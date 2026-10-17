@@ -80,6 +80,8 @@ Famiglie: `presence.*`, `session.*`, `turn.*`, `message.*`, `approval.*`, `repos
 
 ## Stato sessione e controllo locale
 
+**Implementazione T05 locale:** contratti Zod `CodexState`, `CodexRequest`, `CodexResponse` in `packages/contracts/src/codex.ts`; `DesktopBridge.codex.request/onStateChanged`. Account, runtime, login e sessione sono stati distinti; nessun RPC/cwd arbitrario o token nel DTO. Modelli dal catalogo, messaggi massimo 200 e attività 100; testo di ogni messaggio massimo 128 Ki caratteri, attività 32 Ki, budget aggregati 512 Ki/256 Ki. IPC coalescente 50 ms, protocollo linea 8 MiB/coda 16 MiB e richieste pendenti limitate. ID repository/progetto validati e autorizzati dal main, mapping thread locale sul cwd canonico. Policy readOnly e interruzione reali; approvazioni interattive T07. Gli eventi condivisi descritti sopra restano contratto futuro T08, senza upload T05.
+
 Stati applicativi: `created → starting → ready → running → completed`; transizioni aggiuntive `waiting_approval`, `interrupted`, `failed`, `disconnected`. Uno stesso thread può contenere più turni: completare un turno non chiude tutta la sessione. La connettività Nexus è uno stato separato dal runtime Codex. Se il server è offline, un lavoro locale può continuare ma la UI deve dichiarare che non è condiviso live.
 
 Il controllo accetta solo driver e dispositivo associati, sessione e turno correnti, capability presenti e policy locale. Solo il driver invia input a Codex, interrompe un turno o risponde a una richiesta di esecuzione. Gli altri membri aggiungono commenti/proposte autorizzate. Una risposta a un'approvazione scaduta, già risolta o di un altro turno è rifiutata. Non accodare decisioni per eseguirle automaticamente in futuro.

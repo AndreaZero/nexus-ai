@@ -103,7 +103,8 @@ try {
       throw new Error(`Eseguire ${command} sul sistema operativo di destinazione (${packageTargets[command]}).`);
     }
     await run(['build']);
-    await run(['--filter', '@nexus-ai/desktop', command]);
+    if (!['x64', 'arm64'].includes(process.arch)) throw new Error('Architettura host non supportata dal runtime Codex fissato.');
+    await run(['--filter', '@nexus-ai/desktop', command, `--${process.arch}`]);
   } else if (command === 'start:server') {
     if (!existsSync(resolve(root, 'apps/server/dist/index.js'))) {
       throw new Error('Build server assente. Esegui pnpm build prima di pnpm start:server.');

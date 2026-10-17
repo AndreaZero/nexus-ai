@@ -3,6 +3,7 @@ import { useDesktopInfo } from './use-desktop-info.js';
 import { useServerHealth } from './use-server-health.js';
 import type { useMotionPreference } from './use-motion-preference.js';
 import { AccountCard } from './auth/AccountCard.js';
+import { CodexSettings } from './codex/CodexSettings.js';
 
 interface ApplicationSettingsProps {
   motion: ReturnType<typeof useMotionPreference>;
@@ -31,10 +32,6 @@ export function ApplicationSettings({ motion }: ApplicationSettingsProps) {
       <p className="settings-note">{motion.systemReduced ? 'Your operating system requests reduced motion. Animations remain paused.' : 'Pause the planet, particles and ambient transitions. This preference is saved on this device.'}</p>
     </Card>
     <AccountCard />
-    <Card title="Codex runtime" icon={<Icon name="code" />}>
-      <Badge tone="neutral">Codex not connected</Badge>
-      <p className="settings-note">Connect your personal Codex account when local runtime integration is available.</p>
-      <Button size="sm" disabled title="Codex runtime integration is scheduled for T05.">Connect Codex</Button>
-    </Card>
+    <CodexSettings />
   </div>;
 }

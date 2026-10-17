@@ -62,6 +62,8 @@ examples/design/
 
 Queste directory esistono dalla base T01. Da T03 sono operativi identità Nexus, persistenza auth e accesso browser/desktop; T04 aggiunge il dominio collaborazione (workspace/progetti/membership/inviti/repository), client renderer in `apps/web/src/collaboration` e binding cartella account/dispositivo solo nel main. Le entità condivise sono in PostgreSQL e le mutazioni registrano un evento non segreto nella stessa transazione; broadcast/replay resta T08. Task/milestone/sessioni hanno solo tabelle vuote di base, nessun runtime o endpoint anticipato. `packages/ui` non importa DB/runtime; `packages/contracts` non importa Electron, Fastify o filesystem. `codex-bridge` e `db` restano Node-only; il controllo automatico verifica gli import renderer/UI/contratti.
 
+T05 aggiunge runtime Codex nativo 0.159.2 incluso nel desktop, supervisore stdio typed e servizio main isolato per account Nexus. Home/keyring e mapping thread sono locali; nessun nuovo schema o endpoint backend. I turni operano in readOnly nella cartella canonicalizzata del binding T04, con ruolo tecnico riautorizzato e approvazioni di escalation declinate. Il renderer riceve DTO limitati di account/modelli/messaggi/attività attraverso IPC ristretto, senza RPC, path o credenziali generici. Condivisione delle sessioni e autonomia offline sono T08; il servizio T05 ricontrolla online i permessi correnti. Dettagli e prova personale in [codex.md](codex.md).
+
 ## Confini del desktop
 
 - `main`: lifecycle runtime, selezione cartella, Git, processi locali e segreti Nexus protetti dal sistema operativo. Path mediante API native, processi con argomenti separati e senza composizione di comandi shell da input remoto.

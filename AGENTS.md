@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T04 implementato e consegnato per verifica Windows del maintainer**, dopo conferma del login e ritorno browser → app T03. Migrazione T04 applicata/idempotente, 42 test e 12 scenari reali collaborazione passati; account reale conservato. T05 non avviato. Preservare shell T02 approvate e contratti/ownership in `docs/collaboration.md` e `docs/status.md`. Non stampare `.env` o credenziali; `.env.example` deve restare privo di valori privati. Nessuna migrazione all'avvio, nessuna creazione cluster/ruoli/DB o operazione di produzione implicita.
+La fase corrente è **T05 implementato e consegnato per verifica personale Windows**, avviato su richiesta esplicita del maintainer dopo T04 consegnato. Login/inferenza/interruzione e ripresa reali attendono la prova del maintainer; T06 non avviato. Il via non sostituisce la prova manuale dei form T04. Runtime ufficiale Codex **0.159.2**, schema generato immutato e contratti in `docs/codex.md`; ownership integrate/rilasciate in `docs/status.md`. Preservare shell T02, account reale, auth T03 e collaborazione T04. Credenziali Codex solo home/keyring Nexus dedicati: nessuna lettura auth di altre app o fallback API implicito. Non stampare `.env` o credenziali; `.env.example` resta pubblico. Nessuna migrazione all'avvio o operazione di produzione implicita.
 
 ## Prodotto e architettura
 

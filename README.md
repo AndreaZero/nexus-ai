@@ -6,7 +6,7 @@ App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello svilu
 
 ## Stato del progetto
 
-**T04 implementato e consegnato per verifica Windows del maintainer.** T01–T03 accettati; login e ritorno browser → app funzionanti. Workspace/progetti, membri/ruoli, inviti email monouso e repository sono persistiti in PostgreSQL; la cartella locale resta distinta per account e dispositivo. Passati 42 test, 12 scenari reali collaborazione e pacchetto Windows 0.4.0 con smoke. [Regole e prova T04](docs/collaboration.md), [account T03](docs/auth.md). Shell T02 preservate; Codex arriva in T05. Packaging macOS/Linux configurato, prove native ancora da eseguire sui rispettivi sistemi.
+**T05 implementato: runtime Codex personale e sessioni locali, in attesa di verifica del maintainer.** Login browser/device, catalogo modelli reale, chat con streaming, interruzione e ripresa nella cartella del progetto. Codex 0.159.2 è incluso nell'app; modalità iniziale di sola lettura, scrittura e approvazioni interattive in T07. [Collegamento e prova T05](docs/codex.md). Workspace/progetti, ruoli e inviti restano sul PostgreSQL T04, senza nuove migrazioni. T01–T03 accettati Windows; prove manuali T04/T05 e prove native macOS/Linux distinte in [stato](docs/status.md).
 
 Da questa cartella, con Node 22.19+ della serie 22 o Node 24 e pnpm 10.32.1:
 
@@ -19,7 +19,7 @@ pnpm mailpit --install
 pnpm package:win
 ```
 
-`package:win` va eseguito su Windows e produce l'installer unsigned 0.4.0 in `release/win/`. Arrestare app/server precedenti prima della build e riavviarli dopo. Tenere `pnpm mailpit` e `pnpm start:server` in due terminali, poi aprire l'app o eseguire `pnpm start:desktop`. Inbox locale: `http://127.0.0.1:8025`. Le migrazioni non partono automaticamente. Per Mac/Linux usare `pnpm package:mac`/`pnpm package:linux` sul relativo sistema. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
+`package:win` va eseguito su Windows e produce l'installer unsigned 0.5.0 in `release/win/`. Per aggiornare da T04 bastano installazione dipendenze e build: DB e `.env` esistenti sono conservati. Arrestare app/server precedenti prima della build e riavviarli dopo. Tenere `pnpm mailpit` e `pnpm start:server` in due terminali, poi aprire l'app o eseguire `pnpm start:desktop`. Inbox locale: `http://127.0.0.1:8025`. In Settings → Codex collegare il runtime e accedere con il proprio account ChatGPT; nessuna chiave API necessaria per quel percorso. Per Mac/Linux usare `pnpm package:mac`/`pnpm package:linux` sul relativo OS e architettura. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - [Indice documentazione](docs/README.md)
 - [Prodotto e requisiti](docs/product.md)
@@ -31,6 +31,7 @@ pnpm package:win
 - [Skill di coordinamento](.agents/skills/nexus-coordination/SKILL.md)
 - [Contribuire e verificare le build](CONTRIBUTING.md)
 - [Task T04 — workspace e collaborazione](https://github.com/AndreaZero/nexus-ai/issues/4)
+- [Task T05 — Codex locale e account personale](https://github.com/AndreaZero/nexus-ai/issues/5)
 
 ## Metodo
 

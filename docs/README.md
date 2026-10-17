@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01–T03 sono accettati su Windows; T04 workspace/progetti/membri/inviti è implementato e consegnato per verifica manuale. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01–T03 sono accettati su Windows; T04 collaborazione e T05 Codex personale/sessioni locali sono implementati, con prove manuali distinte ancora da registrare. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`, collegamento AI in `codex.md`.
 
 | Documento | Uso |
 | --- | --- |

@@ -1,9 +1,20 @@
 {
   "name": "@nexus-ai/codex-bridge",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
-  "exports": { ".": { "types": "./dist/index.d.ts", "node": "./dist/index.js" } },
-  "files": ["dist"],
-  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc -p tsconfig.json --noEmit" }
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "node": "./dist/src/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test test/*.test.mjs"
+  }
 }

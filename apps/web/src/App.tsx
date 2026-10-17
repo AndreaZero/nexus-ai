@@ -22,6 +22,8 @@ import { RepositoryPage } from './collaboration/RepositoryPage.js';
 import { InvitationPage } from './collaboration/InvitationPage.js';
 import { captureInvitation } from './collaboration/invitation.js';
 import './collaboration/collaboration.css';
+import { CodexProvider } from './codex/CodexProvider.js';
+import './codex/codex.css';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -35,7 +37,7 @@ const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
 
 export function App() {
   captureInvitation();
-  return <AuthProvider><CollaborationProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</CollaborationProvider></AuthProvider>;
+  return <AuthProvider><CollaborationProvider><CodexProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</CodexProvider></CollaborationProvider></AuthProvider>;
 }
 
 function ShellApp() {

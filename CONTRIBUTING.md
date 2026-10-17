@@ -35,15 +35,18 @@ pnpm package:win
 | `pnpm verify:accounts` | Prova esplicita account PostgreSQL/SMTP reali con fixture locale temporanea |
 | `pnpm verify:auth-desktop` | Scambio PKCE, cifratura OS, ripristino/revoca in Electron isolato |
 | `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
+| `pnpm codex:prepare` | Copia il runtime ufficiale fissato della piattaforma dalla dipendenza installata; eseguito anche dal build desktop |
+| `pnpm codex:schema` | Rigenera i tipi dal binario 0.159.2; non modificare manualmente `generated/` |
+| `pnpm verify:codex` | Handshake, account anonimo isolato, catalogo e shutdown del binario reale; richiede build, non esegue inferenza |
 | `pnpm package:win` / `pnpm package:mac` / `pnpm package:linux` | Build e NSIS / DMG / AppImage sul relativo OS |
 
 Gli harness account richiedono backend e Mailpit attivi. Quello HTTP elimina il proprio fixture; quello Electron scrive ID/email in `.nexus/visual/t03/desktop-auth-report.json` e il coordinatore rimuove solo tali righe dopo la prova. Non eseguirli su servizi remoti o usare dati di persone reali. I test SMTP aprono una porta loopback temporanea; il sandbox dell'agente può richiedere esecuzione esterna, senza cambiare la sandbox del renderer.
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T04
+## Build e prova Windows T05
 
-Versione T04: **0.4.0**. Con `pnpm package:win` l'installer viene scritto in `release/win/Nexus-AI-0.4.0-win-x64.exe`; programma senza installer in `release/win/win-unpacked/Nexus AI.exe`. Pacchetto unsigned; nessuna installazione automatica. Arrestare app/server precedenti prima della build e riavviarli dopo: il backend registra i nuovi asset compilati all'avvio.
+Versione T05: **0.5.0**. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.5.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Codex nativo 0.159.2 è incluso, senza CLI globale o WSL richiesti; il pacchetto è più grande perché contiene il runtime ufficiale. Pacchetto unsigned; nessuna installazione automatica. Arrestare app/server precedenti prima della build e riavviarli dopo. Da T04 non occorrono nuove migrazioni o modifiche al DB/`.env`.
 
 Dopo la build tenere aperti:
 
@@ -66,6 +69,10 @@ In Settings avviare **Sign in with browser**, registrarsi, aprire la verifica su
 
 Per T04 aprire **Projects**, creare workspace/progetto e selezionarlo. In **Team**, scegliere ambito Project e invitare un secondo indirizzo; aprire l'email in Mailpit e accettare dal browser con l'account verificato corrispondente. Controllare il solo progetto assegnato, ridurre il ruolo e rimuovere l'accesso. In **Repos** salvare URL HTTPS/default branch e scegliere una cartella locale dal desktop; riaprendo l'app il binding rimane distinto per account e dispositivo. [Regole e prova completa T04](docs/collaboration.md).
 
+Per T05, dopo l'accesso Nexus, aprire **Settings → Codex**, collegare il runtime e scegliere l'accesso personale ChatGPT nel browser. È un login distinto da quello Nexus: l'email Codex non passa da Mailpit. Il ritorno viene gestito dal runtime locale; attendere lo stato account connesso. Il device code è un'alternativa esplicita se il browser non completa il flusso. Su Windows usare il setup sandbox mostrato nelle impostazioni se richiesto. In **Repos** collegare una cartella a un repository del progetto, con ruolo owner/developer, poi aprire **AI Session**, scegliere modello/effort dal catalogo e inviare una domanda sui file chiedendo sola lettura. Controllare streaming, interruzione, nuovo messaggio e riapertura sullo stesso thread. [Passi e limiti completi](docs/codex.md#prova-manuale-t05).
+
+L'accesso personale usa lo storage sicuro OS nella home Codex di Nexus, distinta dalle altre app. Nessuna importazione automatica delle loro sessioni; API key solo se scelta esplicitamente e con relativo consumo API. Il catalogo da solo non prova diritti/quota di inferenza. Scritture e approvazioni interattive arrivano in T07; output e cronologia T05 restano locali, condivisione in T08.
+
 `pnpm verify:collaboration` richiede il DB locale migrato e Mailpit loopback; crea una propria istanza HTTP temporanea e non arresta il server del maintainer. Elimina soltanto workspace/account/email QA della propria esecuzione. La verifica non deve essere usata con SMTP remoto o credenziali di produzione.
 
 Il backend serve le pagine compilate su `http://127.0.0.1:3001/sign-in`; le email non escono dal PC. In sviluppo si può usare `pnpm dev:desktop` al posto dei comandi server/app, lasciando Mailpit nell'altro terminale. Per fermare usare Ctrl+C. Il pacchetto non incorpora né avvia backend, PostgreSQL o Mailpit.
@@ -74,7 +81,7 @@ Il backend serve le pagine compilate su `http://127.0.0.1:3001/sign-in`; le emai
 
 ## macOS, Linux e limiti
 
-Sul relativo sistema usare installazione/setup DB e auth, poi `pnpm check`, `pnpm test` e `pnpm package:mac` oppure `pnpm package:linux`. Output `release/mac/` e `release/linux/`. Mac DMG arm64/x64, Linux AppImage x64; prerequisiti runtime Electron e ambiente grafico reali. AppImage può richiedere FUSE 2 o `--appimage-extract-and-run`. Non usare `--no-sandbox`.
+Sul relativo sistema usare installazione/setup DB e auth, poi `pnpm check`, `pnpm test` e `pnpm package:mac` oppure `pnpm package:linux`. Output `release/mac/` e `release/linux/`. Ogni comando produce l'architettura dell'host Node (x64 o arm64), con runtime Codex corrispondente: per due architetture usare due host/runner nativi, senza copiare il vendor di un altro sistema. Mac DMG e Linux AppImage richiedono ambiente desktop reale. AppImage può richiedere FUSE 2 o `--appimage-extract-and-run`. Non usare `--no-sandbox`.
 
 macOS richiede prova nativa di protocollo e continuità Keychain/firma. Linux richiede keyring sicuro: `basic_text` è rifiutato, senza salvataggio in chiaro. Le configurazioni di packaging e la CI non provano questi comportamenti nativi. Il maintainer proverà il Mac più avanti. Firma/notarizzazione e distribuzione self-host sono T16.
 

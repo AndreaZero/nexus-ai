@@ -9,7 +9,7 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D03 | Adottata in T01 | Monorepo TypeScript, pnpm, React/Vite per renderer condiviso, Electron per runtime desktop: una lingua e componenti comuni per un singolo maintainer |
 | D04 | Fastify T01, PostgreSQL/Drizzle T03; realtime futuro | Pool server Node-only, schema Drizzle e migrazioni SQL esplicite, senza migrazioni all'avvio. REST per snapshot/mutazioni e WebSocket futuro per eventi |
 | D05 | Adottata in T03 | Better Auth e plugin Electron 1.7.10 per identità Nexus, email/password verificata e reset; browser di sistema con PKCE, IPC ristretto e storage OS cifrato. Inviti in T04; identità Codex distinta |
-| D06 | Proposta operativa | Codex app-server locale via stdio, login ufficiale gestito da Codex e home dedicata a Nexus. Nessuna lettura dell'auth store di altre applicazioni |
+| D06 | Adottata in T05 | Codex app-server 0.159.2 ufficiale nativo via stdio, distribuito dal pacchetto npm esatto/lockfile; schema generato immutato, login gestito da Codex, home per account Nexus e keyring OS obbligatorio. Nessuna lettura dell'auth store di altre applicazioni |
 | D07 | Proposta operativa | Eventi durevoli in PostgreSQL e outbox transazionale; presenza effimera. Nessun Redis obbligatorio all'inizio: la voce Redis nelle PNG appartiene al progetto illustrativo |
 | D08 | Proposta operativa | Accesso web con renderer condiviso e capacità esplicite del dispositivo; nessuna shell nel browser |
 | D09 | Proposta operativa | Asset ambientali procedurali SVG/canvas e componenti accessibili; Inter per UI e JetBrains Mono per codice, perché il font originale non è ricavabile dalle PNG |
@@ -20,11 +20,13 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D14 | Adottata in T03 | Mailpit loopback per email locali reali, installazione ufficiale con SHA-256 verificato. Secret generato una sola volta nel proprio `.env`; template pubblico senza credenziali. Plugin senza IPC/CSP automatici; adattamento PKCE 1.7.10 isolato e testato, da riesaminare prima di aggiornamenti |
 | D15 | Adottata in T04 | Workspace owner/member amministrativi, creazione progetti riservata agli owner workspace; ruoli operativi owner/developer/client/viewer per progetto. Appartenenza ordinaria workspace senza accesso implicito ai progetti. Ultimo owner esplicito protetto con lock transazionali e issuer invito riaccertato all'accettazione |
 | D16 | Adottata in T04 | Un endpoint collaborazione con union di operazioni validate e bridge desktop corrispondente, senza URL/header/credenziali arbitrari dal renderer. Binding cartella solo userData per account/progetto/repository/device; repository remoto separato. Invito in fragment/sessionStorage, hash SHA-256 nel DB e SMTP locale esistente |
+| D17 | Adottata in T05 | Modalità iniziale readOnly, approvazioni di escalation declinate e metodi non supportati rifiutati. Nessun bypass o fallback API; scrittura e approvazioni interattive in T07. Ogni operazione locale ricontrolla ruolo/binding T04; thread scoped a utente/progetto/repository/cwd canonico |
+| D18 | Adottata in T05 | Packaging sul relativo OS e architettura Node nativa x64/arm64, per distribuire Electron e Codex della stessa architettura. Due architetture richiedono due build native. Licenza Apache-2.0 Codex e notices conservati nel pacchetto |
 
 ## Da concretizzare al momento opportuno
 
 - **T01 implementato:** versioni effettive fissate nel lockfile e riepilogate in `CONTRIBUTING.md`; app ID `io.github.andreazero.nexusai`. Packaging NSIS x64, DMG arm64/x64 e AppImage x64; Windows generato/verificato, altre prove native da registrare.
-- **T05–T07:** versione Codex compatibile, modalità di credenziali disponibili sui tre OS, isolamento configurazione e comportamento delle approvazioni sul runtime installato. Verifica come parte dell'integrazione definitiva, senza un'app dimostrativa separata.
+- **T05 implementato, prova personale pendente:** runtime 0.159.2 e isolamento fissati. Verificare login/keyring/inferenza su Windows e in seguito su Mac/Linux; T07 completa le approvazioni interattive e scritture sullo stesso protocollo.
 - **T03/T16:** URL server, servizio email per verifica/reset/inviti e provider PostgreSQL/object storage. Preparare configurazione self-host senza impegnare servizi a pagamento non richiesti.
 - **T03 accettato su Windows:** [account e prove](auth.md), login/rientro OS confermati dal maintainer. T04 aggiunge [collaborazione](collaboration.md) sullo stesso DB; prove native Mac/Linux restano distinte.
 - **T12/T16:** account GitHub App/OAuth, segreti, domini, firma e notarizzazione delle build richiedono credenziali/configurazioni reali del maintainer quando si arriva al relativo task.

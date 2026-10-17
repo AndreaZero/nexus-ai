@@ -3,8 +3,10 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { parseEnv } from 'node:util';
+import { prepareCodexRuntime } from '../../../scripts/prepare-codex.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
+await prepareCodexRuntime();
 try {
   const values = parseEnv(await readFile(path.resolve(root, '../../.env'), 'utf8'));
   for (const [key, value] of Object.entries(values)) process.env[key] ??= value;

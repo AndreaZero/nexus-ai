@@ -1,5 +1,13 @@
 # Changelog
 
+### 2026-10-17 — T05: Codex personale e sessioni locali
+
+- Integrati tre fronti multiagente: supervisore Codex typed stdio, servizio desktop isolato e renderer account/sessione nella shell approvata.
+- Incluso il runtime ufficiale Codex 0.159.2 nativo nel pacchetto, tipi generati immutati e licenza Apache-2.0/notices. Build per OS e architettura dell'host, senza CLI globale o WSL.
+- Collegati login ChatGPT browser/device, annullamento/logout, API key solo esplicita, catalogo/effort reale, messaggi progressivi, interruzione, nuovo thread e ripresa locale.
+- Home/keyring dedicati per account Nexus, mapping per cartella canonicalizzata, autorizzazioni T04 ricontrollate e IPC/output limitati. Modalità readOnly e richieste di escalation declinate; scritture/approvazioni interattive in T07, condivisione in T08.
+- Versione app 0.5.0; nessun cambiamento DB/server o migrazione. Passati check, 65 test, build, shell, smoke sviluppo/pacchetto e handshake/catalogo anonimi del binario reale. Pacchetto Windows unsigned generato; login/inferenza personali e prove native Mac/Linux da registrare col maintainer.
+
 ## Unreleased
 
 ### 2026-10-17 — T04: workspace, progetti, membri e inviti

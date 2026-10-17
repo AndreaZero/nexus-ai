@@ -1,50 +1,54 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T04 implementato e consegnato per verifica Windows del maintainer** ([issue #4](https://github.com/AndreaZero/nexus-ai/issues/4)). T01–T03 accettati su Windows; il maintainer conferma login e ritorno browser → app dopo `5fa5846`. T05 non avviato.
+Aggiornato: **17 ottobre 2026**. **T05 implementato e consegnato per verifica personale Windows**. T01–T03 accettati dal maintainer; T04 consegnato con prova manuale ancora distinta. T06 non avviato.
 
-## Risultato T04
+## Risultato T05
 
-- Workspace e progetti PostgreSQL reali, creazione/modifica, selezione per account, header e contatori reali nella shell T02 approvata. Nessun contenuto iniziale fittizio.
-- Workspace owner/member amministrativi; ruoli owner/developer/client/viewer per progetto. Membership ordinaria workspace senza accesso implicito ai progetti. Repository riservato ai ruoli tecnici e email roster oscurate quando previsto.
-- Inviti SMTP Mailpit: token SHA-256 nel DB, 72 ore, destinatario verificato, anteprima/accettazione, revoca/replay e issuer attuale. Ultimo owner esplicito protetto anche con mutazioni concorrenti e rimozione dal workspace.
-- Renderer Projects/Team/Repos, impostazioni e inviti con sessionStorage per attraversare il login. Account browser sbagliato recuperabile con Use another account; nuovo hash invito rimonta la pagina.
-- Bridge di dominio collaborazione validato in preload/main/server, cookie solo nel main. Cartella locale scelta con dialogo nativo e binding atomico per account/progetto/repository/device, nuova autorizzazione dopo dialogo e cancellazione senza scritture.
-- Migrazione additiva `0001_collaboration.sql` applicata sul DB dedicato esistente, 15 tabelle totali. Audit nella transazione mutativa; task/milestone/sessioni hanno basi vuote, senza API o runtime anticipati. Nessun allegato scaricabile in T04.
-- Versione root/desktop/web/server/contratti/DB **0.4.0**; UI 0.2.0 e Codex bridge 0.1.0. Nessuna nuova dipendenza. App/server precedenti vanno chiusi prima della build e riavviati dopo per API/asset nuovi.
+- Codex ufficiale **0.159.2** nativo incluso nell'app; versione esatta, schema TypeScript generato immutato e supervisore stdio con framing, timeout, backpressure e shutdown atteso.
+- Settings con connect/disconnect, login personale browser/device, annullamento/logout, API key soltanto esplicita e catalogo modelli/effort reale. Identità Nexus distinta da Codex; nessuna importazione di credenziali di altre app.
+- Home/keyring OS per account Nexus, mapping atomico thread per account/progetto/repository/cwd canonico. Nessun token, chiave o transcript inviato al server. Logout/cambio account Nexus ferma il processo e cancella subito lo stato corrente.
+- AI Session nella shell reference 2: messaggi reali progressivi, attività osservabili, nuovo thread, interruzione e ripresa. Nessun ragionamento privato, contatore di test o risultato fittizio.
+- Ogni operazione sessione ricontrolla ruolo owner/developer, repository e binding T04. Renderer senza Node/RPC/cwd arbitrari. Snapshot e protocollo limitati; policy **readOnly** iniziale, escalation declinate e operazioni non supportate rifiutate. Scrittura e approvazioni interattive T07, contesto avanzato T06, condivisione/realtime T08.
+- App/root/desktop/web/contratti/bridge **0.5.0**. Server/DB **0.4.0**, UI **0.2.0**: nessuna nuova migrazione o configurazione PostgreSQL. Runtime e licenza Apache-2.0/notices nel pacchetto; MIT per Nexus.
+- Packaging sul proprio OS e architettura Node x64/arm64, con vendor Codex corrispondente. Windows x64 verificato; altre combinazioni non dichiarate provate.
 
-## Ownership concluse
+## Ownership T05 integrate e rilasciate
 
 | Fronte | Agente | Percorsi integrati |
 | --- | --- | --- |
-| API/autorizzazioni | `/root/t04_server` | `apps/server/src/**`: membership, inviti, eventi, SMTP, route e test |
-| Renderer | `/root/t04_web` | `apps/web/src/**`: provider/client, pagine, dialoghi, shell e roster |
-| Desktop | `/root/t04_desktop` | `apps/desktop/**`: trasporto, binding, main/preload e test |
-| DB/contratti/integrazione | Coordinatore | `packages/db/**`, `packages/contracts/**`, manifest/lockfile, script QA, documenti, shell aggiuntive, build/pacchetto e pubblicazione |
+| Bridge protocollo | `/root/t05_bridge` | `packages/codex-bridge/src/**`, `test/**`, `tsconfig.json` |
+| Desktop | `/root/t05_desktop` | `apps/desktop/src/**`, `test/**` |
+| Renderer | `/root/t05_web` | `apps/web/src/**` |
+| Integrazione | Coordinatore | contratti, schema generato, manifest/lockfile, provision/build/packaging, licenze, documenti e QA |
 
-Skill `.agents/skills/nexus-coordination/SKILL.md` applicata; agenti integrati e ownership rilasciate. Nessuna nuova chat utente o T05 avviato.
+Skill `nexus-coordination` e `openai-docs` applicate. Contratti fissati prima degli edit; un writer per manifest/contratti/schema. Nessuna nuova chat utente, installazione concorrente o commit degli agenti. Tutti gli handoff integrati; nessuna delega residua.
 
-## Evidenze T04
+## Evidenze T05
 
 | Ambito | Esito |
 | --- | --- |
-| Statici | Typecheck completo, ESLint e confini renderer **45 file** passati. Check eseguiti in sequenza con arresto su errore; corretti confronti TS di rotte già gestite ed escape lint, poi completati controlli pertinenti |
-| `pnpm test` | **42/42**: DB 3, desktop 16, server 20, web 1, confini 2. Fuori sandbox per SMTP/rename Windows; renderer sandboxed |
-| `pnpm build` | Passato, web 292 moduli; manifest/lockfile coerenti senza nuove dipendenze |
-| Migrazioni | Applicata e ripetuta senza duplicazioni. Corretto ordine dell'indice composto prima della FK; precedenti tentativi annullati integralmente da PostgreSQL |
-| `pnpm verify:collaboration` | **12 scenari reali** HTTP/PG/Mailpit con tre account verificati: recipient/hash/replay, isolamento, proiezioni/ruoli/revoca, owner concorrenti, issuer revocato e rimozione workspace che lascerebbe progetto senza owner |
-| Pulizia QA | Verifica finale: **0 account QA, 0 workspace QA**, unico account reale preesistente conservato. Rimossi solo messaggi Mailpit della prova |
-| Shell Electron | Tre layout reference a 1586 × 992, quattro gate collaborazione senza account, tastiera/reduced motion e sessione a 960 px passati. Catture locali `.nexus/visual/t02/` dal comando storico |
-| Pacchetto Windows | NSIS **0.4.0**, `release/win/Nexus-AI-0.4.0-win-x64.exe`, **115581755 byte**, NotSigned; nessuna installazione automatica |
-| Smoke pacchetto | Exit 0: renderer montato, nuovi bridge/IPC validati e Node assente |
-| Prova umana Windows T04 | Pendente: form autenticati, due account via invito, persistenza selezione e dialogo cartella nativo secondo `collaboration.md` |
-| macOS/Linux | Configurazioni presenti; packaging, protocollo e keyring nativi non provati qui |
+| `pnpm check` | Typecheck completo, ESLint e confini renderer **50 file** passati. Corretto un warning lint nello script di cleanup QA prima del controllo integrato riuscito |
+| `pnpm test` | **65/65**: bridge 13, desktop 26, server 20, DB 3, web 1, confini 2. Include lifecycle, framing, isolamento account, late event, ruoli/binding, readOnly, stream/limiti, ripresa, login/cancel/device e mapping atomico |
+| `pnpm build` | Passato, renderer 298 moduli; runtime nativo della piattaforma preparato dal lockfile |
+| `pnpm verify:codex` | Binario reale 0.159.2 Windows x64, initialize, account/read nullo in home nuova, 8 modelli del catalogo, arresto senza lock residui. Nessun login o inferenza |
+| Runtime impacchettato | `pnpm verify:codex --packaged` passato sugli stessi passaggi usando `resources/codex/bin/codex.exe` |
+| Electron | Smoke sviluppo e dell'eseguibile impacchettato passati: renderer montato, IPC Codex validato, input arbitrario negato, Node assente |
+| Shell | Tre layout reference, quattro gate collaborazione, tastiera/reduced motion e sessione a 960 px passati; cattura sessione ispezionata. Catture locali nel percorso storico `.nexus/visual/t02/` |
+| Pacchetto Windows | NSIS **0.5.0**, `release/win/Nexus-AI-0.5.0-win-x64.exe`, **219852006 byte**, unsigned; nessuna installazione automatica. Runtime escluso dall'asar e copiato una sola volta in resources |
+| Segreti/licenze | Scan 924 file source/build senza valori privati del `.env`; licenza Codex nell'asar, vendor notices conservati, documento terze parti incluso nelle resources |
+| Prova personale | **Pendente:** login Codex/keyring, risposta autenticata, interruzione e ripresa con account del maintainer. Catalogo anonimo e test di trasporto non dimostrano quota/diritti di inferenza |
+| macOS/Linux | Configurazioni native presenti; packaging, keyring e inferenza non provati qui |
 
-L'apertura/ritorno OS Windows T03 è stata confermata dal maintainer; i test automatici restano separati dalle prove manuali. I gate fotografati non sostituiscono la verifica visiva dei form autenticati e non contengono progetti inventati. Il test cartella sostituisce soltanto il selettore nei test e non legge file del repository.
+Rapporti locali `.nexus/visual/t05/`: runtime, runtime impacchettato e smoke. L'home QA anonima viene eliminata dopo lo shutdown; account reale e profili delle altre app conservati. I test di servizio usano trasporto controllato e non sono descritti come inferenza.
 
-## Prossimo passo
+## Continuità T04
 
-Il maintainer segue [T04 collaborazione](collaboration.md) e [CONTRIBUTING.md](../CONTRIBUTING.md): chiude app/backend precedenti, esegue `pnpm package:win`, riavvia `pnpm start:server` e app aggiornata o `pnpm start:desktop`. Mailpit una sola istanza, inbox `http://127.0.0.1:8025`; DB già migrato su questa macchina, nessun nuovo setup/password richiesto.
+T04 implementa workspace/progetti PostgreSQL, membri/ruoli, inviti SMTP monouso, repository remoti e binding locale separato. Migrazione additiva `0001_collaboration.sql`, 42 test, 12 scenari reali PG/SMTP/HTTP con tre account temporanei e pacchetto Windows 0.4.0/smoke passati. Fixture rimossi, unico account reale conservato. Form autenticati, invito con secondo account e selettore cartella nativo restano da prova manuale secondo [collaboration.md](collaboration.md). L'autorizzazione a T05 non è un'accettazione implicita di quei passi.
 
-Creare workspace e due progetti, invitare un secondo account al primo, accettare con email verificata corrispondente e verificare l'isolamento dal secondo. Cambiare ruolo/rimuovere membro e ricaricare; collegare repository HTTPS e cartella locale, riaprire per controllare persistenza. Registrare feedback/correzioni prima di T05.
+## Prossimo passo del maintainer
 
-Limiti: presenza e sincronizzazione realtime T08, Git/runtime Codex T05/T12, API operative task/sessioni e allegati nei rispettivi task. Firma/notarizzazione e hosting T16; nessun deploy o servizio a pagamento creato. Rimane l'adattamento PKCE fissato al plugin 1.7.10, da rivedere prima degli upgrade.
+Chiudere app/backend precedenti, eseguire `pnpm install --frozen-lockfile` e `pnpm package:win`, riavviare `pnpm start:server` e app aggiornata oppure `pnpm start:desktop`. PostgreSQL e `.env` esistenti vanno bene. Mailpit una sola istanza per email Nexus/inviti; non riceve il login Codex.
+
+Seguire [prova personale T05](codex.md#prova-manuale-t05): Connect Codex → Sign in with ChatGPT, setup sandbox Windows esplicito, cartella collegata in Repos, modello e domanda sui file in AI Session. Verificare streaming, interruzione, nuovo messaggio e riapertura dello stesso thread. Login personale nella finestra ufficiale; nessuna password o API key da inviare in chat.
+
+Registrare feedback prima di avviare T06. Firma/notarizzazione/hosting restano T16. Modalità offline avanzata T08: per T05 il backend deve essere raggiungibile per riaccertare sessione e ruolo.

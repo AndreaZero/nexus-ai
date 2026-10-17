@@ -1,6 +1,6 @@
 {
   "name": "@nexus-ai/desktop",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Nexus AI desktop for Windows, macOS and Linux",
   "author": "Nexus AI contributors",
@@ -14,18 +14,20 @@
     "dev": "electron .",
     "start": "electron .",
     "smoke": "electron . --smoke-test",
-    "package:win": "electron-builder --config electron-builder.yml --win nsis --x64 --publish never",
+    "package:win": "electron-builder --config electron-builder.yml --win nsis --publish never",
     "package:mac": "electron-builder --config electron-builder.yml --mac dmg --publish never",
-    "package:linux": "electron-builder --config electron-builder.yml --linux AppImage --x64 --publish never",
+    "package:linux": "electron-builder --config electron-builder.yml --linux AppImage --publish never",
     "package:dir": "electron-builder --config electron-builder.yml --dir --publish never"
   },
   "dependencies": {
-    "@nexus-ai/contracts": "workspace:*",
-    "better-auth": "1.7.10",
-    "@better-auth/electron": "1.7.10",
     "@better-auth/core": "1.7.10",
+    "@better-auth/electron": "1.7.10",
     "@better-auth/utils": "0.5.0",
     "@better-fetch/fetch": "1.3.2",
+    "@nexus-ai/codex-bridge": "workspace:*",
+    "@nexus-ai/contracts": "workspace:*",
+    "@openai/codex": "0.159.2",
+    "better-auth": "1.7.10",
     "better-call": "1.4.2",
     "conf": "15.0.2"
   },

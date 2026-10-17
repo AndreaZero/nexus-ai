@@ -69,15 +69,17 @@ Creare workspace/progetto, associare repository/binding locale come record disti
 
 **Uscita:** due account invitati vedono solo progetti consentiti; terzo estraneo negato su API e allegati; riduzione ruolo efficace. **Build utente:** creare progetto, invitare e accettare con secondo account.
 
-**Evidenze T04:** migrazione additiva/idempotente, 42 test, 12 scenari reali PostgreSQL/SMTP/HTTP con tre account temporanei (isolamento, inviti, riduzione/revoca, owner concorrenti e issuer revocato), statici/build, shell e pacchetto Windows 0.4.0 con smoke passati. Fixture rimossi, account reale conservato. Le API allegati non sono ancora disponibili (404); nessun contenuto scaricabile esposto. Form autenticati/due account/dialogo nativo da prova manuale del maintainer; macOS/Linux da provare nativamente. T05 attende feedback.
+**Evidenze T04:** migrazione additiva/idempotente, 42 test, 12 scenari reali PostgreSQL/SMTP/HTTP con tre account temporanei (isolamento, inviti, riduzione/revoca, owner concorrenti e issuer revocato), statici/build, shell e pacchetto Windows 0.4.0 con smoke passati. Fixture rimossi, account reale conservato. Le API allegati non sono ancora disponibili (404); nessun contenuto scaricabile esposto. Form autenticati/due account/dialogo nativo da prova manuale del maintainer; macOS/Linux da provare nativamente. Il maintainer ha autorizzato T05 senza un'accettazione manuale T04 esplicita.
 
 ### T05 — Runtime locale Codex e account personale
 
-**Dipendenze:** T04. **Ownership:** bridge app-server; desktop supervisore/credenziali; renderer impostazioni account.
+**Stato:** [implementato e consegnato per verifica personale Windows — issue #5](https://github.com/AndreaZero/nexus-ai/issues/5), avviato su richiesta esplicita del maintainer; non deduce una prova manuale T04. **Dipendenze:** T04 implementato. **Ownership:** bridge, desktop e renderer integrati/rilasciati; coordinatore contratti, schema, runtime/build/packaging e prove. Runtime fissato **0.159.2**, policy readOnly iniziale esplicita; [contratto e prova T05](codex.md#prova-manuale-t05).
 
 Adottare runtime ufficiale/versione, schema generato, home dedicata e supervisore multipiattaforma. Implementare login personale, stato account, modelli, logout e API key opzionale esplicita. Thread/turni/stream/interruzione funzionano sul filesystem scelto; errori runtime/account/quota sono gestiti. Questa integrazione è codice dell'app, senza un'app di prova separata.
 
 **Uscita:** una richiesta reale completata dal percorso Nexus e un'interruzione/ripresa; versione incompatibile e runtime assente gestiti. **Build utente:** login Codex e richiesta nella cartella scelta; risultato per OS registrato.
+
+**Evidenze T05:** check completo, 65 test, build, smoke Electron sviluppo/pacchetto e confronto shell passati. Runtime ufficiale distribuito con l'app: handshake/account anonimo/catalogo/chiusura provati sia in sviluppo sia dal vendor impacchettato Windows x64. Nessuna credenziale di altre app usata, nessuna inferenza autenticata dichiarata. Installer 0.5.0 unsigned generato; nessuna nuova migrazione. Restano login personale/keyring, risposta, interruzione e ripresa del maintainer. macOS/Linux non provati nativamente; T06 non avviato.
 
 ### T06 — Sessione AI e contesto, reference 2
 

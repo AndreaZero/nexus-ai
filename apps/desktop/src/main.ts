@@ -1,16 +1,17 @@
-import { app, BrowserWindow, dialog, ipcMain, protocol, session } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
 import { readFile, realpath, rm } from 'node:fs/promises';
 import { mkdtempSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DESKTOP_IPC, collaborationRequestSchema, collaborationResponseSchema, desktopInfoSchema, localBindingRequestSchema, localBindingResponseSchema, nexusAuthStateSchema } from '@nexus-ai/contracts';
+import { DESKTOP_IPC, collaborationRequestSchema, collaborationResponseSchema, desktopInfoSchema, localBindingRequestSchema, localBindingResponseSchema, nexusAuthStateSchema, codexRequestSchema, codexResponseSchema, codexStateSchema } from '@nexus-ai/contracts';
 import { APP_URL, developmentUrl, isTrustedIpcSender, isWithinDirectory, rendererAssetPath } from './security.js';
 import { verifyShell } from './shell-verification.js';
 import { DesktopAuth } from './auth.js';
 import { AUTH_SCHEME } from './auth-config.js';
 import { verifyDesktopAuth } from './auth-verification.js';
 import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
+import { DesktopCodex, codexRuntimePath } from './codex.js';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -27,6 +28,7 @@ if (authVerificationDirectory) app.setPath('userData', authVerificationDirectory
 if (shellVerification) app.commandLine.appendSwitch('force-device-scale-factor', '1');
 let mainWindow: BrowserWindow | undefined;
 let desktopAuth: DesktopAuth | undefined;
+let desktopCodex: DesktopCodex | undefined;
 
 function receiveAccountCallback(value: string) {
   // Never log OS callback URLs: their fragment contains a temporary credential.
@@ -63,7 +65,7 @@ function desktopInfo() {
     platform: process.platform,
     architecture: process.arch,
     electronVersion: process.versions.electron,
-    capabilities: { canRunLocalSession: false, canOpenLocalEditor: false },
+    capabilities: { canRunLocalSession: true, canOpenLocalEditor: false },
   });
 }
 
@@ -144,6 +146,7 @@ async function initialize() {
   }
 
   desktopAuth = new DesktopAuth((state) => {
+    desktopCodex?.nexusStateChanged(state);
     const window = mainWindow;
     if (window && !window.isDestroyed() && isTrustedIpcSender({
       senderId: window.webContents.id,
@@ -152,8 +155,9 @@ async function initialize() {
     }, window.webContents.id, devUrl)) window.webContents.send(DESKTOP_IPC.authStateChanged, state);
   }, smokeTest || shellVerification);
 
+  const bindingStorage = new LocalBindingStorage(path.join(app.getPath('userData'), 'repository-bindings.json'));
   const localBindings = new LocalBindingService(
-    new LocalBindingStorage(path.join(app.getPath('userData'), 'repository-bindings.json')),
+    bindingStorage,
     (projectId, repositoryId) => desktopAuth!.authorizeRepository(projectId, repositoryId),
     async () => {
       const window = mainWindow;
@@ -164,6 +168,22 @@ async function initialize() {
       return selection.canceled ? null : selection.filePaths[0] ?? null;
     },
   );
+
+  desktopCodex = new DesktopCodex({
+    userData: app.getPath('userData'), clientVersion: app.getVersion(), platform: process.platform,
+    executable: codexRuntimePath(app.isPackaged, process.resourcesPath, app.getAppPath(), process.platform),
+    auth: desktopAuth, bindings: bindingStorage, openExternal: url => shell.openExternal(url),
+    publish: (state) => {
+      const window = mainWindow;
+      if (window && !window.isDestroyed() && isTrustedIpcSender({
+        senderId: window.webContents.id, mainFrame: true, url: window.webContents.getURL(),
+      }, window.webContents.id, devUrl)) window.webContents.send(DESKTOP_IPC.codexStateChanged, codexStateSchema.parse(state));
+    },
+  });
+  ipcMain.handle(DESKTOP_IPC.codexRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopCodex!.request(codexRequestSchema.parse(args[0])).then(result => codexResponseSchema.parse(result));
+  });
 
   ipcMain.handle(DESKTOP_IPC.collaborationRequest, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args, 1);
@@ -252,11 +272,14 @@ async function initialize() {
         authState: await window.nexusDesktop.auth.getState(),
         collaborationKeys: Object.keys(window.nexusDesktop.collaboration),
         localBindingKeys: Object.keys(window.nexusDesktop.localBinding),
+        codexKeys: Object.keys(window.nexusDesktop.codex),
+        codexState: await window.nexusDesktop.codex.request({operation:'getState'}),
         collaborationState: await window.nexusDesktop.collaboration.request({operation:'listWorkspaces'}),
         localBindingState: await window.nexusDesktop.localBinding.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         invalidRequestsDenied: await Promise.all([
           window.nexusDesktop.collaboration.request({operation:'listWorkspaces',url:'https://invalid.example'}),
           window.nexusDesktop.localBinding.request({operation:'select',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',rootPath:'/arbitrary'}),
+          window.nexusDesktop.codex.request({operation:'connect',executable:'/arbitrary'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -269,13 +292,15 @@ async function initialize() {
       nexusAuthStateSchema.parse(check['authState']);
       const collaborationState = collaborationResponseSchema.parse(check['collaborationState']);
       const localBindingState = localBindingResponseSchema.parse(check['localBindingState']);
+      const codexState = codexResponseSchema.parse(check['codexState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           localBindingState.ok || localBindingState.code !== 'auth_required' ||
+          JSON.stringify(check['codexKeys']) !== '["request","onStateChanged"]' || codexState.ok || codexState.code !== 'auth_required' || codexState.state.runtime !== 'stopped' ||
           JSON.stringify(check['authKeys']) !== '["getState","signIn","cancelSignIn","signOut","onStateChanged"]' ||
-          info.capabilities.canRunLocalSession || info.capabilities.canOpenLocalEditor) {
+          !info.capabilities.canRunLocalSession || info.capabilities.canOpenLocalEditor) {
         throw new Error('Renderer isolation, CSP, capability or mount check failed.');
       }
       console.log(`Nexus desktop smoke passed: ${info.platform}/${info.architecture}; renderer mounted; IPC validated; Node unavailable.`);
@@ -303,6 +328,14 @@ if (hiddenVerification) {
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
-app.on('before-quit', () => desktopAuth?.dispose());
+let runtimeShutdown = false;
+app.on('before-quit', (event) => {
+  desktopAuth?.dispose();
+  if (desktopCodex && !runtimeShutdown) {
+    event.preventDefault();
+    runtimeShutdown = true;
+    void desktopCodex.dispose().finally(() => app.quit());
+  }
+});
 
 if (primaryInstance) void app.whenReady().then(initialize).catch(fail);
