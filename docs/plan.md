@@ -85,7 +85,7 @@ Adottare runtime ufficiale/versione, schema generato, home dedicata e supervisor
 
 ### T06 — Sessione AI e contesto, reference 2
 
-**Stato:** [implementato e consegnato per verifica Windows — issue #6](https://github.com/AndreaZero/nexus-ai/issues/6), al via «ok bene, proseguiamo» dopo 0.5.1 e creazione progetto confermata. **Ownership:** desktop, server e renderer integrati; coordinatore contratti/DB/IPC/route/QA/documenti. [Guida effettiva](session.md). Il via non è prova esaustiva di tutti i percorsi T04/T05.
+**Stato:** [build Windows confermata dal maintainer — issue #6 chiusa](https://github.com/AndreaZero/nexus-ai/issues/6). **Ownership:** desktop, server e renderer integrati; coordinatore contratti/DB/IPC/route/QA/documenti. [Guida effettiva](session.md). Il feedback non è prova esaustiva di tutti i percorsi personali T04/T05/T06 o altre piattaforme.
 
 **Dipendenze:** T05. **Ownership:** chat/composer; contesto/repository; backend cronologia. Contratti già stabiliti prima della divisione.
 
@@ -97,11 +97,13 @@ Collegare toolbar, stepper, stream messaggi, attività strumenti, piano esposto,
 
 ### T07 — Diff, output e approvazioni
 
-**Dipendenze:** T06. **Ownership:** code workspace; policy/approvals locali; mapping provider. Un autore per bridge e generated schema.
+**Stato:** [implementato e consegnato per verifica Windows — issue #7](https://github.com/AndreaZero/nexus-ai/issues/7), su via esplicito del maintainer dopo conferma build T06. **Dipendenze:** T06. **Ownership:** runtime, workspace locale e renderer integrati/rilasciati; coordinatore contratti, main/preload, integrazione e consegna. Schema provider 0.159.2 invariato; ownership dettagliate in `status.md`.
 
 Completare Code Preview/Terminal/Tests/Preview, diff reale, output strumenti, report test riconosciuti e approvazioni del driver. Distinguere piano, esecuzione e deliverable. Approvals counter, Pause e Stop riflettono stato/capacità effettivi; apertura editor sicura per OS.
 
 **Uscita:** modifica reale visualizzata nel diff, report/output corretti, richiesta approvabile una sola volta e rifiuto stale/non-driver. **Build utente:** consentire e negare un'operazione nella cartella dedicata, osservare file e output.
+
+**Evidenze T07:** check e 124 test integrati passati; Git/filesystem reali, sandbox policy e scoping/replay/expiry/ruoli. Harness Electron UI/IPC con Git e TAP reali isolati, provider controllato: 10 controlli, nessuna inferenza o credenziale personale. Build/smoke/package e confronto visivo in [status.md](status.md). Nessuna nuova migrazione DB o dipendenza. Prova con il proprio Codex e build native macOS/Linux ancora distinte.
 
 ### T08 — Realtime, presenza e recupero
 

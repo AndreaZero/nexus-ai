@@ -58,6 +58,8 @@ Contenuto sinistro x≈224–900, y≈119–982; destro x≈907–1578. Rapporto
 
 `Share` gestisce audience/inviti, mai il token del runtime. `Approvals` apre richieste pendenti del driver; i membri senza controllo leggono solo lo stato consentito. `Publish Update` prepara un riepilogo selezionato, con anteprima e audience. `Preview` apre l'URL configurato in un contesto isolato. Il composer non promette strumenti assenti nel runtime selezionato.
 
+T07 collega file tab, colori add/delete, numeri linea e split/unified a diff locali reali o patch provider con fonte distinta. Terminal/Output/Problems/Debug Console proiettano gli eventi osservati; Tests indica formato e data del report, coverage unknown se non riportata. Il composer sceglie Read only/Workspace write con conferma locale, la toolbar conta soltanto richieste pendenti e Stop arresta il runtime. I nuovi dialoghi mantengono surface/bordi/focus della shell: comando completo o patch, scadenza, Allow once/Decline; nessuna approvazione remota o permanente. La preview T07 apre esplicitamente il browser di sistema; thumbnail/probe/deploy T13. Il movimento decorativo T02 resta invariato, senza simulare avanzamento.
+
 ## Reference 1 — Client & Team Pulse
 
 File: [`../../examples/design/1.png`](../../examples/design/1.png). Vista editoriale di avanzamento e collaborazione; i clienti ricevono solo la proiezione pubblicata.

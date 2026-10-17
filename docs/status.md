@@ -1,6 +1,36 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T06 0.6.0 implementato e consegnato per verifica Windows**, al via «ok bene, proseguiamo» e creazione progetto confermata. Il via non è una prova esaustiva di inferenza/interruzione T05 o inviti T04. T07 non avviato.
+Aggiornato: **17 ottobre 2026**. **T07 0.7.0 implementato e consegnato per verifica Windows** ([issue #7](https://github.com/AndreaZero/nexus-ai/issues/7)), autorizzato dal maintainer con multiagenti. Build Windows T06 funzionante confermata e issue #6 chiusa; il feedback non certifica tutti i percorsi personali o le altre piattaforme. T08 non avviato.
+
+## Ownership T07 integrate/rilasciate e contratto
+
+| Fronte | Percorsi scrivibili | Obiettivo / handoff |
+| --- | --- | --- |
+| `/root/t07_runtime` — integrato | `apps/desktop/src/codex*.ts`, `apps/desktop/test/codex*.test.ts` | Policy readOnly/workspaceWrite esplicita, approvazioni singole con scadenza/scoping, stream output/diff e report test |
+| `/root/t07_workspace` — integrato | `apps/desktop/src/workspace.ts`, `workspace-git.ts`, `workspace-diff.ts`, `apps/desktop/test/workspace.test.ts` | Diff Git locale senza hook, path sicuri, apertura VS Code e preview configurata; API servizio per main |
+| `/root/t07_web` — integrato | `apps/web/src/**`, nuovo `apps/web/test/t07.test.mjs` | Code Preview split/unified, output/test/preview, policy e dialog approvazioni fedeli reference 2 |
+| Coordinatore — integrato | contratti, bridge protocollo, main/preload, `workspace-verification.ts`/`verify-workspace.mjs`, manifest/lockfile, QA/docs | Contratti unici, integrazione nativa, verifica e consegna |
+
+Contratti T07 in `packages/contracts/src/{codex,workspace}.ts`. Policy iniziale readOnly; workspaceWrite solo scelta locale esplicita, limitata al binding corrente, network sandbox disabilitato. Richieste moderne provider tradotte in ID UUID opachi, decisione acceptOnce/decline, massimo 20 pendenti e scadenza entro 110 s; mai persistenza/replay/autorizzazioni di sessione. Riautorizzazione owner/developer e binding prima di rispondere, invalidazione su stop/logout/cambio binding/turno. Legacy e richieste non supportate negate. Diff/output/report rimangono locali e non entrano automaticamente negli estratti T06. Workspace API senza path, comandi o schemi arbitrari dal renderer: file UUID del risultato locale, editor URI VS Code costruito nel main, preview URL configurato esplicitamente e aperto nel browser di sistema. Nessuna migrazione DB prevista; T08/T12/T13 non avviati.
+
+## Evidenze T07 e prossimo passo
+
+| Ambito | Esito |
+| --- | --- |
+| Installazione/statici | `pnpm install --frozen-lockfile` invariato; `pnpm check` passato, confini 67 file. Typecheck/lint mirati ripetuti solo sulle correzioni successive |
+| Test integrati | **124/124**: bridge 13, DB 3, desktop 58, server 32, web 16, confini 2. Comprendono decisione singola/expiry/replay/ruoli/binding, patch complete, output/report bounded e Git/filesystem reali con filtri ostili |
+| Build | `pnpm build` passato, renderer finale 316 moduli. Warning chunk principale circa 526 kB minificati; nessun errore o nuova dipendenza |
+| UI/IPC popolata | `pnpm verify:workspace`: **10 controlli** su renderer e preload effettivi, servizi main reali, Git e TAP Node in fixture isolato. Split/unified/Terminal/Tests/Preview, consenso policy e Allow once/Decline via IPC. Provider/account controllati, OS opens intercettati: nessuna inferenza personale |
+| Confronto visivo | Catture split/unified e dialog approvazioni a 1586×992; original PNG 2 aperta. Corretto spazio del diff e output 130 px, metadata repository contenuti. Shell/pianeta/effetti T02 preservati; non dichiarata uguaglianza pixel di tutti i contenuti o altri OS |
+| Electron/shell | Smoke sviluppo e pacchetto Windows passati, bridge workspace validato, path arbitrari/consenso permanente negati, Node assente. Shell reference, tastiera/reduced motion e 960 px passati |
+| Pacchetto Windows | NSIS **0.7.0 x64**, `release/win/Nexus-AI-0.7.0-win-x64.exe`, **219912210 byte**, unsigned; nessuna installazione automatica |
+| Segreti/dati | Scan **995 file** sorgenti/build senza valori privati `.env`. Nessuna operazione DB o modifica `.env`, credenziali/account/progetti conservati. Cartella Git/profilo QA rimossi dopo il test |
+| Prova personale | Modifica/escalation eseguite dal proprio Codex e apertura effettiva VS Code/browser da verificare dal maintainer; fixture e decisione su trasporto controllato non dimostrano inferenza |
+| macOS/Linux | Implementazione portabile, prove native non eseguite su questa macchina Windows |
+
+Versioni root/desktop/web/contratti **0.7.0**, server/DB 0.6.0, bridge 0.5.0 e UI 0.2.0; runtime ufficiale invariato **0.159.2** e generated schema immutato. Ownership chiuse dopo integrazione; nessun agente ha installato dipendenze o fatto commit. Rapporti/catture in `.nexus/visual/t07/`, shell nel percorso storico `.nexus/visual/t02/`.
+
+Chiudere app/backend precedenti, `pnpm install --frozen-lockfile` e `pnpm package:win`, poi `pnpm start:server` e `pnpm start:desktop` in terminali separati oppure app aggiornata. Nessuna nuova migrazione o configurazione PostgreSQL rispetto a T06. Su un proprio repository Git dedicato verificare Workspace write con conferma, file creato sul disco/diff, operazione negata/consentita una volta/scaduta, report test e URL preview. [Passi esatti e limiti](session.md#build-e-prova-del-maintainer). Attendere feedback del maintainer prima di T08.
 
 ## Ownership T06 integrate/rilasciate e contratto
 
@@ -33,9 +63,9 @@ La selezione non garantisce assenza di segreti dentro normali sorgenti. L'estrat
 
 Rapporto `.nexus/visual/t06/sessions-report.json` e smoke pacchetto locali; catture nel percorso storico `.nexus/visual/t02/`. Scelte/test e limiti dettagliati in [session.md](session.md). I subagenti non hanno installato dipendenze o fatto commit; un solo autore per contratti/migrazioni/lockfile.
 
-## Prossimo passo T06
+## Procedura storica T06
 
-Chiudere app/backend precedenti: `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`, quindi server e app aggiornati. DB e `.env` esistenti bastano. Verificare file/preview, Saved dopo navigazione/riavvio, piano/token se presenti, Share con audience e lettura da secondo account. [Procedura completa](session.md#build-e-prova-del-maintainer). GitHub T12 e Deploy T13 sono spiegati nella [mappa pannelli/dati](product.md#da-dove-arrivano-i-dati-dei-pannelli). Attendere feedback prima di T07.
+Procedura consegnata con T06: `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`, quindi server e app aggiornati. DB e `.env` esistenti bastano. File/preview, Saved dopo navigazione/riavvio, piano/token, Share con audience e secondo account restano verificabili nella [guida](session.md#build-e-prova-del-maintainer). Il maintainer ha confermato la build Windows e autorizzato T07, ora consegnato sopra. GitHub T12 e Deploy T13 sono spiegati nella [mappa pannelli/dati](product.md#da-dove-arrivano-i-dati-dei-pannelli).
 
 ## Correzione T05 0.5.1
 

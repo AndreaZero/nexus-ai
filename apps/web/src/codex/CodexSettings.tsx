@@ -27,7 +27,7 @@ export function CodexSettings() {
     setKeyError('');
     if (await codex.request(parsed.data)) setShowKey(false);
   }
-  return <Card title="Codex runtime" icon={<Icon name="sparkles" />} action={<Badge tone="neutral">Local · Read only</Badge>}>
+  return <Card title="Codex runtime" icon={<Icon name="sparkles" />} action={<Badge tone="neutral">Local · {codex.state.policy === 'readOnly' ? 'Read only' : 'Workspace write'}</Badge>}>
     <div role="status"><StatusIndicator tone={state.runtime === 'ready' ? 'positive' : state.runtime === 'error' || state.runtime === 'incompatible' || state.runtime === 'missing' ? 'danger' : 'neutral'}>{!codex.desktop ? 'Desktop required' : !enabled ? 'Sign in to Nexus first' : state.runtime === 'starting' ? 'Starting Codex…' : `Runtime ${state.runtime}`}</StatusIndicator></div>
     <dl className="settings-details"><div><dt>Runtime version</dt><dd>{state.version ?? 'Not started'} · required {state.expectedVersion}</dd></div><div><dt>Executable</dt><dd className="codex-runtime-path">{state.runtimePath ?? 'Available after connection'}</dd></div><div><dt>Codex account</dt><dd>{state.account ? state.account.type === 'chatgpt' ? state.account.email ?? 'Personal ChatGPT account' : 'API key (explicit)' : 'Not signed in'}</dd></div>{state.account?.plan && <div><dt>Reported plan</dt><dd>{state.account.plan}</dd></div>}</dl>
     <p className="settings-note">Connect your personal ChatGPT account through the official Codex login. This is separate from your Nexus account. Credentials stay with Codex on this device.</p>
@@ -38,7 +38,7 @@ export function CodexSettings() {
     {state.account && <div className="codex-settings-actions"><Button size="sm" disabled={busy} onClick={() => { void codex.request({ operation: 'logout' }); }}>Sign out of Codex</Button><Button size="sm" disabled={busy} onClick={() => { void codex.request({ operation: 'refreshModels' }); }}><Icon name="refresh" size={13} />Refresh models</Button></div>}
     {state.runtime === 'ready' && state.account && <ModelControls disabled={busy} />}
     {state.runtime === 'ready' && !state.account && !state.login && <div className="codex-api-option"><button type="button" className="text-link" aria-expanded={showKey} onClick={() => { setShowKey(value => !value); setApiKey(''); setKeyError(''); }}>Use an API key instead</button>{showKey && <form className="domain-form" onSubmit={event => { void submitApiKey(event); }}><p className="settings-note">API usage is billed to the key’s account. Nexus never switches to API billing automatically.</p><label>API key<input type="password" autoComplete="off" spellCheck={false} maxLength={512} value={apiKey} onChange={event => setApiKey(event.target.value)} disabled={busy} required /></label><Button size="sm" type="submit" disabled={busy || !apiKey}>Connect with this key</Button>{keyError && <p className="domain-error" role="alert">{keyError}</p>}</form>}</div>}
-    <p className="settings-note">Read only mode can inspect files and answer questions. File writes and commands needing approval are blocked. Model availability and usage limits are enforced by Codex.</p>
+    <p className="settings-note">Sessions begin in read only mode. Enable workspace writes explicitly in AI Sessions; broader permissions require a local, single use approval. Model availability and usage limits are enforced by Codex.</p>
     {state.notice && <p className="codex-notice" role="status">{state.notice}</p>}{codex.error && <p className="domain-error" role="alert">{codex.error}</p>}
   </Card>;
 }

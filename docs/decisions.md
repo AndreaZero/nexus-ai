@@ -22,6 +22,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D16 | Adottata in T04 | Un endpoint collaborazione con union di operazioni validate e bridge desktop corrispondente, senza URL/header/credenziali arbitrari dal renderer. Binding cartella solo userData per account/progetto/repository/device; repository remoto separato. Invito in fragment/sessionStorage, hash SHA-256 nel DB e SMTP locale esistente |
 | D17 | Adottata in T05 | Modalità iniziale readOnly, approvazioni di escalation declinate e metodi non supportati rifiutati. Nessun bypass o fallback API; scrittura e approvazioni interattive in T07. Ogni operazione locale ricontrolla ruolo/binding T04; thread scoped a utente/progetto/repository/cwd canonico |
 | D18 | Adottata in T05 | Packaging sul relativo OS e architettura Node nativa x64/arm64, per distribuire Electron e Codex della stessa architettura. Due architetture richiedono due build native. Licenza Apache-2.0 Codex e notices conservati nel pacchetto |
+| D19 | Adottata in T07 | ReadOnly default, workspaceWrite esplicito per binding senza network/tmp e senza full access. Solo approvazioni moderne singole, UUID effimero/scadenza, riautorizzazione e consumo prima dell'I/O; negate richieste che implicano consenso permanente o contesti non supportati |
+| D20 | Adottata in T07 | Diff locale mediante oggetti Git e letture descriptor bounded, senza filtri repository; apertura VS Code via URI fissa costruita dal main. Preview URL scelta esplicitamente e aperta nel browser di sistema, nessun embed con privilegi o deploy/probe implicito |
 
 ## Da concretizzare al momento opportuno
 

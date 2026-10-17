@@ -1,5 +1,13 @@
 # Changelog
 
+### 2026-10-17 — T07: diff, output e approvazioni locali
+
+- Confermata dal maintainer la build Windows T06; integrati tre fronti runtime, workspace locale e renderer nella reference 2.
+- Diff Git effettivi HEAD/working tree con staged/unstaged/untracked, split/unified, numeri linea e colori; oggetti e descriptor diretti senza hook/filtri del repository. File/volume limitati, esclusioni sensibili e percorsi opachi per apertura VS Code.
+- Workspace write solo per consenso locale esplicito e binding corrente. Approvazioni moderne monouso con scadenza, controlli ruolo/account/cartella/turno e consumo prima dell'I/O; diniego di richieste stale, grant di sessione, contesti non supportati e patch non revisionabili.
+- Output progressivo, exit code/durata/troncamento e report TAP/Jest riconosciuti; nessun conteggio o coverage dedotto. Preview configurata in memoria e aperta esplicitamente nel browser di sistema. Pause interrompe, Stop arresta il runtime; Share conserva la selezione/preview T06.
+- App/root/desktop/web/contratti 0.7.0, server/DB 0.6.0 e bridge 0.5.0 invariati. Nessuna dipendenza o migrazione nuova, nessun cambio a `.env` o account. Check e 124 test passati; prove native/visive e pacchetto registrati in `docs/status.md`. Prova personale Codex e macOS/Linux distinte.
+
 ### 2026-10-17 — T06: sessione, contesto e cronologia esplicita
 
 - Aggiunti selezione nativa/anteprima di sorgenti UTF-8, file chip e invio reale al proprio Codex; esclusione file sensibili/binari, limiti e controlli canonical path/descriptor contro traversal e symlink esterni.

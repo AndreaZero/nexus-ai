@@ -7,6 +7,7 @@ import { CodexProcessError, type CodexProcess, type CodexNotification, type Code
 import { codexRequestSchema, type CodexRequest, type CodexState, type NexusAuthState } from '@nexus-ai/contracts';
 import { DesktopCodex, codexRuntimePath, officialCodexLoginUrl } from '../src/codex.ts';
 import { CodexThreadStorage, codexAccountHome, codexSessionKey } from '../src/codex-storage.ts';
+import { terminalText, testReport } from '../src/codex-report.ts';
 
 const projectId = 'd309dd11-6d7e-4bc1-bd49-292bc50c2f74';
 const repositoryId = '02f71f6e-69b1-49b7-b6d8-df89167070b9';
@@ -23,8 +24,10 @@ class RuntimeFixture {
   rejections: (string | number)[] = [];
   disposed = false;
   failure: CodexProcessError | undefined;
+  responseFailure = false;
   pauseCatalog: (() => Promise<void>) | undefined;
   count = 0;
+  turnCount = 0;
   threads = new Map<string, unknown>();
   nextLoginUrl = 'https://auth.openai.com/authorize?client_id=test';
   async start() { if (this.failure) throw this.failure; }
@@ -32,7 +35,7 @@ class RuntimeFixture {
   onNotification(callback: (event: CodexNotification) => void) { this.notification = callback; return () => undefined; }
   onServerRequest(callback: (event: CodexServerRequest) => void) { this.serverRequest = callback; return () => undefined; }
   onExit(callback: (reason: unknown) => void) { this.exited = callback; return () => undefined; }
-  async respond(id: string | number, result: unknown) { this.responses.push({ id, result }); }
+  async respond(id: string | number, result: unknown) { this.responses.push({ id, result }); if (this.responseFailure) throw new Error('Transport closed'); }
   async reject(id: string | number) { this.rejections.push(id); }
   async request(method: string, params: unknown): Promise<unknown> {
     this.calls.push({ method, params });
@@ -49,7 +52,7 @@ class RuntimeFixture {
       this.threads.set(thread.id, thread); return { thread };
     }
     if (method === 'thread/read' || method === 'thread/resume') return { thread: this.threads.get(String(data?.['threadId'])) };
-    if (method === 'turn/start') return { turn: { id: 'turn-1', status: 'inProgress', items: [], error: null } };
+    if (method === 'turn/start') return { turn: { id: `turn-${++this.turnCount}`, status: 'inProgress', items: [], error: null } };
     return {};
   }
   client() { return this as unknown as Pick<CodexProcess, 'start' | 'request' | 'onNotification' | 'onServerRequest' | 'respond' | 'reject' | 'onExit' | 'dispose'>; }
@@ -139,7 +142,7 @@ test('Codex home is isolated by Nexus account; logout immediately clears and rej
   } finally { await test.close(); }
 });
 
-test('session execution reauthorizes repository, validates catalog/effort and permanently pins read-only policies', async () => {
+test('session execution reauthorizes repository, validates catalog/effort and defaults to read-only policies', async () => {
   const test = await fixture();
   try {
     await test.service.request({ operation: 'connect' });
@@ -192,6 +195,7 @@ test('observable deltas stream with bounds, private reasoning is excluded, appro
     test.runtime.serverRequest({ method: 'item/tool/call', id: 3, params: {} });
     assert.deepEqual(test.runtime.responses, [{ id: 1, result: { decision: 'decline' } }, { id: 2, result: { decision: 'decline' } }]);
     assert.deepEqual(test.runtime.rejections, [3]);
+    emit('item/agentMessage/delta', { itemId: 'large', delta: 'x'.repeat(200000) });
     await test.service.request({ operation: 'interrupt', projectId, repositoryId });
     assert.deepEqual(test.runtime.calls.find(call => call.method === 'turn/interrupt')!.params, { threadId: 'thread-1', turnId: 'turn-1' });
     emit('turn/completed', { turn: { id: 'turn-1', status: 'interrupted', items: [], error: null } });
@@ -299,4 +303,192 @@ test('mapping writes atomically, isolates identities and does not overwrite malf
     await assert.rejects(() => storage.set(first, 'overwrite'), /cannot be read/);
     assert.equal(await readFile(filename, 'utf8'), '{invalid');
   } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+const approvalRequest = (id: number, folder: string, overrides: Record<string, unknown> = {}): CodexServerRequest => ({
+  id, method: 'item/commandExecution/requestApproval', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: `command-${id}`,
+    kind: 'command', startedAtMs: Date.now(), environmentId: null, command: 'node local-script.mjs', cwd: folder, ...overrides },
+});
+async function writable(state: Awaited<ReturnType<typeof fixture>>) {
+  await state.service.request({ operation: 'connect' }); await state.service.request(open);
+  const result = await state.service.request({ operation: 'setPolicy', projectId, repositoryId, policy: 'workspaceWrite' });
+  assert.equal(result.ok, true); await state.service.request(send);
+}
+
+test('workspace writes require explicit idle choice, stay scoped and never enable full access or network', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    const turn = state.runtime.calls.find(call => call.method === 'turn/start')!.params as Record<string, unknown>;
+    assert.deepEqual(turn['sandboxPolicy'], { type: 'workspaceWrite', writableRoots: [await realpath(state.folder)], networkAccess: false, excludeTmpdirEnvVar: true, excludeSlashTmp: true });
+    const busy = await state.service.request({ operation: 'setPolicy', projectId, repositoryId, policy: 'readOnly' });
+    assert.equal(busy.ok, false); assert.equal(busy.state.policy, 'workspaceWrite');
+    state.runtime.notification({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed', items: [], error: null } } });
+    const changed = await state.service.request({ ...open, repositoryId: secondRepository });
+    assert.equal(changed.state.policy, 'readOnly');
+    for (const input of [{ operation: 'setPolicy', projectId, repositoryId, policy: 'dangerFullAccess' }, { operation: 'resolveApproval', projectId, repositoryId, approvalId: repositoryId, decision: 'acceptForSession' }]) assert.equal(codexRequestSchema.safeParse(input).success, false);
+  } finally { await state.close(); }
+});
+
+test('opaque execution approvals resolve exactly once and expire by declining without replay', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    state.runtime.serverRequest(approvalRequest(101, state.folder));
+    let result = await state.service.request({ operation: 'getState' });
+    const approval = result.state.session!.approvals[0]!;
+    assert.match(approval.id, /^[0-9a-f-]{36}$/); assert.equal(approval.cwd, '.');
+    assert.equal(JSON.stringify(result.state).includes('rpcId'), false);
+    result = await state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: approval.id, decision: 'acceptOnce' });
+    assert.equal(result.ok, true); assert.deepEqual(state.runtime.responses, [{ id: 101, result: { decision: 'accept' } }]);
+    assert.equal((await state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: approval.id, decision: 'acceptOnce' })).ok, false);
+    state.runtime.serverRequest(approvalRequest(101, state.folder));
+    assert.equal(state.runtime.responses.length, 1);
+    state.runtime.serverRequest(approvalRequest(102, state.folder, { startedAtMs: Date.now() - 109980 }));
+    await new Promise(resolve => setTimeout(resolve, 45));
+    result = await state.service.request({ operation: 'getState' });
+    assert.equal(result.state.session?.approvals.length, 0); assert.deepEqual(state.runtime.responses.at(-1), { id: 102, result: { decision: 'decline' } });
+  } finally { await state.close(); }
+});
+
+test('unsupported scopes, legacy callbacks, stale turns and request overflow never become approvals', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    const denied = [{ kind: 'writeStdin' }, { networkApprovalContext: { host: 'example.invalid' } }, { environmentId: 'remote' }, { turnId: 'old-turn' }, { cwd: state.directory }, { startedAtMs: Date.now() - 120000 }];
+    denied.forEach((params, index) => state.runtime.serverRequest(approvalRequest(index, state.folder, params)));
+    state.runtime.serverRequest({ method: 'item/fileChange/requestApproval', id: 10, params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'file', startedAtMs: Date.now(), grantRoot: state.folder } });
+    state.runtime.serverRequest({ method: 'execCommandApproval', id: 11, params: {} });
+    for (let index = 20; index < 41; index++) state.runtime.serverRequest(approvalRequest(index, state.folder));
+    let result = await state.service.request({ operation: 'getState' });
+    assert.equal(result.state.session?.approvals.length, 20);
+    assert.deepEqual(state.runtime.responses.find(value => value.id === 11)?.result, { decision: 'denied' });
+    assert.deepEqual(state.runtime.responses.find(value => value.id === 40)?.result, { decision: 'decline' });
+    await state.service.request({ operation: 'interrupt', projectId, repositoryId });
+    state.runtime.serverRequest(approvalRequest(80, state.folder));
+    result = await state.service.request({ operation: 'getState' }); assert.equal(result.state.session?.approvals.length, 0);
+    assert.equal(state.runtime.responses.filter(value => value.result && (value.result as { decision: string }).decision === 'accept').length, 0);
+  } finally { await state.close(); }
+});
+
+test('an undeliverable decision is reported once without retrying or restoring the approval', async () => {
+  const state = await fixture();
+  try {
+    await writable(state); state.runtime.serverRequest(approvalRequest(1, state.folder));
+    const id = (await state.service.request({ operation: 'getState' })).state.session!.approvals[0]!.id;
+    state.runtime.responseFailure = true;
+    const result = await state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: id, decision: 'acceptOnce' });
+    assert.equal(result.ok, false); assert.equal(result.state.session?.approvals.length, 0);
+    assert.match(result.state.notice!, /not retried/); assert.equal(state.runtime.responses.length, 1);
+    await state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: id, decision: 'acceptOnce' });
+    assert.equal(state.runtime.responses.length, 1);
+  } finally { await state.close(); }
+});
+
+test('file approvals without session grants are one-shot and terminal metrics still observe the latest completed turn', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    state.runtime.serverRequest({ id: 5, method: 'item/fileChange/requestApproval', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'patch', startedAtMs: Date.now(), grantRoot: null } });
+    const current = await state.service.request({ operation: 'getState' });
+    assert.equal(current.state.session?.approvals[0]?.kind, 'fileChange');
+    const result = await state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: current.state.session!.approvals[0]!.id, decision: 'decline' });
+    assert.equal(result.ok, true); assert.deepEqual(state.runtime.responses, [{ id: 5, result: { decision: 'decline' } }]);
+    state.runtime.notification({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed', items: [], error: null } } });
+    state.runtime.notification({ method: 'thread/tokenUsage/updated', params: { threadId: 'thread-1', turnId: 'turn-1', tokenUsage: { total: { totalTokens: 12, inputTokens: 8, cachedInputTokens: 0, outputTokens: 4 }, modelContextWindow: null } } });
+    assert.equal((await state.service.request({ operation: 'getState' })).state.session?.usage?.totalTokens, 12);
+  } finally { await state.close(); }
+});
+
+test('revoked drivers and rebound folders cannot release a pending execution request', async () => {
+  for (const change of ['role', 'folder', 'account'] as const) {
+    const state = await fixture();
+    try {
+      await writable(state); state.runtime.serverRequest(approvalRequest(1, state.folder));
+      const pending = (await state.service.request({ operation: 'getState' })).state.session!.approvals[0]!;
+      if (change === 'role') state.setAllowed(false);
+      if (change === 'folder') { const other = path.join(state.directory, 'moved'); await mkdir(other); state.setFolder(other); }
+      if (change === 'account') state.setAccount(nexusAccount('other-user'));
+      const result = await state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: pending.id, decision: 'acceptOnce' });
+      assert.equal(result.ok, false); assert.equal(result.state.policy, 'readOnly');
+      assert.deepEqual(state.runtime.responses, [{ id: 1, result: { decision: 'decline' } }]);
+    } finally { await state.close(); }
+  }
+});
+
+test('current-turn output uses real exit status, reports and bounded relative diffs; late turns cannot revive state', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    const emit = (method: string, params: Record<string, unknown>) => state.runtime.notification({ method, params: { threadId: 'thread-1', turnId: 'turn-1', ...params } });
+    emit('item/commandExecution/outputDelta', { itemId: 'cmd', delta: '\u001b[31mfirst\u001b[0m\r\n' });
+    emit('item/completed', { item: { type: 'commandExecution', id: 'cmd', command: 'node --test', aggregatedOutput: 'TAP version 13\n1..2\n# tests 2\n# pass 1\n# fail 1\n# skipped 0\n# duration_ms 8.4', exitCode: 1, durationMs: 12, status: 'completed' } });
+    emit('item/commandExecution/outputDelta', { itemId: 'huge', delta: 'x'.repeat(40000) });
+    emit('turn/diff/updated', { diff: 'diff --git a/source.ts b/source.ts\n--- a/source.ts\n+++ b/source.ts\n@@ -1 +1 @@\n-old\n+new\ndiff --git a/.env b/.env\n--- a/.env\n+++ b/.env\n+private-value\n' });
+    emit('item/completed', { item: { type: 'fileChange', id: 'files', status: 'completed', changes: [{ path: path.join(state.folder, 'source.ts'), kind: { type: 'update', move_path: null }, diff: '-old\n+new' }, { path: path.join(state.directory, 'outside'), kind: { type: 'add' }, diff: '+outside' }] } });
+    let result = await state.service.request({ operation: 'getState' });
+    assert.equal(result.state.session?.activities.find(value => value.id === 'cmd')?.status, 'failed');
+    assert.equal(result.state.session?.activities.find(value => value.id === 'cmd')?.exitCode, 1);
+    assert.equal(result.state.session?.activities.find(value => value.id === 'huge')?.detail.length, 32768);
+    assert.equal(result.state.session?.activities.find(value => value.id === 'huge')?.outputTruncated, true);
+    assert.equal(result.state.session?.testReports[0]?.failed, 1);
+    assert.equal(result.state.session?.fileChanges.length, 1); assert.equal(result.state.session?.fileChanges[0]?.path, 'source.ts');
+    assert.match(result.state.session!.diff, /\+new/); assert.equal(result.state.session!.diff.includes('private-value'), false);
+    emit('turn/completed', { turn: { id: 'turn-1', status: 'completed', items: [], error: null } });
+    await state.service.request(send);
+    emit('turn/started', { turn: { id: 'turn-1', status: 'inProgress', items: [], error: null } });
+    emit('item/commandExecution/outputDelta', { itemId: 'stale', delta: 'old-turn output' });
+    emit('turn/completed', { turn: { id: 'turn-1', status: 'failed', items: [], error: null } });
+    result = await state.service.request({ operation: 'getState' });
+    assert.equal(result.state.session?.turnId, 'turn-2'); assert.equal(result.state.session?.status, 'running');
+    assert.equal(result.state.session?.activities.some(value => value.id === 'stale'), false);
+    assert.equal(result.state.session?.testReports.length, 0); assert.equal(result.state.session?.diff, '');
+  } finally { await state.close(); }
+});
+
+test('report recognition refuses arbitrary success, partial summaries, impossible counts and oversized output', () => {
+  assert.equal(terminalText('\u001b]0;title\u0007\u001b[32mOK\u001b[0m\u0000'), 'OK');
+  for (const value of ['all tests passed', 'TAP version 13\n1..2\n# tests 2\n# pass 2', 'TAP version 13\n1..2\n# tests 2\n# pass 5\n# fail 0\n# skipped 0', 'x'.repeat(32769)]) assert.equal(testReport('command', value), null);
+  const report = testReport('command', JSON.stringify({ numTotalTests: 3, numPassedTests: 2, numFailedTests: 0, numPendingTests: 1, success: true, testResults: [] }));
+  assert.equal(report?.format, 'jest-json'); assert.equal(report?.skipped, 1);
+});
+
+test('file acceptance requires all current item diffs, and aggregate diff content remains bounded', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    const ask = (rpcId: number, itemId: string) => state.runtime.serverRequest({ id: rpcId, method: 'item/fileChange/requestApproval', params: { threadId: 'thread-1', turnId: 'turn-1', itemId, startedAtMs: Date.now(), grantRoot: null } });
+    const changes = (itemId: string, values: unknown[]) => state.runtime.notification({ method: 'item/started', params: { threadId: 'thread-1', turnId: 'turn-1', item: { id: itemId, type: 'fileChange', status: 'inProgress', changes: values } } });
+    const decide = async () => {
+      const current = await state.service.request({ operation: 'getState' });
+      return state.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: current.state.session!.approvals[0]!.id, decision: 'acceptOnce' });
+    };
+    ask(201, 'missing'); assert.equal((await decide()).ok, false);
+    changes('full', [{ path: 'source.ts', kind: { type: 'update', move_path: null }, diff: '-old\n+new' }]);
+    ask(202, 'full'); assert.equal((await decide()).ok, true);
+    changes('filtered', [{ path: 'source.ts', kind: { type: 'update' }, diff: '-old\n+new' }, { path: '../outside.ts', kind: { type: 'add' }, diff: '+hidden' }]);
+    ask(203, 'filtered'); assert.equal((await decide()).ok, false);
+    changes('large', [{ path: 'large.ts', kind: { type: 'add' }, diff: 'x'.repeat(65537) }]);
+    ask(204, 'large'); assert.equal((await decide()).ok, false);
+    changes('budget', Array.from({ length: 50 }, (_, index) => ({ path: `file-${index}.ts`, kind: { type: 'add' }, diff: '界'.repeat(21000) })));
+    let result = await state.service.request({ operation: 'getState' });
+    assert.ok(result.state.session!.fileChanges.reduce((total, change) => total + Buffer.byteLength(change.diff), 0) <= 262144);
+    assert.ok(result.state.session!.fileChanges.some(change => change.truncated));
+    ask(205, 'budget'); assert.equal((await decide()).ok, false);
+    result = await state.service.request({ operation: 'getState' }); assert.equal(result.state.session!.approvals.length, 0);
+    assert.deepEqual(state.runtime.responses.map(value => ({ id: value.id, result: value.result })), [201, 202, 203, 204, 205].map(id => ({ id, result: { decision: id === 202 ? 'accept' : 'decline' } })));
+  } finally { await state.close(); }
+});
+
+test('approval commands with invisible control or bidi characters are denied without altering a permitted command', async () => {
+  const state = await fixture();
+  try {
+    await writable(state);
+    ['node\u0000hidden', 'node\u001b[31mhidden', 'node\u007fhidden', 'node\u202ehidden', 'node\u2066hidden'].forEach((command, index) => state.runtime.serverRequest(approvalRequest(300 + index, state.folder, { command })));
+    const command = 'node\tlocal.mjs\r\nnode second.mjs';
+    state.runtime.serverRequest(approvalRequest(310, state.folder, { command }));
+    const result = await state.service.request({ operation: 'getState' });
+    assert.equal(result.state.session?.approvals.length, 1); assert.equal(result.state.session?.approvals[0]?.command, command);
+    assert.equal(state.runtime.responses.length, 5); assert.ok(state.runtime.responses.every(value => (value.result as { decision: string }).decision === 'decline'));
+  } finally { await state.close(); }
 });

@@ -13,8 +13,9 @@ import { verifyDesktopAuth } from './auth-verification.js';
 import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
 import { DesktopCodex, codexRuntimePath } from './codex.js';
 import { DesktopContext } from './context.js';
+import { DesktopWorkspace } from './workspace.js';
 import { EncryptedAuthStorage } from './auth-storage.js';
-import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema } from '@nexus-ai/contracts';
+import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema } from '@nexus-ai/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -33,6 +34,7 @@ let mainWindow: BrowserWindow | undefined;
 let desktopAuth: DesktopAuth | undefined;
 let desktopCodex: DesktopCodex | undefined;
 let desktopContext: DesktopContext | undefined;
+let desktopWorkspace: DesktopWorkspace | undefined;
 
 function receiveAccountCallback(value: string) {
   // Never log OS callback URLs: their fragment contains a temporary credential.
@@ -69,7 +71,7 @@ function desktopInfo() {
     platform: process.platform,
     architecture: process.arch,
     electronVersion: process.versions.electron,
-    capabilities: { canRunLocalSession: true, canOpenLocalEditor: false },
+    capabilities: { canRunLocalSession: true, canOpenLocalEditor: true },
   });
 }
 
@@ -152,6 +154,7 @@ async function initialize() {
   desktopAuth = new DesktopAuth((state) => {
     desktopCodex?.nexusStateChanged(state);
     desktopContext?.nexusStateChanged(state);
+    desktopWorkspace?.nexusStateChanged(state);
     const window = mainWindow;
     if (window && !window.isDestroyed() && isTrustedIpcSender({
       senderId: window.webContents.id,
@@ -191,6 +194,12 @@ async function initialize() {
   ipcMain.handle(DESKTOP_IPC.sessionsRequest, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args, 1);
     return desktopAuth!.sessionsRequest(sessionsRequestSchema.parse(args[0])).then(result => sessionsResponseSchema.parse(result));
+  });
+
+  desktopWorkspace = new DesktopWorkspace({ auth: desktopAuth, bindings: bindingStorage, openExternal: url => shell.openExternal(url) });
+  ipcMain.handle(DESKTOP_IPC.workspaceRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopWorkspace!.request(workspaceRequestSchema.parse(args[0])).then(result => workspaceResponseSchema.parse(result));
   });
 
   desktopCodex = new DesktopCodex({
@@ -302,6 +311,8 @@ async function initialize() {
         contextState: await window.nexusDesktop.context.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         sessionsState: await window.nexusDesktop.sessions.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         contextKeys: Object.keys(window.nexusDesktop.context), sessionsKeys: Object.keys(window.nexusDesktop.sessions),
+        workspaceKeys: Object.keys(window.nexusDesktop.workspace),
+        workspaceState: await window.nexusDesktop.workspace.request({operation:'getChanges',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         collaborationState: await window.nexusDesktop.collaboration.request({operation:'listWorkspaces'}),
         localBindingState: await window.nexusDesktop.localBinding.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         invalidRequestsDenied: await Promise.all([
@@ -310,6 +321,8 @@ async function initialize() {
           window.nexusDesktop.codex.request({operation:'connect',executable:'/arbitrary'}),
           window.nexusDesktop.context.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',path:'/arbitrary'}),
           window.nexusDesktop.sessions.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
+          window.nexusDesktop.workspace.request({operation:'openEditor',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',fileId:null,path:'/arbitrary'}),
+          window.nexusDesktop.codex.request({operation:'resolveApproval',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',approvalId:'b6981157-a6fb-4947-a392-8ed54b0d7d57',decision:'acceptForSession'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -325,16 +338,18 @@ async function initialize() {
       const codexState = codexResponseSchema.parse(check['codexState']);
       const contextState = contextResponseSchema.parse(check['contextState']);
       const sessionsState = sessionsResponseSchema.parse(check['sessionsState']);
+      const workspaceState = workspaceResponseSchema.parse(check['workspaceState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           JSON.stringify(check['contextKeys']) !== '["request"]' || JSON.stringify(check['sessionsKeys']) !== '["request"]' ||
           contextState.ok || contextState.code !== 'auth_required' || sessionsState.ok || sessionsState.code !== 'auth_required' ||
+          JSON.stringify(check['workspaceKeys']) !== '["request"]' || workspaceState.ok || workspaceState.code !== 'auth_required' ||
           localBindingState.ok || localBindingState.code !== 'auth_required' ||
           JSON.stringify(check['codexKeys']) !== '["request","onStateChanged"]' || codexState.ok || codexState.code !== 'auth_required' || codexState.state.runtime !== 'stopped' ||
           JSON.stringify(check['authKeys']) !== '["getState","signIn","cancelSignIn","signOut","onStateChanged"]' ||
-          !info.capabilities.canRunLocalSession || info.capabilities.canOpenLocalEditor) {
+          !info.capabilities.canRunLocalSession || !info.capabilities.canOpenLocalEditor) {
         throw new Error('Renderer isolation, CSP, capability or mount check failed.');
       }
       console.log(`Nexus desktop smoke passed: ${info.platform}/${info.architecture}; renderer mounted; IPC validated; Node unavailable.`);

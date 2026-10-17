@@ -38,6 +38,8 @@ Queste fonti supportano la fattibilità della proposta, non sostituiscono la ver
 
 **Aggiornamento T05:** runtime fissato a `@openai/codex@0.159.2`, schema prodotto dal comando ufficiale della stessa versione e conservato in `packages/codex-bridge/generated/`. Consultate le sezioni account/login, thread/turni e sandbox di App Server; dove la documentazione corrente contiene campi successivi, prevalgono i tipi effettivamente generati per 0.159.2. Licenza dalla [release ufficiale](https://github.com/openai/codex/blob/rust-v0.159.2/LICENSE), copiata nei resources desktop. Handshake/catalogo anonimo provati sul binario reale Windows; inferenza personale ancora da prova del maintainer.
 
+**Aggiornamento T07:** schema 0.159.2 per sandbox workspaceWrite, CommandExecutionRequestApproval/FileChangeRequestApproval, decisione accept/decline, delta output e diff; nessuna modifica ai generated. Consultata la [documentazione ufficiale VS Code](https://code.visualstudio.com/docs/configure/command-line#_opening-vs-code-with-urls) per URI di apertura file/cartella. Le prove UI/IPC con provider controllato restano distinte dall'esecuzione personale Codex.
+
 ## Preparazione T03
 
 Il maintainer ha confermato T02 Windows funzionante e UI approvata, autorizzando T03 con multiagenti e chiedendo i prerequisiti PostgreSQL prima di introdurre account/persistenza. Il database locale sarà creato personalmente dal maintainer.

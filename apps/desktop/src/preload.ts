@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { DESKTOP_IPC, collaborationRequestSchema, collaborationResponseSchema, desktopInfoSchema, localBindingRequestSchema, localBindingResponseSchema, nexusAuthStateSchema, codexRequestSchema, codexResponseSchema, codexStateSchema } from '@nexus-ai/contracts';
 import type { CollaborationRequest, DesktopBridge, LocalBindingRequest, NexusAuthState, CodexRequest, CodexState } from '@nexus-ai/contracts';
-import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, type ContextRequest, type SessionsRequest } from '@nexus-ai/contracts';
+import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema, type ContextRequest, type SessionsRequest, type WorkspaceRequest } from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -25,6 +25,11 @@ const bridge: DesktopBridge = Object.freeze({
   sessions: Object.freeze({
     async request(input: SessionsRequest) {
       return sessionsResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.sessionsRequest, sessionsRequestSchema.parse(input)));
+    },
+  }),
+  workspace: Object.freeze({
+    async request(input: WorkspaceRequest) {
+      return workspaceResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.workspaceRequest, workspaceRequestSchema.parse(input)));
     },
   }),
   codex: Object.freeze({

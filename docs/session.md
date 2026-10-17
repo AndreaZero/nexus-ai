@@ -1,6 +1,24 @@
-# Sessione AI e contesto — T06
+# Sessione AI, contesto e workspace codice — T06/T07
 
-T06 estende la stessa app e la reference `examples/design/2.png`. File e cronologia Codex rimangono locali; la cronologia sul server contiene soltanto gli estratti selezionati e confermati con **Share**. Policy readOnly: scritture e approvazioni interattive sono T07.
+La stessa app segue la reference `examples/design/2.png`. File, diff, output e cronologia Codex rimangono locali; la cronologia sul server contiene soltanto gli estratti selezionati e confermati con **Share**. T06 introduce contesto e cronologia, T07 aggiunge workspace codice e approvazioni locali.
+
+## Workspace codice e controllo locale T07
+
+La policy iniziale resta **Read only**. Il driver locale owner/developer può scegliere **Workspace write** per il binding corrente, a turno fermo, spuntare il consenso e confermare **Enable workspace writes**: autorizza le operazioni consentite dalla sandbox nella cartella collegata. Non ogni scrittura genera un prompt: il runtime decide quando chiedere un'escalation. La rete nella sandbox resta disabilitata e le directory temporanee generali non vengono aggiunte alle root scrivibili. Cambio account, cartella o arresto del runtime azzera il consenso locale; non esiste modalità full access.
+
+**Approvals** mostra le richieste attualmente pendenti. Ogni scheda espone comando o modifica, directory, motivo e scadenza: **Allow once** e **Decline** valgono per quella callback. L'approvazione di un comando può autorizzare l'esecuzione oltre i normali limiti della sandbox; revisionare il comando completo. Nessuna autorizzazione permanente, regola automatica o approvazione cliente abilita esecuzioni. Le richieste con grantRoot per l'intera sessione, contesto rete gestita, ambiente remoto, input a terminale preesistente o protocollo legacy sono negate perché non corrispondono al consenso singolo supportato.
+
+Fino a 20 richieste pendenti, con scadenza entro 110 secondi e diniego alla scadenza. Il main riautorizza ruolo e binding prima di rispondere, lega il consenso ad account/processo/thread/turno/item e consuma l'ID prima dell'I/O. Replay, vecchio turno, revoca o cambio cartella non possono riutilizzarlo. Una modifica richiede patch concreta disponibile e non troncata prima di poterla consentire; il solo motivo generico non basta. Nessuna richiesta viene salvata o riprodotta dopo un riavvio. **Pause** interrompe il turno; la prosecuzione richiede un nuovo messaggio. **Stop** arresta il runtime locale, preservando il login nel keyring finché non si sceglie logout Codex.
+
+**Code Preview** mostra modifiche locali osservate rispetto a HEAD: staged, unstaged e nuovi file non ignorati. Sono osservazioni dell'intero working tree, comprese modifiche manuali; la provenienza è distinta dal diff riportato dal runtime per il turno. Il binding deve essere la root del repository Git; un binding annidato non può esporre la cartella superiore. Repository senza commit gestito come base vuota. Nessun fetch, commit, push o comando modificante Git.
+
+Il servizio legge oggetti Git e file testuali direttamente: non esegue filtri clean/smudge, hook, external diff o textconv del repository. Esclude segreti riconoscibili dal nome, binari, symlink e submodule. Limiti: 50 file, 64 KiB per sorgente/diff e 256 KiB complessivi di diff; scansione fino a 10.000 nomi/16 MiB, overflow segnalato. I filtri non garantiscono che un normale sorgente sia privo di segreti. Confronta il testo letterale: conversioni EOL/filtri Git non vengono applicati, rinominati rappresentati come add/delete e modifiche dei soli permessi non mostrate. Split/unified sono viste dello stesso diff, con numeri linea e conteggi reali. L'aggiornamento avviene a fine turno e su **Refresh**; non è un monitor filesystem continuo.
+
+**Terminal / Output** espone lo stream osservato, exit code e durata quando forniti. Un comando con exit code diverso da zero è fallito anche se il trasporto si conclude. **Tests** accetta report completi riconosciuti TAP o JSON Jest: conteggi con fonte e timestamp, senza dedurre test/coverage dall'exit code o inventare percentuali. Output troppo grande è troncato e non viene interpretato come report completo. Gli output sono testo, senza HTML eseguibile o sequenze terminale attive.
+
+**Open in VS Code** passa al sistema soltanto una URI `vscode://file/` costruita dal main per la root o un file esistente identificato da UUID del diff. Richiede VS Code e il suo protocollo registrato; nessun argv/shell/path arbitrario dal renderer. Si usa il [formato ufficiale VS Code](https://code.visualstudio.com/docs/configure/command-line#_opening-vs-code-with-urls). **Preview** richiede un URL configurato esplicitamente, HTTPS oppure HTTP loopback. Si apre nel browser di sistema, senza incorporare pagine con privilegi Nexus, eseguire probe o avviare server/deploy. La configurazione T07 è locale in memoria e si azzera al riavvio/cambio account; configurazioni ambienti/deploy persistenti restano T13.
+
+Diff, file, output, report e approvazioni non vengono aggiunti automaticamente a **Share**. L'interfaccia del browser o di un membro client/viewer non controlla il runtime del driver.
 
 ## Contesto locale
 
@@ -40,11 +58,22 @@ Chiudere app/backend precedenti:
 
 ```powershell
 pnpm install --frozen-lockfile
-pnpm db:migrate
 pnpm package:win
 ```
 
 Avviare `pnpm start:server` e `pnpm start:desktop` in terminali distinti, oppure l'app aggiornata. PostgreSQL esistente è sufficiente, nessun nuovo DB/secret. Mailpit resta per le email Nexus.
+
+T07 non aggiunge migrazioni: 0002 deve essere già applicata da T06. Per aggiornamenti diretti da versioni precedenti eseguire `pnpm db:migrate` una volta. Su Windows x64 l'installer è `release/win/Nexus-AI-0.7.0-win-x64.exe`; macOS/Linux richiedono la build sul proprio OS.
+
+Prova T07 con una cartella Git dedicata senza dati sensibili, collegata a un proprio progetto:
+
+1. Aprire una sessione, scegliere **Workspace write**, spuntare e confermare **Enable workspace writes**. Chiedere a Codex di creare un file di testo di prova nella cartella. Il file deve esistere sul disco e comparire nel diff locale dopo il turno; alternare split/unified e aprirlo in VS Code.
+2. Chiedere l'esecuzione di un comando innocuo che richieda approvazione esplicita. Confrontare il comando nel dialogo, negarlo e controllare che resti bloccato; ripetere e consentire una volta. I prompt dipendono dal runtime: un'operazione già ammessa dalla sandbox non richiede consenso aggiuntivo.
+3. Lasciare scadere una richiesta o interrompere il turno: il vecchio pulsante non deve poterla approvare. Con ruolo client/viewer e da browser non deve essere disponibile alcuna decisione locale.
+4. Chiedere il test reale del repository con output TAP o JSON Jest, se disponibile. Controllare stream, exit code e report; un comando senza report deve lasciare test sconosciuti. Nessun conteggio coverage presunto.
+5. Configurare in Preview il proprio URL locale, per esempio `http://127.0.0.1:5173`, e aprirlo: il servizio deve essere già avviato. Verificare rifiuto di schemi come `file:` o `javascript:`.
+
+Restano disponibili le verifiche T06:
 
 1. Collegare progetto/cartella, aggiungere README o un sorgente piccolo e controllare chip, preview, branch e rimozione. Env o file esterno devono essere rifiutati.
 2. Scrivere una bozza, attendere Saved, navigare/riaprire: deve rimanere nel proprio progetto, distinta dal secondo progetto/account.
@@ -52,3 +81,5 @@ Avviare `pnpm start:server` e `pnpm start:desktop` in terminali distinti, oppure
 4. Share → selezione → preview/audience → conferma. Riaprire l'estratto da Session Info; il client vede solo quelli client, l'estraneo nessuno.
 
 `pnpm verify:sessions` prova PostgreSQL/SMTP/HTTP con tre account temporanei: audience, retry/conflitti, revoca e pulizia fixture, senza inferenza. Solo DB dedicato e Mailpit loopback. Evidenze in [status.md](status.md).
+
+`pnpm verify:workspace` richiede il build e verifica in Electron il renderer/preload effettivi: diff da Git e TAP Node su cartella temporanea isolata, navigazione dei tab, consenso alla policy, diniego/allow once tramite IPC. Il trasporto provider e l'account sono fixture controllati, le aperture OS intercettate: non prova inferenza personale o l'installazione dell'editor/browser. Scrive catture e rapporto in `.nexus/visual/t07/`, poi elimina la propria cartella QA; non usa PostgreSQL, il profilo del maintainer o credenziali di altre app.

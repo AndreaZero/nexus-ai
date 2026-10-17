@@ -6,6 +6,12 @@ T01 implementa la base; T03 aggiunge identità e `DesktopBridge.auth` ristretto.
 
 `GET /health` descrive liveness e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag e `/auth/me` solo profilo sanitizzato e scadenza. Schema/account in [auth.md](auth.md). Le rotte REST per task, allegati, runtime e realtime elencate sotto restano progettuali; in T04 non sono esposte e rispondono 404. Nessun download disponibile per un estraneo o per un membro.
 
+## Contratti locali T07
+
+`DesktopBridge.workspace.request` ammette `getChanges`, `openEditor(fileId|null)`, `setPreview(url|null)` e `openPreview` con soli ID progetto/repository. UUID file temporanei della snapshot autorizzata, nessun path o argv dal renderer. `WorkspaceSnapshot` contiene path relativi, diff/conteggi limitati, timestamp e URL configurato; non viene caricato al server.
+
+`CodexRequest.setPolicy` seleziona readOnly/workspaceWrite per il binding corrente. `resolveApproval` accetta UUID opaco e decisione acceptOnce/decline; nessun RPC ID, policy amendment o autorizzazione permanente. `CodexSession` aggiunge approvals (max 20), diff (256 Ki caratteri), fileChanges (50 × 64 Ki), testReports (50); attività con exitCode/durationMs/outputTruncated. I servizi applicano ulteriori budget aggregati prima dell'IPC. I tipi/schema effettivi sono `packages/contracts/src/{codex,workspace}.ts`.
+
 ## Entità e invarianti
 
 | Entità | Campi/relazioni essenziali | Invariante |

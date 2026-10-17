@@ -15,6 +15,7 @@ Creare un progetto salva anagrafica, ruoli e collegamento repository. Non crea a
 | Pannello | Fonte e comportamento | Task |
 | --- | --- | --- |
 | Sessione / Context & Files | Chat Codex locale, file scelti, branch/HEAD osservati, piano/token se forniti dal runtime; bozza per progetto | T05–T06 |
+| Code Preview / Terminal / Approvals | Diff locale rispetto a HEAD e diff provider distinti, split/unified, output/exit reali, report TAP/Jest riconosciuti; workspaceWrite esplicito e consenso singolo del driver | T07 |
 | Cronologia condivisa | Share: messaggi selezionati, preview e audience confermata; altri membri leggono soltanto estratti autorizzati | T06, aggiornamento live T08 |
 | Team online / Live activity | Dispositivi connessi, presenza con scadenza ed eventi autorizzati, senza dedurre online dalla sola membership | T08–T10 |
 | Tasks / Roadmap / Outcomes | Task e milestone creati, sessioni collegate, risultati/deliverable pubblicati e feedback | T11 |

@@ -1,6 +1,6 @@
 # Integrazione Codex
 
-**T06:** la sessione aggiunge [contesto e cronologia esplicita](session.md): file selezionati/preview, bozza cifrata, Git osservato, piano/token dagli eventi reali e Share con preview. Il protocollo/runtime resta 0.159.2 e la modalità readOnly; i limiti T05 sotto sono descritti nel loro contesto storico.
+**T07:** la sessione aggiunge [diff, output, report test e approvazioni locali](session.md#workspace-codice-e-controllo-locale-t07). ReadOnly resta il default; workspaceWrite richiede scelta esplicita per il binding, con network sandbox disabilitato. T06 conserva contesto, bozza cifrata e Share selezionato. Protocollo/runtime invariato 0.159.2; i limiti T05 sotto sono storici.
 
 ## Contratto T05 fissato
 
@@ -34,7 +34,7 @@ L'alternativa con OAuth gestito dall'app esiste, ma comporta un lifecycle distin
 
 ## Responsabilità del bridge Nexus
 
-Il servizio desktop espone le operazioni validate `getState`, `connect`, `disconnect`, `login`, `cancelLogin`, `loginApiKey`, `logout`, `refreshModels`, `setupSandbox`, `openSession`, `newSession`, `send`, `interrupt`. I nomi e DTO autorevoli sono in `packages/contracts/src/codex.ts`; il bridge sottostante parla RPC ufficiali typed e non è accessibile al renderer. Le approvazioni interattive saranno aggiunte in T07.
+Il servizio desktop espone le operazioni validate `getState`, `connect`, `disconnect`, `login`, `cancelLogin`, `loginApiKey`, `logout`, `refreshModels`, `setupSandbox`, `openSession`, `newSession`, `send`, `interrupt`, `setPolicy`, `resolveApproval`. I nomi e DTO autorevoli sono in `packages/contracts/src/codex.ts`; il bridge sottostante parla RPC ufficiali typed e non è accessibile al renderer. Le approvazioni T07 supportano solo decisioni singole sulle callback moderne correnti.
 
 - Home/configurazione runtime dedicata a Nexus e scelta esplicita di storage credenziali supportato dall'OS. Nessuna importazione dei file auth di altre applicazioni. Versione, percorso e account attivo visibili nelle impostazioni.
 - Un supervisore per processo: handshake con timeout, correlazione richieste, framing JSON per linea, gestione richieste iniziate dal server, stderr separato, backpressure e shutdown. Non interpretare lo stdout con parser di testo libero.
@@ -52,9 +52,9 @@ L'interfaccia mostra messaggi, file, piano dichiarato, strumenti/output e stati 
 
 I risultati test mostrano conteggi/coverage solo quando un report riconosciuto li fornisce; un comando con exit code zero senza report non prova un numero di test. I diff vengono dallo stato reale del repository/strumento. Le percentuali dei mockup non sono valori iniziali.
 
-## Approvazioni interattive previste in T07
+## Approvazioni interattive T07
 
-Tradurre ogni richiesta supportata dallo schema in un oggetto locale con sessione, turno, item, scopo e scadenza. La decisione torna esclusivamente alla richiesta ancora pendente. Nessuna autoapprovazione per timeout. Se il driver scompare, la richiesta resta in attesa o viene annullata secondo il runtime; i client remoti non guadagnano controllo.
+Le callback supportate diventano oggetti locali con sessione, turno, item, scopo, UUID opaco e scadenza massima 110 secondi. La decisione torna esclusivamente alla richiesta ancora pendente dopo nuova autorizzazione; timeout, interruzione e perdita del contesto la negano. Nessun acceptForSession o emendamento di policy. I client remoti non guadagnano controllo. Dettagli e limiti supportati nella [guida sessione](session.md#workspace-codice-e-controllo-locale-t07).
 
 L'approvazione di un piano nell'interfaccia, l'approvazione di esecuzione Codex e l'approvazione di un deliverable cliente sono tre azioni distinte. Non riutilizzare stato, tabella o pulsante in modo che una autorizzi le altre.
 

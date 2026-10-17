@@ -54,7 +54,8 @@ function CodexScope({ children, accountId, startup }: { children: ReactNode; acc
   const pending = useRef(0);
   const inFlight = useRef(new Map<string, Promise<boolean>>());
   const apply = useCallback((next: CodexState) => {
-    setState({ ...next, session: technical && next.session && next.session.projectId === projectId && next.session.repositoryId === repositoryId ? next.session : null });
+    const session = technical && next.session && next.session.projectId === projectId && next.session.repositoryId === repositoryId ? next.session : null;
+    setState({ ...next, session, policy: session ? next.policy : 'readOnly' });
   }, [projectId, repositoryId, technical]);
 
   const request = useCallback((input: CodexRequest): Promise<boolean> => {
