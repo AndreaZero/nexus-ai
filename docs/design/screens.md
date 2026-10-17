@@ -89,6 +89,8 @@ Il pianeta e le particelle della sidebar sono presenti anche qui. Nel hero la wa
 
 **T10 implementato:** hero232px, wave/particelle e nodi da milestone reali, donut da task visibili, griglia delle tre righe e rail450/380px. Roadmap in lettura e dialoghi di provenienza, summary UTC/project-mine, outcomes da estratti completed, presenza WS reale. Preview client richiede una proiezione server restrittiva e nasconde il lavoro locale. Deliverable/feedback/deploy condivisi hanno stati vuoti fino ai workflow previsti. Nessun dato numerico o avatar personale copiato dalla PNG; focus/reduced motion e960px. [Fonti e prova](../pulse.md).
 
+**T11 implementato:** Tasks/Board/Roadmap e Docs con editor, dettaglio/versioni/provenienza/commenti e preview prima della pubblicazione. I nuovi layout non hanno PNG dedicate e riusano Card/Dialog/tokens/focus della shell. Pulse mantiene la griglia reference1 e mostra deliverable realmente approvati, feedback con navigazione manuale e documenti/update con fonte pubblicata. Overview/Sessione aprono task reali; feed/filtri/notifiche includono metadata autorizzati. Nessuna simulazione di generazione file o approvazione cliente. [Workflow](../work.md).
+
 ## Flussi complementari da realizzare
 
 **T08 implementato:** presenza in header/Team Online, badge Live Sync, Connection panel e Live shared sessions in Session Info della reference2. Share apre scelta estratto/live, selezione senza default, preview congelata e consenso per i futuri delta degli stessi messaggi. I dialog non hanno una PNG dedicata e riusano le primitive della shell. Catture1586×992 in `.nexus/visual/t08/`, limiti e prova in [realtime](../realtime.md); overview completa reference3 resta T09.

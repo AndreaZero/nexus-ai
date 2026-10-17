@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T10 consegnato, in attesa di verifica utente**, dopo conferma Windows0.9.1 e scomparsa del429. App0.10.0, Client & Team Pulse reference1 integrata con multiagenti, proiezioni audience correnti e progressi da tutte le task visibili. Ownership rilasciate/prove in `docs/status.md`, guida `docs/pulse.md`; T11 non avviato. Nessuna nuova migrazione T10; DB0.9.0. Runtime Codex **0.159.2** e schema generato invariati. Preservare shell T02, account reale, auth/collaborazione e correzione0.9.1, approvazioni T07 e recupero T08. Credenziali Codex solo home/keyring Nexus dedicati: nessuna lettura auth di altre app o fallback API implicito. Non stampare `.env` o credenziali; `.env.example` resta pubblico. Nessuna migrazione all'avvio o operazione di produzione implicita.
+La fase corrente è **T11 consegnato, in attesa di verifica utente**. Build WindowsT10 accettata; app/contratti/DB0.11.0, migrazione0005 additiva applicata al DB locale (6totali). Ownership rilasciate/prove in docs/status.md, guida docs/work.md. Task/milestone/Docs, deliverable versionati/file scelti, feedback/decisione cliente e card reference1/3 integrate; T12 non avviato. Preservare shell/reference1/2/3, runtime Codex0.159.2/schema generato, auth0.9.1/no429, account e configurazione. Nessuna lettura credenziali di altre app o inferenza personale automatica; non stampare .env/segreti, nessuna migrazione all’avvio.
 
 ## Prodotto e architettura
 

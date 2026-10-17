@@ -4,11 +4,11 @@ import { liveShareSummarySchema } from './realtime.js';
 
 const cursor = z.string().regex(/^(?:0|[1-9]\d{0,18})$/);
 const project = { projectId: z.uuid() };
-export const overviewFilterSchema = z.enum(['all', 'sessions', 'commits', 'files', 'comments', 'deployments']);
+export const overviewFilterSchema = z.enum(['all', 'sessions', 'commits', 'files', 'comments', 'deployments', 'tasks', 'documents']);
 export const overviewActivitySchema = z.object({
-  id: z.uuid(), sequence: cursor, category: z.literal('sessions'),
-  kind: z.enum(['excerpt.published', 'live.updated', 'live.stopped']),
-  target: z.object({ kind: z.enum(['shared_session', 'live_share']), id: z.uuid() }).strict(),
+  id: z.uuid(), sequence: cursor, category: z.enum(['sessions', 'tasks', 'documents', 'comments']),
+  kind: z.enum(['excerpt.published', 'live.updated', 'live.stopped', 'work.changed']),
+  target: z.object({ kind: z.enum(['shared_session', 'live_share', 'work_task', 'work_milestone', 'work_document', 'work_update', 'work_deliverable', 'work_feedback', 'work_comment']), id: z.uuid() }).strict(),
   actor: z.object({ id: z.string().min(1).max(128), name: z.string().max(200) }).strict(),
   title: z.string().max(140), visibility: z.enum(['team', 'client']), occurredAt: z.iso.datetime(),
 }).strict();

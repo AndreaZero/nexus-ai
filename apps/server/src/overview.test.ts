@@ -29,6 +29,7 @@ function fixture() {
     const previousRead = read;
     return { async query(sql: string, values: unknown[] = []) {
       queries.push({ sql, values });
+      if (sql.startsWith('WITH work_targets')) return { rows: [] };
       let result: unknown[] = [];
       if (sql === 'COMMIT' && failCommit) throw new Error('SQL password should remain private');
       if (sql === 'ROLLBACK') read = previousRead;

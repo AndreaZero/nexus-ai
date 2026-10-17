@@ -1,4 +1,5 @@
 import type { DatabaseBoundary } from '@nexus-ai/db';
+import { readWorkActivity } from './work-activity.js';
 import {
   overviewRequestSchema, overviewResponseSchema,
   type OverviewActivity, type OverviewRequest, type OverviewResponse, type ProjectTask, type LiveShare,
@@ -65,13 +66,14 @@ async function dispatch(db: Client, actor: Actor, request: OverviewRequest, team
   } else {
     readThrough = (await db.query<{ sequence: string }>('SELECT sequence::text FROM overview_read_cursor WHERE project_id = $1 AND user_id = $2', [request.projectId, actor.id])).rows[0]?.sequence ?? '0';
   }
-  const items = await activity(db, request.projectId, team);
+  const items = [...await activity(db, request.projectId, team), ...await readWorkActivity(db, request.projectId, team)]
+    .sort((a, b) => BigInt(a.sequence) > BigInt(b.sequence) ? -1 : 1).slice(0, 1000);
   const otherActivity = items.filter(item => item.actor.id !== actor.id);
   const unreadCount = otherActivity.filter(item => BigInt(item.sequence) > BigInt(readThrough)).length;
   if (request.operation === 'markRead') return { ok: true, kind: 'read', projectId: request.projectId, readThrough, unreadCount };
   // before is compared as BigInt here: even a syntactically valid cursor beyond int8 cannot overflow SQL.
-  const candidates = request.filter !== 'all' && request.filter !== 'sessions' ? []
-    : items.filter(item => request.before === null || BigInt(item.sequence) < BigInt(request.before));
+  const candidates = items.filter(item => (request.filter === 'all' || item.category === request.filter) &&
+    (request.before === null || BigInt(item.sequence) < BigInt(request.before)));
   const page = candidates.slice(0, request.limit);
   const tasks = (await db.query<ProjectTask>(`SELECT id, title, status, visibility FROM task
     WHERE project_id = $1 AND ($2::boolean OR visibility = 'client') ORDER BY updated_at DESC, id LIMIT 100`, [request.projectId, team])).rows;

@@ -10,6 +10,8 @@ import { requestCollaboration } from './collaboration-transport.js';
 import { requestSessions } from './sessions-transport.js';
 import { requestOverview } from './overview-transport.js';
 import { requestPulse } from './pulse-transport.js';
+import { requestWork } from './work-transport.js';
+import type { WorkRequest, WorkResponse } from '@nexus-ai/contracts';
 import { type PulseRequest, type PulseResponse } from '@nexus-ai/contracts';
 import { type OverviewRequest, type OverviewResponse } from '@nexus-ai/contracts';
 import { sessionsResponseSchema, type SessionsRequest, type SessionsResponse } from '@nexus-ai/contracts';
@@ -238,6 +240,15 @@ export class DesktopAuth {
     const result = await requestPulse(before.server, before.cookie, request);
     const after = await this.realtimeSession();
     if (!after || after.userId !== before.userId || after.cookie !== before.cookie) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
+    return result;
+  }
+
+  async workRequest(request: WorkRequest): Promise<WorkResponse> {
+    const before = await this.realtimeSession();
+    if (!before) return { ok: false, code: this.state.status === 'unavailable' ? 'unavailable' : 'auth_required', message: 'Reconnect your Nexus account to read project work.' };
+    const result = await requestWork(before.server, before.cookie, request);
+    const after = await this.realtimeSession();
+    if (!after || before.userId !== after.userId || before.cookie !== after.cookie) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
     return result;
   }
 

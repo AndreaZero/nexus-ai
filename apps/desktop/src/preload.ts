@@ -5,6 +5,7 @@ import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, ses
 import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema, type RealtimeRequest, type RealtimeState } from '@nexus-ai/contracts';
 import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema, type OverviewRequest, type TelemetryRequest } from '@nexus-ai/contracts';
 import { pulseRequestSchema, pulseResponseSchema, type PulseRequest } from '@nexus-ai/contracts';
+import { workRequestSchema, workResponseSchema, workDownloadRequestSchema, type WorkRequest, type WorkDownloadRequest } from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -52,6 +53,10 @@ const bridge: DesktopBridge = Object.freeze({
   }),
   pulse: Object.freeze({
     async request(input: PulseRequest) { return pulseResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.pulseRequest, pulseRequestSchema.parse(input))); },
+  }),
+  work: Object.freeze({
+    async request(input: WorkRequest) { return workResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.workRequest, workRequestSchema.parse(input))); },
+    async download(input: WorkDownloadRequest) { return workResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.workDownload, workDownloadRequestSchema.parse(input))); },
   }),
   codex: Object.freeze({
     async request(input: CodexRequest) {

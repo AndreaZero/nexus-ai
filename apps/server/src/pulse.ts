@@ -4,6 +4,7 @@ import {
   type PulseProgress, type PulseRequest, type PulseResponse, type SharedSession,
 } from '@nexus-ai/contracts';
 import { OverviewError, readOverviewInTransaction } from './overview.js';
+import { readWorkActivity } from './work-activity.js';
 
 type Client = Pick<NonNullable<DatabaseBoundary['pool']>, 'query'>;
 type Actor = { id: string; email: string };
@@ -70,6 +71,7 @@ async function snapshot(db: Client, actor: Actor, request: PulseRequest): Promis
     author: { id: row.created_by, name: row.author_name.slice(0, 200) }, version: row.version, messageCount: row.message_count,
     createdAt: row.created_at.toISOString(), updatedAt: row.updated_at.toISOString(),
   }));
+  const dailyWork = await readWorkActivity(db, request.projectId, team, { start: day.day_start, end: day.day_end, actorId: request.scope === 'mine' ? actor.id : null });
   return { ok: true, snapshot: {
     projectId: request.projectId, audience: team ? 'team' : 'client', overview: overview.snapshot,
     milestones: milestones.map(row => {
@@ -78,7 +80,7 @@ async function snapshot(db: Client, actor: Actor, request: PulseRequest): Promis
         state: value.total > 0 && value.completed === value.total ? 'completed' : value.completed > 0 || value.inProgress > 0 ? 'in_progress' : 'planned', progress: value };
     }), milestoneCount, progress: progress(counts),
     summary: { dayStart: day.day_start.toISOString(), dayEnd: day.day_end.toISOString(), scope: request.scope,
-      tasksUpdated: Number(counts.tasks_updated), sharedUpdates, sharedSource: 'retained_entities', commits: null, comments: null, buildsDeploys: null },
+      tasksUpdated: Number(counts.tasks_updated), sharedUpdates: sharedUpdates + dailyWork.length, sharedSource: 'retained_entities', commits: null, comments: dailyWork.filter(item => item.category === 'comments').length, buildsDeploys: null },
     outcomes,
   } };
 }

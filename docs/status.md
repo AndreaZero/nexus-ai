@@ -1,5 +1,42 @@
 # Stato operativo
 
+Aggiornato: **18 ottobre 2026**. **T11 consegnato, in attesa di verifica utente** — [issue11](https://github.com/AndreaZero/nexus-ai/issues/11). Il maintainer conferma WindowsT10; issue10 accettata/chiusa. Fronti T11 integrati, prove automatiche separate dalla build personale. T12 non avviato; runtime0.159.2 e correzione429 invariati.
+
+## Ownership T11 integrate/rilasciate e contratto
+
+| Agente | Percorsi scrivibili | Handoff |
+| --- | --- | --- |
+| /root/t11_tasks — integrato | apps/server/src/work-planning.ts e work-planning.test.ts | Task/milestone CRUD, assegnazioni, progressi/roadmap, commenti autorizzati e test |
+| /root/t11_content — integrato | apps/server/src/work-content.ts e work-content.test.ts | Documenti/aggiornamenti, revisioni deliverable, approvazioni cliente e feedback con provenienza; test |
+| /root/t11_web — integrato | apps/web/src/** e apps/web/test/t11.test.mjs | Board/roadmap/Docs/detail, pubblicazione con preview/audience, file scelti, feedback/decisioni; collegare card Pulse/Overview reference1/3 |
+| /root/t11_content — QA integrata | solo scripts/verify-work.mjs | Prove reali PG/HTTP/WS/Mailpit, workflow completo/ruoli/CAS/receipt/revisioni/download/revoca e cleanup |
+| /root/t11_tasks — QA integrata | solo apps/desktop/src/workspace-verification.ts e scripts/verify-workspace.mjs | QA renderer/preload actual, snapshot Work controllati dichiarati, nuova board/docs e Pulse popolata; root coordina build prima esecuzione |
+| Coordinatore — integrato | contratti/DB/migrazioni/schema, work-common/service/attachments/route, desktop auth/main/preload/transport/download, proiezioni server, QA/docs/GitHub/manifest | Integrazione, migrazione0005 additiva, dominio singolaTX, idempotenza/CAS, UI/HTTP/PG/WS e package Windows |
+
+Contratto autorevole packages/contracts/src/work.ts già fissato e compilato. POST /api/work e bridge work.request; work.download apre salvataggio nativo soltanto allegato autorizzato con ID, mai path da remoto. List con kind/offset/limit/target e view auto|client, read per ID/revision. Mutazioni con requestId UUID per ricevuta idempotente; save expectedVersion0 per creare, CAS per aggiornare/delete. WorkItem comune strict (list body vuoto, read testo), progress visible_tasks per milestone. Tabelle/colonne esatte in0005_project_work.sql. Ruoli: owner/developer scrittura tecnica; client commenti pubblici/feedback/decisione deliverable; viewer sola lettura. Decisione cliente una per revisione corrente, nessun consenso runtime; revisione successiva pending e mantiene storico. Preview+audience prima di pubblicare; niente upload automatico. Allegati selezionati max1MiB ciascuno/5perdeliverable, max20MiB progetto, memorizzati nel DB con hash e download esplicito; no path o token nei DTO. Testi plain text escaped, mai HTML eseguibile. SingolaTX lock workspace→project, receipt+mutazione+evento atomici. Evento work.changed solo invalidazione WS con resync senza ID di oggetto privato; metadata feed proiettati da oggetti attualmente autorizzati. File condivisi helper root work-common.ts: WorkDb, WorkAccess {projectId,actor:{id,email},role,team}; WorkError(code,message); makeWorkItem(input) defaults nullable/arrays; requireTechnical(access), requireWriter(access), readableTarget(db,access,kind,id) -> {id,title,visibility,version}|null, validateReferences(db,access,{visibility,sourceSessionId,taskId,documentId}); visibleReference(db,access,kind,id) -> id|null; appendWorkChange(db,access,kind,id) atomico. Agenti non installano/committano o modificano contratti/migrazioni.
+
+## Evidenze T11 e consegna
+
+| Ambito | Esito |
+| --- | --- |
+| Installazione/statici | Installazione frozen/offline e pnpm check passati; typecheck tutti pacchetti/app, ESLint e confini93file. Esclusi dalla lint i bundle generati .nexus, già ignorati daGit: una verifica concorrente stava leggendo il bundle temporaneo QA, nessuna esclusione di codice applicativo |
+| Test | **222/222**: bridge13,DB3,desktop88,server76,web40,confini2. Suite eseguita fuori sandbox per rename/Git/socket dei fixture Windows. Dopo ritocchi finali web40/40 ritestati, typecheck/lint/build mirati passati |
+| Build | pnpm build e build finali renderer/server/desktop passati; nessuna nuova dipendenza o schema Codex. Warning Vite chunk principale circa632kB senza errore. Lockfile invariato |
+| Migrazione/persistenza | 0005_project_work applicata esplicitamente al solo nexus_ai_dev; **6 migrazioni** registrate. Colonne task/milestone e nove tabelle work aggiuntive, nessun dato iniziale o cambio .env/account/project. Migrazione ripetibile tramite comando, mai all’avvio |
+| Percorso reale | pnpm verify:work: **8/8 scenari** PostgreSQL/SMTP/HTTP/WS,3account temporanei/ruoli correnti,2progetti. Workflow task→sessione pubblicata→documento/update→file→deliverable→feedback/commento→approvazione→v2 Pending/storico/download. CAS/receipt/hash/rollback,105task/pagine/conteggi, origine/parent/audience, unsafefile/MIME/size, recoveryupload, commenti UTC/mine, filtri/target feed e revoca socket/snapshot inclusi |
+| Renderer/IPC | pnpm verify:workspace: **35/35** nel renderer/preload effettivi. Git/TAP reali, provider/Work DTO e risposte controllati dichiarati. Board CRUD/assegnazione/CAS, roadmap/Docs/provenienza escaped, scelta File prima anteprima e upload soltanto dopo conferma, revisioni e download ID, clientdecision/feedback, offline e960px |
+| Confronto | PNG1/2/3 originali aperte; catture finali Pulse/dettaglio revisioni/board/Docs/pubblicazione/client/reducedmotion/960 ispezionate. Griglia hero1050×232/railx1286 e pianeta/wave preservati, card approvazione/feedback/provenienza da dati Work. Nuove board/dialoghi non hanno PNG dedicata e riusano palette/focus. Select revisioni navy e heading feedback/commenti accessibili corretti; nessuna uguaglianza pixel di contenuti diversi dichiarata |
+| Recupero finale | Cancel non resta bloccato se cleanupupload fallisce/offline: chiude il form, gli upload restano recuperabili in Manage unused uploads. Correzione mirata verificata con typecheck/lint/build; nessuna eliminazione di allegati pubblicati. Le bozze restano nello scope durante resync, reset al cambio account/ruolo/progetto/audience |
+| Desktop | Smoke sviluppo passato: work.request/download validati, URL/cookie/path arbitrari negati, Node assente/CSP/mount validi. Download autorizzato riautentica dopo Save dialog e verifica byte/hash; nel QA il salvataggio OS è intercettato e la scelta destinazione manuale resta da provare |
+| Segreti/pulizia | Scan1598file sorgenti/build:0valori privati;0account/workspaceQA T11 residui,1account reale conservato. Fixture/email proprie rimosse, servizi del maintainer conservati. Primi tentativi QA: sandbox negava rete; il quarto signup fu respinto dal limite3/min, poi QA allineata a3account senza alterare limiter/rate_limit |
+| Versioni/limiti | Root/desktop/web/server/contratti/DB **0.11.0**; UI0.3.0,bridge0.5.0,Codex0.159.2 invariati. File1MiB/5perrevisione/20MiBproject e ricevute100.000, revisioni50; testo plainescaped, lista100paginabile. Git/GitHub T12, deploy/probe T13 e ricerca globale T14 restano futuri |
+| Pacchetto finale | NSIS Windows x64 **0.11.0**, release/win/Nexus-AI-0.11.0-win-x64.exe, **220048793 byte**, NotSigned; smoke finale dell’eseguibile win-unpacked passato, nessuna installazione automatica |
+| Piattaforme | Windows x64 build e package verificati; macOS/Linux non buildati nativamente qui. La conferma del maintainer T11 è ancora attesa |
+
+Guida completa e prova manuale in [work.md](work.md), rapporti/catture .nexus/visual/t11. Tutti i fronti consegnati, ownership rilasciate; coordinatore unico autore di contratti/migrazioni/main/preload/manifest e pubblicazione. Chiudere app/backend precedenti, pnpm install --frozen-lockfile, pnpm db:migrate, pnpm package:win; avviare server/app separatamente. Attendere feedback prima di T12.
+
+## Storico consegna T10
+
 Aggiornato: **17 ottobre 2026**. **T10 consegnato, in attesa di verifica utente** — [issue10](https://github.com/AndreaZero/nexus-ai/issues/10). Il maintainer conferma build Windows0.9.1 e assenza del429; T09/issue9 accettato e chiuso. T10 sviluppato con multiagenti, integrato e controllato; build personale e accettazione restano distinte. Il feedback non certifica ogni percorso personale o altri OS. T11 non avviato.
 
 ## Ownership T10 integrate/rilasciate e contratto

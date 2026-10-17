@@ -127,7 +127,7 @@ Completare Team Online, Active AI Session, Live Activity, Task Overview, System 
 
 ### T10 — Client & Team Pulse, reference 1
 
-**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #10](https://github.com/AndreaZero/nexus-ai/issues/10). Fronti backend, renderer ed effetti integrati; contratti/main/preload/QA coordinati. Fonti, limiti e prova in [pulse.md](pulse.md); evidenze in [status.md](status.md). T11 non avviato.
+**Stato:** [build Windows T10 confermata dal maintainer — issue #10 chiusa](https://github.com/AndreaZero/nexus-ai/issues/10), con via esplicito a T11. Fonti/prova in [pulse.md](pulse.md), evidenze in [status.md](status.md); gli altri OS restano distinti.
 
 **Dipendenze:** T09. **Ownership:** hero/effetti; renderer pulse/card; backend proiezioni audience.
 
@@ -136,6 +136,8 @@ Completare composizione, wave/particelle e nodi, milestone, summary, active sess
 **Uscita:** reference 1 riconoscibile in tutti i blocchi, movimento ridotto completo, nessuna fuga di contenuti via snapshot/eventi/tooltip. **Build utente:** confrontare vista developer e client con la stessa sessione.
 
 ### T11 — Task, roadmap, documenti e consegne cliente
+
+**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #11](https://github.com/AndreaZero/nexus-ai/issues/11). Fronti task/roadmap, contenuti e renderer integrati; migrazione0005/contratti/desktop/QA coordinati. [Fonti e prova](work.md), evidenze in [status.md](status.md). T12 non avviato.
 
 **Dipendenze:** T10. **Ownership:** task/roadmap; documenti/outcomes; backend deliverable/feedback. Root schema e migrazioni serializzati.
 

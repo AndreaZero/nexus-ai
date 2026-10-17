@@ -30,7 +30,7 @@ import { RealtimeProvider } from './realtime/RealtimeProvider.js';
 import './realtime/realtime.css';
 import { OverviewProvider } from './overview/OverviewProvider.js';
 import './overview/overview.css';
-import { ProjectTasks } from './overview/ProjectTasks.js';
+import { WorkPage } from './work/WorkPages.js';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -75,13 +75,14 @@ function ShellApp() {
   const content = route === 'overview' ? <OverviewView {...viewProps} />
     : route === 'projects' ? <ProjectsPage />
     : route === 'team' ? <TeamPage />
-    : route === 'tasks' ? <ProjectTasks />
+    : route === 'tasks' ? <WorkPage section="tasks" />
+    : route === 'docs' ? <WorkPage section="docs" />
     : route === 'repos' || route === 'code' ? <RepositoryPage />
     : route === 'invitations' ? <InvitationPage />
     : route === 'pulse' || route === 'portal' ? <PulseView {...viewProps} />
     : route === 'session' ? <SessionView {...viewProps} />
     : route === 'settings' ? <ApplicationSettings motion={motion} />
-    : <div className="route-empty-layout"><Card title={section?.label ?? 'Workspace'} icon={<Icon name={route === 'docs' ? 'book' : 'upload'} />}><EmptyPanel title={`No ${section?.label.toLowerCase() ?? 'items'} yet`} description={sectionDescriptions[route] ?? 'No content has been shared in this workspace.'} /></Card></div>;
+    : <div className="route-empty-layout"><Card title={section?.label ?? 'Workspace'} icon={<Icon name="upload" />}><EmptyPanel title={`No ${section?.label.toLowerCase() ?? 'items'} yet`} description={sectionDescriptions[route] ?? 'No content has been shared in this workspace.'} /></Card></div>;
 
   return <>
     <AppShell route={route} onNavigate={navigate} onSearch={() => setDialog('navigation')} onNotifications={() => setDialog('notifications')} reducedMotion={motion.reducedMotion} onToggleMotion={motion.systemReduced ? () => navigate('settings') : motion.toggle}>

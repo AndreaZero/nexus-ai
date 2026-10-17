@@ -21,6 +21,8 @@ Il lettore ha restituito cinque turni con messaggi utente, senza ulteriori pagin
 | U09 | Reference 1/2/3 da riprodurre in componenti, layout, grafici, dettagli e animazioni | Specifica dettagliata e confronto sul viewport originale |
 | U10 | Chiarimento corrente: app Windows, Mac e Linux; build Mac dal Mac più avanti | Target desktop multipiattaforma da subito; evidenze build separate per OS |
 
+Il maintainer conferma successivamente build WindowsT10 e autorizza T11 con multiagenti per task/milestone/roadmap/documenti/deliverable/feedback cliente. T10 è accettato per Windows; T12 non autorizzato né avviato.
+
 ## Reference visive
 
 Il maintainer conferma in questa sessione build Windows0.9.1 e scomparsa del429, poi autorizza T10 con multiagenti per Client & Team Pulse reference1. La conferma accetta T09 per Windows; non estende l'evidenza a macOS/Linux o a ogni percorso personale Codex.

@@ -1,5 +1,12 @@
 # Changelog
 
+### 2026-10-18 — T11: task, roadmap e consegne cliente
+
+- Ricevuta conferma WindowsT10; integrati fronti task/roadmap, contenuti e UI con multiagenti. Board CRUD/CAS, assegnazioni/commenti, milestone/progressi da task visibili e link sessione pubblicata.
+- Documenti e aggiornamenti con provenienza/audience/preview, file scelti soltanto dopo conferma e download autorizzato. Deliverable con revisioni immutabili, decisione cliente singola sulla versione corrente Pending, storico e nuova revisione da approvare. Feedback esplicito, risposte tramite commenti; nessun consenso Codex implicito.
+- Card Pulse approvate/feedback/outcomes e feed/filtri/notifiche alimentati dai nuovi domini mantenendo shell/pianeta/wave reference. Recovery upload inutilizzati, Cancel disponibile offline, bozza/retry scoping e ricevute idempotenti; dettagli locali e oggetti team esclusi dalla preview cliente.
+- App/contratti/DB0.11.0, migrazione additiva0005, nessuna dipendenza nuova; Codex0.159.2 e correzione429 invariati. Check,222test,8scenari PG/HTTP/WS,35controlli UI/IPC, build e package Windows passati; account reale conservato e fixture rimossi. Prove effettive e package in docs/status.md; guida docs/work.md. Verifica personale Windows e build native macOS/Linux distinte; T12 non avviato.
+
 ### 2026-10-17 — T10: Client & Team Pulse, reference1
 
 - Conferma Windows0.9.1/no429 ricevuta, T09 accettato; integrati backend, renderer ed effetti con multiagenti. Hero wave/particelle e nodi da milestone reali, donut, griglia tre righe e rail reference1; focus/reduced motion e960px.

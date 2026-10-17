@@ -1,5 +1,7 @@
 # Client & Team Pulse — T10
 
+**Aggiornamento T11:** CRUD/roadmap, documenti e aggiornamenti, deliverable versionati, feedback/approvazioni e file scelti sono ora operativi: [guida corrente](work.md). Pulse riusa questi dati nelle card; il summary Comments conta commenti/feedback visibili retained UTC. Le sezioni sotto descrivono la consegna T10 e i suoi limiti storici.
+
 La vista **Client & Team Pulse** e **Client Portal** usa la composizione della [reference1](../examples/design/1.png): hero wave/particelle e nodi selezionabili, donut, tre righe di card e rail attività/presenza. Pianeta e shell T02 restano condivisi. Non occorre preparare un altro database o cambiare `.env`: T10 legge le tabelle esistenti, senza migrazioni nuove.
 
 ## Dati e azioni

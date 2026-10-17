@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 import { builtinModules } from 'node:module';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/node_modules/**', 'release/**', 'coverage/**', 'packages/codex-bridge/generated/**'] },
+  { ignores: ['**/dist/**', '**/node_modules/**', 'release/**', 'coverage/**', '.nexus/**', 'packages/codex-bridge/generated/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

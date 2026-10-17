@@ -35,7 +35,8 @@ function fixture() {
   const counts = (rows: Task[]) => ({ total: String(rows.length), completed: String(rows.filter(row => row.status === 'done').length),
     in_progress: String(rows.filter(row => row.status === 'review').length), planned: String(rows.filter(row => row.status === 'todo').length) });
   const database = { pool: { async connect() { return { async query(sql: string, values: unknown[] = []) {
-    queries.push({ sql, values }); let rows: unknown[] = [];
+    queries.push({ sql, values });
+      if (sql.startsWith('WITH work_targets')) return { rows: [] }; let rows: unknown[] = [];
     const visibleTasks = tasks.filter(row => values[1] || row.visibility === 'client');
     if (sql === 'COMMIT' && commitFailure) throw new Error('SQL secret diagnostic');
     if (sql.includes('wm.role AS workspace_role')) {
@@ -68,7 +69,7 @@ test('Pulse composes one authorized transaction, UTC summary and completed excer
   assert.equal(result.snapshot.audience, 'team'); assert.deepEqual(result.snapshot.progress, { total: 4, completed: 1, inProgress: 2, planned: 1, percent: 25, source: 'visible_tasks' });
   assert.equal(result.snapshot.milestoneCount, 3); assert.equal(result.snapshot.summary.tasksUpdated, 3); assert.equal(result.snapshot.summary.sharedUpdates, 2);
   assert.equal(result.snapshot.summary.dayStart, today.toISOString()); assert.equal(result.snapshot.summary.dayEnd, tomorrow.toISOString());
-  assert.equal(result.snapshot.summary.commits, null); assert.equal(result.snapshot.summary.comments, null); assert.equal(result.snapshot.summary.buildsDeploys, null);
+  assert.equal(result.snapshot.summary.commits, null); assert.equal(result.snapshot.summary.comments, 0); assert.equal(result.snapshot.summary.buildsDeploys, null);
   assert.equal(result.snapshot.outcomes.length, 2); assert.equal(result.snapshot.outcomes[0]?.messageCount, 2);
   assert.equal(JSON.stringify(result).includes(actor.email), false); assert.equal(JSON.stringify(result).includes('messages'), false);
   assert.deepEqual(db.queries.filter(row => ['BEGIN', 'COMMIT', 'ROLLBACK'].includes(row.sql)).map(row => row.sql), ['BEGIN', 'COMMIT']);

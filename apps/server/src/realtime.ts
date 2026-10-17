@@ -156,7 +156,7 @@ export function createRealtimeService(database: DatabaseBoundary, reportError?: 
         const rows = await db.query<{ event_id: string; sequence: string; kind: 'session.changed' | 'live.changed'; entity_id: string; occurred_at: Date; visible: boolean }>(
           `SELECT e.event_id, e.sequence::text, e.kind, e.entity_id, e.occurred_at,
             CASE WHEN e.kind = 'session.changed' THEN EXISTS (SELECT 1 FROM ai_session s WHERE s.project_id = e.project_id AND s.id = e.entity_id AND ($3::boolean OR s.visibility = 'client'))
-            ELSE EXISTS (SELECT 1 FROM live_share s WHERE s.project_id = e.project_id AND s.id = e.entity_id AND ($3::boolean OR s.visibility = 'client')) END AS visible
+            WHEN e.kind = 'live.changed' THEN EXISTS (SELECT 1 FROM live_share s WHERE s.project_id = e.project_id AND s.id = e.entity_id AND ($3::boolean OR s.visibility = 'client')) ELSE false END AS visible
           FROM realtime_event e WHERE e.project_id = $1 AND e.sequence > $2::bigint ORDER BY e.sequence LIMIT 100`, [projectId, previous, technical(allowed)]);
         // Hidden changes may invalidate a formerly public entity: replace projection without leaking its ID.
         if (rows.rows.some(row => !row.visible)) return { access: allowed, frame: realtimeServerFrameSchema.parse({ type: 'snapshot', snapshot: await snapshot(db, projectId, allowed), resync: true }) };

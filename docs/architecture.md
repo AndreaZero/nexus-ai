@@ -28,6 +28,8 @@ Il server riceve contenuti selezionati per il progetto e applica la visibilità 
 
 T10 aggiunge `POST /api/pulse` come proiezione transazionale degli stessi domini, con riuso dell'overview autorizzata e conteggi di tutte le task visibili prima dei limiti. Client preview è un'audience server restrittiva, mentre dettagli Codex/editor/preview locali rimangono sul dispositivo tecnico. Nessuna nuova tabella: scrittura task/milestone, deliverable e feedback resta T11. Fonti e semantica in [pulse.md](pulse.md).
 
+T11 aggiunge il dominio work transazionale e migrazione0005 per CRUD/assegnazioni, documenti/update, revisioni deliverable, feedback/commenti, allegati/ricevute. Allegati selezionati e bounded in PostgreSQL, download autenticato e salvataggio nativo nel main; nessuno storage service aggiuntivo. Eventi work.changed invalidano WS senza payload privati, il feed costruisce metadata correnti autorizzati. UI Tasks/Docs e card Pulse usano gli stessi domini; [workflow e limiti](work.md).
+
 ## Stack proposto
 
 | Area | Scelta | Motivazione |

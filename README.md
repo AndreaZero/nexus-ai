@@ -6,7 +6,7 @@ App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello svilu
 
 ## Stato del progetto
 
-**T10: Client & Team Pulse, reference1.** Hero wave/particelle con nodi milestone, progressi da task visibili, summary UTC, sessioni/outcomes pubblicati e presenza/feed reali. Preview cliente con proiezione server restrittiva; dettagli del dispositivo solo nella vista team. [Guida e prova T10](docs/pulse.md). Overview T09, correzione429 della0.9.1, recupero T08 e approvazioni T07 conservati; runtime Codex ufficiale0.159.2 incluso. CRUD task/milestone e deliverable/feedback T11, GitHub T12 e deploy T13 seguono il [piano](docs/plan.md). Evidenze e limiti di piattaforma in [stato](docs/status.md).
+**T11: task, roadmap e consegne cliente.** Board e milestone CRUD, assegnazioni/commenti e provenienza dagli estratti pubblicati; documenti e aggiornamenti con audience, file scelti e download autorizzato, revisioni deliverable e feedback/approvazioni cliente. Card Overview/Pulse alimentate dai dati correnti seguendo le reference. [Guida e prova T11](docs/work.md). Correzione429, recupero realtime e approvazioni Codex conservati. Git/GitHub T12 e deploy T13 seguono il [piano](docs/plan.md). Evidenze e limiti di piattaforma in [stato](docs/status.md).
 
 Da questa cartella, con Node 22.19+ della serie 22 o Node 24 e pnpm 10.32.1:
 
@@ -19,7 +19,7 @@ pnpm mailpit --install
 pnpm package:win
 ```
 
-`package:win` va eseguito su Windows e produce l'installer unsigned0.10.0 in `release/win/`. T10 non aggiunge migrazioni. T09 introduce la migrazione **0004** per lettura notifiche, già applicata su questa macchina; la patch0.9.1 corregge il429 sui controlli account e non aggiunge migrazioni. Account/progetti e `.env` conservati, nessun nuovo DB/secret. Arrestare app/server precedenti prima della build e riavviarli dopo: il backend aggiornato applica il limite corretto. Tenere Mailpit e `pnpm start:server` in terminali distinti, poi aprire l'app o `pnpm start:desktop`. Inbox locale `http://127.0.0.1:8025`; login Codex personale distinto, ripreso automaticamente dal proprio keyring senza browser/inferenza automatici. Backend con [log Chalk](CONTRIBUTING.md#log-server-e-diagnosi). Mac/Linux: `pnpm package:mac`/`pnpm package:linux` sul relativo OS/architettura. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
+`package:win` va eseguito su Windows e produce l'installer unsigned0.11.0 in `release/win/`. T11 aggiunge la migrazione additiva0005 per i workflow di progetto, senza dati iniziali. T09 introduce la migrazione **0004** per lettura notifiche, già applicata su questa macchina; la patch0.9.1 corregge il429 sui controlli account e non aggiunge migrazioni. Account/progetti e `.env` conservati, nessun nuovo DB/secret. Arrestare app/server precedenti prima della build e riavviarli dopo: il backend aggiornato applica il limite corretto. Tenere Mailpit e `pnpm start:server` in terminali distinti, poi aprire l'app o `pnpm start:desktop`. Inbox locale `http://127.0.0.1:8025`; login Codex personale distinto, ripreso automaticamente dal proprio keyring senza browser/inferenza automatici. Backend con [log Chalk](CONTRIBUTING.md#log-server-e-diagnosi). Mac/Linux: `pnpm package:mac`/`pnpm package:linux` sul relativo OS/architettura. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - [Indice documentazione](docs/README.md)
 - [Prodotto e requisiti](docs/product.md)
@@ -37,6 +37,7 @@ pnpm package:win
 - [Task T08 — realtime, presenza e recupero](https://github.com/AndreaZero/nexus-ai/issues/8)
 - [Task T09 — overview operativa e attività reali](https://github.com/AndreaZero/nexus-ai/issues/9)
 - [Task T10 — Client & Team Pulse](https://github.com/AndreaZero/nexus-ai/issues/10)
+- [Task T11 — Task, roadmap, documenti e consegne cliente](https://github.com/AndreaZero/nexus-ai/issues/11)
 
 ## Metodo
 

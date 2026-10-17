@@ -125,12 +125,15 @@ export const milestone = pgTable('milestone', {
   id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
   title: text('title').notNull(), createdBy: text('created_by').notNull().references(() => user.id),
   visibility: text('visibility', { enum: ['team', 'client'] }).notNull().default('team'),
+  description: text('description').notNull().default(''), version: integer('version').notNull().default(1),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   dueAt: timestamp('due_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index('milestone_project_idx').on(table.projectId), check('milestone_visibility_check', sql`${table.visibility} IN ('team', 'client')`)]);
 export const task = pgTable('task', {
   id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
   milestoneId: text('milestone_id').references(() => milestone.id), title: text('title').notNull(),
+  description: text('description').notNull().default(''), sourceSessionId: text('source_session_id').references(() => aiSession.id, {onDelete:'set null'}),
   createdBy: text('created_by').notNull().references(() => user.id), assigneeId: text('assignee_id').references(() => user.id),
   status: text('status', { enum: ['todo', 'in_progress', 'review', 'done'] }).notNull().default('todo'),
   visibility: text('visibility', { enum: ['team', 'client'] }).notNull().default('team'), version: integer('version').notNull().default(1),
@@ -160,7 +163,7 @@ export const liveShare = pgTable('live_share', {
 }, table => [index('live_share_project_idx').on(table.projectId, table.updatedAt), check('live_share_title_check', sql`char_length(${table.title}) BETWEEN 1 AND 140`), check('live_share_visibility_check', sql`${table.visibility} IN ('team', 'client')`), check('live_share_status_check', sql`${table.status} IN ('active', 'stopped')`), check('live_share_messages_check', sql`jsonb_typeof(${table.messages}) = 'array' AND jsonb_array_length(${table.messages}) BETWEEN 1 AND 20`)]);
 export const realtimeEvent = pgTable('realtime_event', {
   projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }), sequence: bigint('sequence', { mode: 'bigint' }).notNull(), eventId: text('event_id').notNull().unique(), kind: text('kind').notNull(), entityId: text('entity_id').notNull(), actorId: text('actor_id').notNull().references(() => user.id), occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
-}, table => [primaryKey({ columns: [table.projectId, table.sequence] }), check('realtime_event_sequence_check', sql`${table.sequence} > 0`), check('realtime_event_kind_check', sql`${table.kind} IN ('session.changed', 'live.changed')`)]);
+}, table => [primaryKey({ columns: [table.projectId, table.sequence] }), check('realtime_event_sequence_check', sql`${table.sequence} > 0`), check('realtime_event_kind_check', sql`${table.kind} IN ('session.changed', 'live.changed', 'work.changed')`)]);
 export const realtimeUpload = pgTable('realtime_upload', {
   projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }), batchId: text('batch_id').notNull(), authorId: text('author_id').notNull().references(() => user.id), shareId: text('share_id').notNull().references(() => liveShare.id, { onDelete: 'cascade' }), payloadHash: text('payload_hash').notNull(), sequence: bigint('sequence', { mode: 'bigint' }).notNull(), committedAt: timestamp('committed_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [primaryKey({ columns: [table.projectId, table.batchId] }), check('realtime_upload_sequence_check', sql`${table.sequence} > 0`)]);
@@ -172,4 +175,19 @@ export const overviewReadCursor = pgTable('overview_read_cursor', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [primaryKey({ columns: [table.projectId, table.userId] }), check('overview_read_cursor_sequence_check', sql`${table.sequence} >= 0`)]);
 export const overviewSchema = { overviewReadCursor };
-export const databaseSchema = { ...authSchema, ...collaborationSchema, ...realtimeSchema, ...overviewSchema };
+
+
+const workTimestamps = () => ({createdAt: timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),updatedAt: timestamp('updated_at',{withTimezone:true}).notNull().defaultNow()});
+const workIdentity = () => ({id:text('id').primaryKey(),projectId:text('project_id').notNull().references(()=>project.id,{onDelete:'cascade'}),createdBy:text('created_by').notNull().references(()=>user.id)});
+const workContentColumns = () => ({...workIdentity(),title:text('title').notNull(),body:text('body').notNull(),visibility:text('visibility').notNull(),version:integer('version').notNull().default(1),sourceSessionId:text('source_session_id').references(()=>aiSession.id,{onDelete:'set null'}),taskId:text('task_id').references(()=>task.id,{onDelete:'set null'}),documentId:text('document_id'),...workTimestamps()});
+export const projectDocument=pgTable('project_document',workContentColumns());
+export const projectUpdate=pgTable('project_update',workContentColumns());
+export const deliverable=pgTable('deliverable',{...workIdentity(),title:text('title').notNull(),visibility:text('visibility').notNull(),version:integer('version').notNull(),status:text('status').notNull().default('pending'),...workTimestamps()});
+export const deliverableVersion=pgTable('deliverable_version',{deliverableId:text('deliverable_id').notNull().references(()=>deliverable.id,{onDelete:'cascade'}),version:integer('version').notNull(),title:text('title').notNull(),body:text('body').notNull(),visibility:text('visibility').notNull(),createdBy:text('created_by').notNull().references(()=>user.id),sourceSessionId:text('source_session_id').references(()=>aiSession.id,{onDelete:'set null'}),taskId:text('task_id').references(()=>task.id,{onDelete:'set null'}),documentId:text('document_id').references(()=>projectDocument.id,{onDelete:'set null'}),attachmentIds:jsonb('attachment_ids').notNull().default([]),createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow(),decision:text('decision'),decidedBy:text('decided_by').references(()=>user.id),decisionBody:text('decision_body').notNull().default(''),decidedAt:timestamp('decided_at',{withTimezone:true})},table=>[primaryKey({columns:[table.deliverableId,table.version]})]);
+export const clientFeedback=pgTable('client_feedback',{...workIdentity(),targetKind:text('target_kind').notNull(),targetId:text('target_id'),body:text('body').notNull(),sentiment:text('sentiment'),...workTimestamps()});
+export const workComment=pgTable('work_comment',{...workIdentity(),targetKind:text('target_kind').notNull(),targetId:text('target_id').notNull(),body:text('body').notNull(),...workTimestamps()});
+export const workAttachment=pgTable('work_attachment',{...workIdentity(),name:text('name').notNull(),mime:text('mime').notNull(),size:integer('size').notNull(),sha256:text('sha256').notNull(),base64:text('base64').notNull(),createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow()});
+export const workReceipt=pgTable('work_receipt',{projectId:text('project_id').notNull().references(()=>project.id,{onDelete:'cascade'}),actorId:text('actor_id').notNull().references(()=>user.id,{onDelete:'cascade'}),requestId:text('request_id').notNull(),payloadHash:text('payload_hash').notNull(),response:jsonb('response').notNull(),createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow()},table=>[primaryKey({columns:[table.projectId,table.actorId,table.requestId]})]);
+export const workChange=pgTable('work_change',{id:text('id').primaryKey(),projectId:text('project_id').notNull().references(()=>project.id,{onDelete:'cascade'}),targetKind:text('target_kind').notNull(),targetId:text('target_id').notNull(),createdAt:timestamp('created_at',{withTimezone:true}).notNull().defaultNow()});
+export const workSchema={projectDocument,projectUpdate,deliverable,deliverableVersion,clientFeedback,workComment,workAttachment,workReceipt,workChange};
+export const databaseSchema={...authSchema,...collaborationSchema,...realtimeSchema,...overviewSchema,...workSchema};

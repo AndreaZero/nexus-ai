@@ -31,6 +31,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 
 | D25 | Adottata in T10 | Pulse è una lettura transazionale dei domini esistenti con preview client restrittiva. Progressi da tutte le task visibili prima dei limiti; summary UTC da record correnti e outbox retained. Outcomes sono estratti completed pubblicati con provenienza, distinti dai deliverable/feedback T11; nessuna nuova tabella o metrica illustrativa |
 
+| D26 | Adottata in T11 | Task/milestone/documenti CAS e ricevute UUID/hash persistenti; pubblicazione update e revisioni deliverable esplicita. Decisione cliente singola sulla revisione corrente Pending, separata da esecuzione Codex; storico immutable e audience corrente sul parent. Allegati scelti max1MiB/5perrevisione/20MiBprogetto nel DB con hash, recupero upload inutilizzati e download main con scelta destinazione; nessuno storage esterno obbligatorio |
+
 ## Da concretizzare al momento opportuno
 
 **T06:** bozza/selezione restano cifrate sul dispositivo; il backend persiste solo messaggi scelti con preview e conferma di audience. Nessuna promozione automatica di un thread completo a contenuto cliente. Osservazioni Git locali separate dall'autenticazione/API GitHub T12; condivisione pull separata dal realtime T08. Limiti e prova in [session.md](session.md).

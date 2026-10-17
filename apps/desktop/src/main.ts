@@ -1,5 +1,6 @@
 import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell, safeStorage } from 'electron';
-import { readFile, realpath, rm } from 'node:fs/promises';
+import { readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { mkdtempSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,6 +22,7 @@ import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, ses
 import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema } from '@nexus-ai/contracts';
 import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema } from '@nexus-ai/contracts';
 import { pulseRequestSchema, pulseResponseSchema } from '@nexus-ai/contracts';
+import { workRequestSchema, workResponseSchema, workDownloadRequestSchema, type WorkResponse } from '@nexus-ai/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -242,6 +244,29 @@ async function initialize() {
     requireTrustedCaller(event, args, 1);
     return desktopAuth!.pulseRequest(pulseRequestSchema.parse(args[0])).then(result => pulseResponseSchema.parse(result));
   });
+  ipcMain.handle(DESKTOP_IPC.workRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopAuth!.workRequest(workRequestSchema.parse(args[0])).then(value => workResponseSchema.parse(value));
+  });
+  ipcMain.handle(DESKTOP_IPC.workDownload, async (event, ...args: unknown[]): Promise<WorkResponse> => {
+    requireTrustedCaller(event, args, 1);
+    const request = workDownloadRequestSchema.parse(args[0]);
+    const identity = desktopAuth!.currentState().user?.id;
+    const input = { operation: 'readAttachment' as const, ...request };
+    const initial = await desktopAuth!.workRequest(input);
+    if (!initial.ok) return initial;
+    if (initial.kind !== 'attachment') return { ok: false, code: 'unavailable', message: 'Attachment unavailable.' };
+    const destination = await dialog.showSaveDialog(mainWindow!, { title: 'Save published attachment', defaultPath: initial.attachment.name });
+    if (destination.canceled || !destination.filePath) return { ok: true, kind: 'saved', projectId: request.projectId, saved: false };
+    if (!identity || identity !== desktopAuth!.currentState().user?.id) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
+    const current = await desktopAuth!.workRequest(input);
+    if (!current.ok) return current;
+    if (current.kind !== 'attachment' || current.attachment.sha256 !== initial.attachment.sha256) return { ok: false, code: 'unavailable', message: 'The attachment changed. Retry the download.' };
+    const bytes = Buffer.from(current.base64, 'base64');
+    if (bytes.length !== current.attachment.size || bytes.toString('base64') !== current.base64 || createHash('sha256').update(bytes).digest('hex') !== current.attachment.sha256) return { ok: false, code: 'unavailable', message: 'The attachment could not be verified.' };
+    try { await writeFile(destination.filePath, bytes); return { ok: true, kind: 'saved', projectId: request.projectId, saved: true }; }
+    catch { return { ok: false, code: 'unavailable', message: 'The selected destination could not be written. Choose another location.' }; }
+  });
   ipcMain.handle(DESKTOP_IPC.telemetryRequest, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args, 1);
     return desktopTelemetry!.request(telemetryRequestSchema.parse(args[0])).then(result => telemetryResponseSchema.parse(result));
@@ -362,6 +387,8 @@ async function initialize() {
         realtimeState: await window.nexusDesktop.realtime.request({operation:'getState'}),
         overviewKeys: Object.keys(window.nexusDesktop.overview), telemetryKeys: Object.keys(window.nexusDesktop.telemetry),
         pulseKeys: Object.keys(window.nexusDesktop.pulse),
+        workKeys:Object.keys(window.nexusDesktop.work),
+        workState:await window.nexusDesktop.work.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',kind:'task'}),
         pulseState: await window.nexusDesktop.pulse.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         overviewState: await window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         telemetryState: await window.nexusDesktop.telemetry.request({operation:'getState',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
@@ -380,6 +407,8 @@ async function initialize() {
           window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
           window.nexusDesktop.telemetry.request({operation:'setEnabled',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',enabled:true,command:'arbitrary'}),
           window.nexusDesktop.pulse.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
+          window.nexusDesktop.work.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',kind:'task',cookie:'arbitrary'}),
+          window.nexusDesktop.work.download({projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',id:'02f71f6e-69b1-49b7-b6d8-df89167070b9',path:'C:/arbitrary'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -399,13 +428,15 @@ async function initialize() {
       const realtimeState = realtimeResponseSchema.parse(check['realtimeState']);
       const overviewState = overviewResponseSchema.parse(check['overviewState']);
       const telemetryState = telemetryResponseSchema.parse(check['telemetryState']);
+      const workState = workResponseSchema.parse(check['workState']);
       const pulseState = pulseResponseSchema.parse(check['pulseState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","work","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           JSON.stringify(check['overviewKeys']) !== '["request"]' || overviewState.ok || !['auth_required', 'unavailable'].includes(overviewState.code) ||
           JSON.stringify(check['telemetryKeys']) !== '["request"]' || telemetryState.ok || !['auth_required', 'unavailable'].includes(telemetryState.code) ||
+          JSON.stringify(check['workKeys']) !== '["request","download"]' || workState.ok || !['auth_required','unavailable'].includes(workState.code) ||
           JSON.stringify(check['pulseKeys']) !== '["request"]' || pulseState.ok || !['auth_required', 'unavailable'].includes(pulseState.code) ||
           JSON.stringify(check['contextKeys']) !== '["request"]' || JSON.stringify(check['sessionsKeys']) !== '["request"]' ||
           contextState.ok || contextState.code !== 'auth_required' || sessionsState.ok || sessionsState.code !== 'auth_required' ||

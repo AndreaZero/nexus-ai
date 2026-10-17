@@ -113,7 +113,8 @@ try {
   const clientMine = (await pulse(client, { ...snapshot, scope: 'mine' })).snapshot;
   assert.equal(team.summary.tasksUpdated, 92); assert.equal(visible.summary.tasksUpdated, 90); assert.equal(mine.summary.tasksUpdated, 45); assert.equal(clientMine.summary.tasksUpdated, 45);
   assert.equal(mine.summary.dayStart, utcDay.toISOString()); assert.equal(mine.summary.dayEnd, nextDay.toISOString()); assert.equal(mine.progress.total, 105); assert.equal(mine.overview.activity.length, 0);
-  for (const key of ['commits', 'comments', 'buildsDeploys']) assert.equal(mine.summary[key], null);
+  for (const key of ['commits', 'buildsDeploys']) assert.equal(mine.summary[key], null);
+  assert.equal(mine.summary.comments, 0); // T11 supplies retained comment/feedback counts; this fixture has none.
   checks.push('UTC [start,end) summary counts task records assigned to actor for mine, independent of feed filter; unsupported metrics stay null');
 
   stage = 'published completed outcomes and shared summary';
