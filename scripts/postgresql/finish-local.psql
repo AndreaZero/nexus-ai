@@ -1,0 +1,44 @@
+-- Ripresa manuale dopo errore alla riconnessione di prepare-local.psql.
+-- Collegarsi DIRETTAMENTE a nexus_ai_dev come postgres: nessuna riconnessione qui.
+\set ON_ERROR_STOP on
+
+BEGIN;
+DO $preflight$
+BEGIN
+  IF current_database() <> 'nexus_ai_dev' THEN
+    RAISE EXCEPTION 'Connettersi direttamente al database nexus_ai_dev.';
+  END IF;
+  IF NOT (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) THEN
+    RAISE EXCEPTION 'Eseguire come amministratore PostgreSQL locale (normalmente postgres).';
+  END IF;
+  IF NOT EXISTS (
+    SELECT FROM pg_roles
+    WHERE rolname = 'nexus_ai_dev' AND rolcanlogin
+      AND NOT rolsuper AND NOT rolcreatedb AND NOT rolcreaterole
+      AND NOT rolreplication AND NOT rolbypassrls
+  ) THEN
+    RAISE EXCEPTION 'Ruolo nexus_ai_dev assente o attributi diversi da quelli previsti: nessuna modifica.';
+  END IF;
+  IF NOT EXISTS (
+    SELECT FROM pg_database
+    WHERE datname = current_database()
+      AND pg_get_userbyid(datdba) = 'nexus_ai_dev'
+      AND pg_encoding_to_char(encoding) = 'UTF8'
+  ) THEN
+    RAISE EXCEPTION 'Owner o encoding del database inattesi: nessuna modifica.';
+  END IF;
+END;
+$preflight$;
+
+REVOKE CONNECT, TEMPORARY ON DATABASE nexus_ai_dev FROM PUBLIC;
+ALTER SCHEMA public OWNER TO nexus_ai_dev;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+COMMIT;
+
+SELECT current_database() AS database,
+       current_setting('server_version') AS server_version,
+       pg_get_userbyid(nspowner) AS schema_owner,
+       has_schema_privilege('nexus_ai_dev', oid, 'USAGE') AS can_use,
+       has_schema_privilege('nexus_ai_dev', oid, 'CREATE') AS can_create
+FROM pg_namespace WHERE nspname = 'public';
+\echo 'Permessi completati. Verificare ora il login con utente nexus_ai_dev e la sua password dedicata.'

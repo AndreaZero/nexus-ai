@@ -49,6 +49,20 @@ La password è letta tramite `\password`, senza inserirla nel file SQL o nella r
 
 Il login possiede DB/schema per poter applicare le future migrazioni di sviluppo, ma non amministra il cluster. Questa configurazione locale non definisce il ruolo runtime di produzione, che sarà separato dal ruolo migrazioni e avrà i soli privilegi necessari. [Attributi dei ruoli](https://www.postgresql.org/docs/18/sql-createrole.html).
 
+## Ripresa dopo password errata alla riconnessione finale
+
+Se `prepare-local.psql` si interrompe alla riconnessione al nuovo DB, ruolo, password applicativa e database sono già stati creati; le due istruzioni sullo schema `public` possono essere rimaste ineseguite. Rilanciare lo script di creazione produce correttamente l'errore «il ruolo esiste» e non modifica gli oggetti esistenti.
+
+Collegarsi direttamente al DB creato ed eseguire il completamento, dalla root:
+
+```powershell
+psql -X -h 127.0.0.1 -p 5432 -U postgres -d nexus_ai_dev -W -f scripts/postgresql/finish-local.psql
+```
+
+Qui il prompt richiede **la password amministrativa di `postgres`**, non quella scelta per `nexus_ai_dev`. Non ci sono riconnessioni o ulteriori prompt. Lo script verifica nome/owner/encoding del DB e attributi del ruolo, poi applica soltanto i permessi finali in una transazione. Non crea o elimina ruoli, database o tabelle e non cambia password. Se lo stato è diverso dal previsto si ferma senza applicare modifiche.
+
+Atteso: `schema_owner = nexus_ai_dev`, `can_use = t`, `can_create = t`. Procedere con la verifica del login applicativo descritta sotto, usando questa volta la password dedicata di `nexus_ai_dev`.
+
 ## Alternativa manuale con pgAdmin
 
 Il file `.psql` contiene metacomandi: **non incollarlo nel Query Tool**, che esegue SQL. Se preferisci pgAdmin:

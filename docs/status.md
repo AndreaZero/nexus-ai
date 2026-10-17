@@ -47,6 +47,8 @@ Le verifiche Electron sono state eseguite fuori dal sandbox di esecuzione dopo c
 
 ## Prossimo passo
 
+Il maintainer segnala password amministrativa errata alla riconnessione finale dello script. Il successivo errore «ruolo esiste» è il controllo previsto. Consegnato `scripts/postgresql/finish-local.psql`: connessione diretta come `postgres` al DB `nexus_ai_dev`, controlli su ruolo/owner/encoding e soli permessi finali in transazione. Il server risponde, ma il tentativo in sola lettura dell'agente non ha potuto autenticarsi per assenza di password; nessuno stato/grant finale è dichiarato verificato. Eseguire il completamento e poi il login applicativo della guida, senza condividere credenziali.
+
 Il maintainer prepara PostgreSQL T03 seguendo [la guida](setup/postgresql.md), prima di introdurre account e persistenza. Database UTF8 e ruolo dedicati `nexus_ai_dev`, connessione `127.0.0.1:5432`, PostgreSQL 18 aggiornato o 17 aggiornato già installato. Lo script manuale non crea tabelle applicative. Comunicare solo versione server ed esito delle query; proseguire T03 dopo la preparazione locale, senza richiedere credenziali in chat.
 
 **Verifiche della preparazione T03:** rilevato client `psql 18.1` già installato; versione server non interrogata. Revisionati comandi e riferimenti ufficiali, senza installazioni, connessioni, creazione ruoli/DB o migrazioni. Nessuna dipendenza applicativa modificata e nessuna nuova build richiesta per questa consegna documentale. L'app continua a mostrare `not_connected` se `DATABASE_URL` è impostata: è il comportamento T01, non una prova PostgreSQL.

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### 2026-10-17 — T03: ripresa preparazione PostgreSQL
+
+- Aggiunto completamento manuale dei permessi dopo password amministrativa errata alla riconnessione finale: connessione diretta al DB, verifiche preventive e transazione, senza ricreare oggetti o modificare password.
+- Server locale raggiungibile dalla verifica dell'agente; ispezione autenticata non eseguita perché nessuna password è disponibile ai comandi. Stato finale da verificare con il login manuale del maintainer.
+
 ### 2026-10-17 — T03: preparazione PostgreSQL e contratto auth
 
 - Ricevuta accettazione Windows T02: build funzionante e UI approvata. Chiusa issue #2 e avviata issue #3 con multiagenti.
