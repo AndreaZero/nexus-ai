@@ -4,11 +4,11 @@ Il maintainer sviluppa con agenti e verifica personalmente le build. I contribut
 
 Leggere [AGENTS.md](AGENTS.md), [piano](docs/plan.md) e [stato](docs/status.md). Un task corrente, un risultato concreto, percorsi assegnati senza sovrapposizioni. Il coordinatore integra cambiamenti e dipendenze condivise. Il task successivo segue la consegna e il feedback del maintainer.
 
-## Setup T01
+## Setup
 
 Prerequisiti: **Node.js 22.19+ della serie 22 oppure Node 24**, **pnpm 10.32.1** e Git. La versione usata qui è Node 22.19.0 x64 su Windows; `.node-version` permette di riprodurla. Prima di aggiornare versioni major, verificare compatibilità di lint, TypeScript, Vite ed Electron. [Requisiti Vite](https://vite.dev/guide/).
 
-Se pnpm manca: `npm install --global pnpm@10.32.1`. Dalla root del repository eseguire `pnpm install --frozen-lockfile`. La prima installazione/il primo avvio possono scaricare runtime e strumenti ufficiali Electron; nessuna chiave API o database è richiesta in T01. Il warning di pnpm su `electron-winstaller` riguarda un tool Squirrel transitivo non utilizzato: il packaging Windows scelto è NSIS; non abilitare indiscriminatamente script di dipendenze.
+Se pnpm manca: `npm install --global pnpm@10.32.1`. Dalla root del repository eseguire `pnpm install --frozen-lockfile`. La prima installazione/il primo avvio possono scaricare runtime e strumenti ufficiali Electron; nessuna chiave API o database è richiesta in T01/T02. Il maintainer creerà PostgreSQL quando T03 introdurrà la persistenza. Il warning di pnpm su `electron-winstaller` riguarda un tool Squirrel transitivo non utilizzato: il packaging Windows scelto è NSIS; non abilitare indiscriminatamente script di dipendenze.
 
 | Comando | Scopo |
 | --- | --- |
@@ -21,6 +21,7 @@ Se pnpm manca: `npm install --global pnpm@10.32.1`. Dalla root del repository es
 | `pnpm build` | Compilazione workspace |
 | `pnpm start:desktop` | Avvia il renderer compilato; richiede `pnpm build` |
 | `pnpm smoke:desktop` | Verifica nascosta del renderer compilato e bridge, senza mostrare finestre; richiede build |
+| `pnpm verify:shell` | Catture Electron reali delle tre viste, focus ricerca, preferenza movimento ridotto e viewport 960 px; richiede build |
 | `pnpm start:server` | Avvia il server compilato e carica `.env` dalla root |
 | `pnpm package:win` | Compila workspace e produce installer NSIS x64 su Windows |
 | `pnpm package:mac` | Compila e produce DMG arm64/x64 sul Mac |
@@ -28,7 +29,7 @@ Se pnpm manca: `npm install --global pnpm@10.32.1`. Dalla root del repository es
 
 Gli script root usano Node e argomenti di processo separati, senza richiedere bash/PowerShell nei manifest. Per test di un solo dominio: `pnpm --filter @nexus-ai/server test` oppure `pnpm --filter @nexus-ai/desktop test`, dopo la build delle librerie. Se si cambiano librerie condivise durante dev, riavviare il comando dev per ricompilarle; Vite/tsx aggiornano renderer e server, main/preload richiedono riavvio desktop.
 
-Il comando di packaging richiede il sistema operativo di destinazione. Firma/notarizzazione e icone finali vengono trattate nei task successivi: T01 produce pacchetti di sviluppo unsigned della stessa app. L'installer non include né avvia il backend condiviso.
+Il comando di packaging richiede il sistema operativo di destinazione. Le icone native sono incluse da T02; firma/notarizzazione vengono trattate nei task successivi. I pacchetti attuali sono unsigned. L'installer non include né avvia il backend condiviso. `verify:shell` usa il renderer compilato della stessa app senza dati fittizi; salva PNG/report in `.nexus/visual/t02/`, imposta device scale 1 solo per la verifica e ripristina la preferenza movimento dell'utente.
 
 ## Build e verifica Windows
 
@@ -41,17 +42,17 @@ pnpm test
 pnpm package:win
 ```
 
-`package:win` include `pnpm build`. Gli artefatti vanno in `release/win/`; l'installer è `Nexus-AI-0.1.0-win-x64.exe`, il programma senza installer è `release/win/win-unpacked/Nexus AI.exe`. Non sono artefatti firmati: l'installazione manuale resta una verifica del maintainer, distinta dalla generazione del pacchetto.
+`package:win` include `pnpm build`. Gli artefatti vanno in `release/win/`; l'installer T02 è `Nexus-AI-0.2.0-win-x64.exe`, il programma senza installer è `release/win/win-unpacked/Nexus AI.exe`. Non sono artefatti firmati: l'installazione manuale resta una verifica del maintainer, distinta dalla generazione del pacchetto.
 
 Per provare rapidamente la build compilata: `pnpm start:desktop`. Per usare il ciclo di sviluppo completo: `pnpm dev:desktop`. Non avviare contemporaneamente più comandi dev sulle porte 5173/3001.
 
-Controllare questo step:
+Controllare T02 (T01 è già stato confermato funzionante dal maintainer):
 
-1. La finestra Nexus si apre con stato vuoto del workspace, senza dati di progetti inventati.
-2. L'ambiente mostra **Desktop · Windows**, versione **0.1.0**, architettura reale e versione Electron; nessun errore di lettura del bridge.
-3. Codex risulta non collegato e il database non viene presentato come connesso. Login/workspace/runtime arriveranno nei task già pianificati.
-4. In `pnpm dev:desktop` il server locale risulta raggiungibile e compare l'ultima verifica. Se il server viene fermato, **Riprova connessione** deve mostrare il servizio non raggiungibile.
-5. Chiudere, riaprire e ridimensionare la finestra; l'installer deve aprire la stessa app. Questa prova non è ancora l'accettazione grafica delle tre reference, prevista da T02 in avanti.
+1. Confrontare **Overview** con `examples/design/3.png`, **Client Portal / Client & Team Pulse** con `1.png` e **Live Sessions** con `2.png`, idealmente su area contenuto 1586 × 992. Sidebar, pianeta, griglie, font e glow devono mantenere le proporzioni; i contenuti di progetto sono vuoti, senza dati inventati. [Catture e limiti](docs/design/t02-review.md).
+2. Provare sidebar, tab della sessione e **Ctrl K**: il dialogo permette di cercare pagine, selezionarle con Tab/Invio e chiudere con Esc. La ricerca nei dati arriverà in T14. La campanella apre il centro notifiche vuoto.
+3. Osservare pianeta, orbite e particelle di Pulse, poi attivare **Reduce ambient motion** nelle impostazioni o dall'icona waveform nell'header. La scena deve rimanere completa e statica; chiudere e riaprire per verificare la preferenza. La preferenza di sistema ha precedenza.
+4. Ridimensionare a circa 960 px: la sidebar diventa rail compatto; la sessione offre tab **Conversation / Context / Code**. Non deve esserci scroll orizzontale dell'intera pagina. Lo scroll verticale conserva tutti i blocchi.
+5. In **Settings** verificare versione desktop **0.2.0**, piattaforma/architettura reali e stato HTTP. Codex/database restano non collegati/non configurati. Comandi senza capacità reale sono disabilitati con una motivazione; non richiedono ancora login o PostgreSQL.
 
 La build produzione senza configurazione mostra **Server non configurato**. Per verificare la connessione anche nella build/installer, prima della build copiare `.env.example` in `.env` (senza sovrascrivere un file proprio) e lasciare `VITE_NEXUS_SERVER_URL=http://127.0.0.1:3001`; poi ricompilare. Avviare `pnpm start:server` in un secondo terminale. Modificare `.env` dopo il packaging non cambia l'endpoint già incorporato.
 

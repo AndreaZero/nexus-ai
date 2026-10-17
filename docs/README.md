@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. La base T01 è implementata e verificata tecnicamente su Windows; i domini successivi restano pianificati. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01 è accettato su Windows; T02 è consegnato per verifica visiva. I domini successivi restano pianificati. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
 
 | Documento | Uso |
 | --- | --- |
@@ -15,7 +15,8 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [Design](design/README.md) | Palette, tipografia, geometria, componenti e asset |
 | [Schermate](design/screens.md) | Mappa completa delle tre reference e flussi collegati |
 | [Movimento](design/motion.md) | Particelle, pianeta, wave, grafici, transizioni e prestazioni |
-| [Token CSS](design/tokens.css) | Valori iniziali da trasferire al package UI in T02 |
+| [Token CSS](design/tokens.css) | Base dei valori trasferiti al package UI in T02 |
 | [Registro asset](design/assets.md) | Origine, hash, elementi da costruire e criteri di accettazione |
+| [Confronto T02](design/t02-review.md) | Catture reali della shell, geometria verificata e differenze residue |
 
 Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.

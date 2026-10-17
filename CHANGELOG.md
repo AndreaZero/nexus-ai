@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### 2026-10-17 — T02: sistema visivo e shell
+
+- Integrati con tre agenti token, componenti, logo e icone originali, font locali Inter/JetBrains Mono con licenze OFL e icone native Windows/macOS/Linux.
+- Costruite le shell Overview, Client & Team Pulse e AI Session nelle proporzioni delle reference, con stati vuoti reali e comandi futuri disabilitati con motivazione.
+- Aggiunti pianeta/orbite, superficie di particelle, wave e mappa schematica; pausa fuori viewport/in background e movimento ridotto di sistema o persistito nelle impostazioni.
+- Collegate sidebar, tab, rotte, dialogo di navigazione Ctrl/⌘ K, notifiche e impostazioni con diagnostica desktop/server.
+- Verificati typecheck/lint/confini, 16 test, build e renderer Electron a 1586 × 992; catture delle tre viste, focus ricerca, preferenza movimento ridotto e layout 960 px. Pacchetto Windows 0.2.0 unsigned; prove native Mac/Linux e accettazione visiva del maintainer separate.
+- Ricevuta conferma del maintainer: T01 Windows funziona. T02 non richiede PostgreSQL; creazione locale a cura del maintainer al task di persistenza T03.
+
 ### 2026-10-17 — T01: base multipiattaforma
 
 - Creato workspace pnpm/TypeScript strict con desktop Electron, renderer React/Vite condiviso e server Fastify.

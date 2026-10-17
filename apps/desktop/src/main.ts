@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DESKTOP_IPC, desktopInfoSchema } from '@nexus-ai/contracts';
 import { APP_URL, developmentUrl, isTrustedIpcSender, isWithinDirectory, rendererAssetPath } from './security.js';
+import { verifyShell } from './shell-verification.js';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -11,6 +12,9 @@ protocol.registerSchemesAsPrivileged([
 
 const bundleDirectory = path.dirname(fileURLToPath(import.meta.url));
 const smokeTest = process.argv.includes('--smoke-test');
+const shellVerification = process.argv.includes('--verify-shell') && !app.isPackaged;
+const hiddenVerification = smokeTest || shellVerification;
+if (shellVerification) app.commandLine.appendSwitch('force-device-scale-factor', '1');
 let mainWindow: BrowserWindow | undefined;
 
 function desktopInfo() {
@@ -92,10 +96,12 @@ async function initialize() {
     const window = new BrowserWindow({
       width: 1586,
       height: 992,
+      useContentSize: true,
       minWidth: 900,
       minHeight: 620,
       title: 'Nexus AI',
       backgroundColor: '#070a12',
+      icon: path.join(app.getAppPath(), 'resources/icon.png'),
       show: false,
       autoHideMenuBar: true,
       webPreferences: {
@@ -109,6 +115,7 @@ async function initialize() {
         webSecurity: true,
         webviewTag: false,
         spellcheck: false,
+        backgroundThrottling: !shellVerification,
       },
     });
     mainWindow = window;
@@ -119,8 +126,14 @@ async function initialize() {
     window.webContents.on('will-redirect', (event) => event.preventDefault());
     window.webContents.on('will-attach-webview', (event) => event.preventDefault());
     window.on('closed', () => { if (mainWindow === window) mainWindow = undefined; });
-    window.once('ready-to-show', () => { if (!smokeTest) window.show(); });
+    window.once('ready-to-show', () => { if (!hiddenVerification) window.show(); });
     await window.loadURL(devUrl ?? APP_URL);
+
+    if (shellVerification) {
+      await verifyShell(window, path.resolve(app.getAppPath(), '../../.nexus/visual/t02'));
+      app.exit(0);
+      return;
+    }
 
     if (smokeTest) {
       const result: unknown = await window.webContents.executeJavaScript(`(async () => {
@@ -163,12 +176,12 @@ async function initialize() {
 
 function fail(error: unknown) {
   console.error('Nexus desktop failed:', error instanceof Error ? error.message : 'Unknown error');
-  if (!smokeTest) dialog.showErrorBox('Impossibile avviare Nexus AI', 'La base desktop non è disponibile. Esegui la build dalla root del progetto e riprova. Consulta il terminale per il dettaglio.');
+  if (!hiddenVerification) dialog.showErrorBox('Impossibile avviare Nexus AI', 'La base desktop non è disponibile. Esegui la build dalla root del progetto e riprova. Consulta il terminale per il dettaglio.');
   app.exit(1);
 }
 
-if (smokeTest) {
-  setTimeout(() => fail(new Error('Desktop smoke timed out after 20 seconds.')), 20_000).unref();
+if (hiddenVerification) {
+  setTimeout(() => fail(new Error('Desktop verification timed out.')), shellVerification ? 60_000 : 20_000).unref();
 }
 
 app.on('window-all-closed', () => {

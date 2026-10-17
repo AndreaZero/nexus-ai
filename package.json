@@ -1,6 +1,6 @@
 {
   "name": "nexus-ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -18,7 +18,8 @@
     "package:linux": "node scripts/workspace.mjs package:linux",
     "start:desktop": "node scripts/workspace.mjs start:desktop",
     "start:server": "node scripts/workspace.mjs start:server",
-    "smoke:desktop": "pnpm --filter @nexus-ai/desktop smoke"
+    "smoke:desktop": "pnpm --filter @nexus-ai/desktop smoke",
+    "verify:shell": "pnpm --filter @nexus-ai/desktop exec electron . --verify-shell"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

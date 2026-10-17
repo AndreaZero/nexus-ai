@@ -1,35 +1,214 @@
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-500.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/jetbrains-mono/latin-400.css';
+@import './effects/effects.css';
+/* Shared visual tokens reconstructed from examples/design/*.png. */
 :root {
   color-scheme: dark;
   --nexus-bg-app: #050b12;
+  --nexus-bg-sidebar: #040c13;
   --nexus-bg-surface: #08121d;
+  --nexus-bg-surface-end: #050d15;
   --nexus-bg-raised: #101e2d;
+  --nexus-bg-selected: #071e3e;
   --nexus-border-subtle: #142d40;
   --nexus-border-strong: #31526c;
   --nexus-text-primary: #edf4ff;
   --nexus-text-secondary: #b2c4da;
   --nexus-text-muted: #7692af;
   --nexus-accent-cyan: #00b7ff;
+  --nexus-accent-blue: #0866ff;
+  --nexus-accent-violet: #8355ff;
   --nexus-positive: #00e6a0;
+  --nexus-positive-bg: #042b24;
   --nexus-warning: #f5b941;
+  --nexus-warning-bg: #30230c;
   --nexus-danger: #f34e63;
-  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --nexus-danger-bg: #2c111a;
+  --nexus-diff-add-bg: #06251d;
+  --nexus-diff-add-text: #7ce6b7;
+  --nexus-diff-remove-bg: #301621;
+  --nexus-diff-remove-text: #ef9cab;
+  --nexus-chart-code: #00b7ff;
+  --nexus-chart-editor: #9766ff;
+  --nexus-chart-tests: #00e6a0;
+  --nexus-chart-build: #f5b941;
+  --nexus-chart-deploy: #8355ff;
+  --nexus-font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --nexus-font-code: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  --nexus-text-xs: 0.625rem;
+  --nexus-text-sm: 0.75rem;
+  --nexus-text-md: 0.875rem;
+  --nexus-text-lg: 1rem;
+  --nexus-text-title: 1.875rem;
+  --nexus-leading-body: 1.45;
+  --nexus-space-1: 4px;
+  --nexus-space-2: 8px;
+  --nexus-space-3: 12px;
+  --nexus-space-4: 16px;
+  --nexus-space-5: 20px;
+  --nexus-space-6: 24px;
+  --nexus-sidebar-width: 212px;
+  --nexus-card-gap: 12px;
+  --nexus-card-padding: 14px;
+  --nexus-radius-control: 6px;
+  --nexus-radius-card: 9px;
+  --nexus-radius-pill: 999px;
+  --nexus-surface-gradient: linear-gradient(160deg, #0a1623 0%, #050d15 100%);
+  --nexus-primary-gradient: linear-gradient(110deg, #087dff 0%, #0053ef 100%);
+  --nexus-active-gradient: linear-gradient(125deg, #00b7ff 0%, #1672ff 52%, #8355ff 100%);
+  --nexus-glow-cyan: 0 0 14px rgb(0 183 255 / 20%);
+  --nexus-glow-positive: 0 0 10px rgb(0 230 160 / 25%);
+  --nexus-glow-violet: 0 0 14px rgb(131 85 255 / 18%);
+  --nexus-shadow-panel: 0 5px 18px rgb(0 0 0 / 16%);
+  --nexus-motion-fast: 140ms;
+  --nexus-motion-panel: 200ms;
+  --nexus-motion-progress: 320ms;
+  --nexus-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --nexus-z-content: 0;
+  --nexus-z-header: 10;
+  --nexus-z-popover: 30;
+  --nexus-z-modal: 50;
+  --nexus-z-toast: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --nexus-motion-fast: 0ms;
+    --nexus-motion-panel: 0ms;
+    --nexus-motion-progress: 0ms;
+  }
+}
+
+:root {
+  font-family: var(--nexus-font-ui);
   font-size: 16px;
   font-synthesis: none;
-  line-height: 1.5;
+  line-height: var(--nexus-leading-body);
   color: var(--nexus-text-primary);
   background: var(--nexus-bg-app);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --nexus-chart-start: #00b7ff;
+  --nexus-chart-end: #0866ff;
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
-button { font: inherit; }
-button:focus-visible { outline: 2px solid var(--nexus-accent-cyan); outline-offset: 4px; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled, input:disabled, textarea:disabled { cursor: not-allowed; }
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--nexus-accent-cyan);
+  outline-offset: 3px;
+}
+::selection { color: #fff; background: #064ca7; }
+a { color: var(--nexus-accent-cyan); text-underline-offset: 3px; }
+code, pre, kbd, samp { font-family: var(--nexus-font-code); }
+svg { vertical-align: middle; }
+.nexus-icon { display: inline-block; flex: 0 0 auto; }
+.nexus-mark { flex: 0 0 auto; filter: drop-shadow(0 0 8px rgb(0 183 255 / 29%)); }
+.nexus-logo { display: flex; align-items: flex-start; gap: 10px; width: max-content; }
+.nexus-logo__type { padding-top: 4px; }
+.nexus-logo__word { display: flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 19px; line-height: 25px; font-weight: 500; letter-spacing: 3.2px; }
+.nexus-logo__word > span { display: inline-grid; place-items: center; height: 16px; padding: 0 3px; border: 1px solid #263d6c; border-radius: 3px; color: #dbe6ff; background: #071536; box-shadow: 0 0 10px rgb(39 86 239 / 10%); font-family: var(--nexus-font-code); font-size: 10px; letter-spacing: 1px; line-height: 1; }
+.nexus-logo__payoff { margin-top: 8px; color: #8da4be; font-size: 9px; font-weight: 400; letter-spacing: 1px; line-height: 1.4; }
+.nexus-logo--compact { align-items: center; }
+
+.nexus-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-width: 0; border: 1px solid #294156; border-radius: var(--nexus-radius-control); color: var(--nexus-text-primary); background: linear-gradient(180deg, #101e2c, #09121c); font-size: 12px; font-weight: 500; line-height: 1.2; text-decoration: none; white-space: nowrap; transition: color var(--nexus-motion-fast) ease-out, background-color var(--nexus-motion-fast) ease-out, border-color var(--nexus-motion-fast) ease-out, box-shadow var(--nexus-motion-fast) ease-out; }
+.nexus-button--md { min-height: 35px; padding: 8px 13px; }
+.nexus-button--sm { min-height: 27px; padding: 5px 9px; font-size: 10px; gap: 5px; }
+.nexus-button:hover:not(:disabled) { border-color: #527594; background: #142539; }
+.nexus-button--primary { border-color: #00aaff; background: var(--nexus-primary-gradient); box-shadow: inset 0 0 0 2px rgb(60 147 255 / 16%), 0 0 13px rgb(0 110 255 / 28%); color: #fff; }
+.nexus-button--primary:hover:not(:disabled) { border-color: #72d9ff; background: linear-gradient(110deg, #178bff, #1566ff); box-shadow: inset 0 0 0 2px rgb(60 147 255 / 16%), 0 0 17px rgb(0 110 255 / 34%); }
+.nexus-button--ghost { color: var(--nexus-text-secondary); background: transparent; border-color: transparent; box-shadow: none; }
+.nexus-button--ghost:hover:not(:disabled) { color: var(--nexus-text-primary); border-color: var(--nexus-border-subtle); background: #0d1b2a; }
+.nexus-button--danger { color: #ff9eac; background: linear-gradient(180deg, #301721, #1d111a); border-color: #76303f; }
+.nexus-button--danger:hover:not(:disabled) { color: #ffd7dd; background: #3e1824; border-color: #e3576c; }
+.nexus-button:disabled { opacity: .43; box-shadow: none; }
+.nexus-button__label { overflow: hidden; text-overflow: ellipsis; }
+
+.nexus-badge { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 19px; padding: 2px 7px; flex: 0 0 auto; border: 1px solid #203146; border-radius: var(--nexus-radius-pill); color: #bdcee0; background: #0e1a28; font-size: 10px; line-height: 1.2; font-weight: 500; white-space: nowrap; }
+.nexus-badge--cyan { color: #61d4ff; border-color: #07577a; background: #05202c; }
+.nexus-badge--blue { color: #99c9ff; border-color: #174980; background: #081e3b; }
+.nexus-badge--violet { color: #c4aaff; border-color: #3c2374; background: #1c1237; }
+.nexus-badge--success { color: #00eca5; border-color: #075442; background: #042b24; }
+.nexus-badge--warning { color: #ffd177; border-color: #61451a; background: #30230c; }
+.nexus-badge--danger { color: #ff9eac; border-color: #66303e; background: #2c111a; }
+.nexus-badge__dot { width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: currentColor; box-shadow: 0 0 7px currentColor; }
+.nexus-badge--live .nexus-badge__dot { animation: nexus-live-dot 2.2s ease-in-out infinite; }
+@keyframes nexus-live-dot { 0%, 100% { opacity: 1; } 50% { opacity: .56; } }
+
+.nexus-card { position: relative; min-width: 0; border: 1px solid var(--nexus-border-subtle); border-radius: var(--nexus-radius-card); background: var(--nexus-surface-gradient); box-shadow: var(--nexus-shadow-panel); isolation: isolate; }
+.nexus-card--active { border-color: transparent; background: linear-gradient(160deg, #0a1623, #050d15) padding-box, var(--nexus-active-gradient) border-box; box-shadow: -3px 0 12px rgb(0 183 255 / 11%), 2px 1px 11px rgb(131 85 255 / 9%); }
+.nexus-card--active::before { content: ''; position: absolute; left: -1px; top: 10px; width: 2px; height: 22px; background: #4bd9ff; box-shadow: 0 0 10px 2px rgb(0 183 255 / 48%); border-radius: 2px; pointer-events: none; }
+.nexus-card__header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 37px; padding: 10px 12px 6px; }
+.nexus-card__header h2 { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; color: #e1edfa; font-size: 13px; font-weight: 600; line-height: 1.35; }
+.nexus-card__header h2 > .nexus-icon { color: #75ccff; }
+.nexus-card__action { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; font-size: 10px; }
+.nexus-card__body { min-width: 0; padding: 4px 12px 12px; }
+.nexus-empty-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; min-height: 104px; padding: 18px 14px; text-align: center; }
+.nexus-empty-panel__icon { display: inline-flex; align-items: center; justify-content: center; width: 33px; height: 33px; border: 1px solid #1a334b; border-radius: 10px; color: #719ac5; background: linear-gradient(145deg, #10243a, #081421); }
+.nexus-empty-panel__title { color: #b1c4dc; font-size: 12px; font-weight: 500; line-height: 1.4; }
+.nexus-empty-panel p { max-width: 330px; margin: 0; color: var(--nexus-text-muted); font-size: 11px; line-height: 1.5; }
+.nexus-empty-panel--compact { gap: 5px; min-height: 62px; padding: 9px 8px; }
+.nexus-empty-panel--compact .nexus-empty-panel__icon { width: 28px; height: 28px; border-radius: 8px; }
+.nexus-empty-panel--compact .nexus-empty-panel__title { font-size: 11px; }
+
+.nexus-progress { --nexus-chart-start: #00b7ff; --nexus-chart-end: #0866ff; height: 6px; min-width: 0; overflow: hidden; border-radius: 999px; background: #1a2a3b; }
+.nexus-progress--success, .nexus-donut--success { --nexus-chart-start: #00b7ff; --nexus-chart-end: #00eca0; }
+.nexus-progress--violet, .nexus-donut--violet { --nexus-chart-start: #2488ff; --nexus-chart-end: #9766ff; }
+.nexus-progress__fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--nexus-chart-end), var(--nexus-chart-start)); box-shadow: 0 0 7px rgb(0 136 255 / 32%); transition: width var(--nexus-motion-progress) var(--nexus-motion-ease); }
+.nexus-progress--success .nexus-progress__fill { background: linear-gradient(90deg, #00c68b, #00eca0); box-shadow: 0 0 6px rgb(0 230 160 / 25%); }
+.nexus-progress--unknown { background: #152333; }
+.nexus-donut { position: relative; display: inline-grid; place-items: center; flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+.nexus-donut > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.nexus-donut circle { fill: none; stroke-width: 7; }
+.nexus-donut__track { stroke: #1c3445; }
+.nexus-donut__value { stroke-linecap: round; filter: drop-shadow(0 0 3px rgb(0 183 255 / 37%)); transition: stroke-dashoffset var(--nexus-motion-progress) var(--nexus-motion-ease); }
+.nexus-donut--success .nexus-donut__value { filter: drop-shadow(0 0 4px rgb(0 230 160 / 35%)); }
+.nexus-donut__center { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 74%; gap: 3px; text-align: center; }
+.nexus-donut__center strong { color: #eef5ff; font-size: 22px; line-height: 1; font-weight: 600; }
+.nexus-donut__center span { max-width: 100%; color: #93bad7; font-size: 10px; line-height: 1.25; }
+.nexus-donut--success .nexus-donut__center span { color: var(--nexus-positive); }
+.nexus-donut--unknown .nexus-donut__track { stroke: #183042; }
+.nexus-donut--unknown .nexus-donut__center strong { color: #8cabc6; }
+.nexus-donut--unknown .nexus-donut__center span { color: #7995af; }
+
+.nexus-avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border: 1.5px solid #288bc7; border-radius: 50%; color: #c4e3ff; background: linear-gradient(135deg, #173651, #101626); line-height: 1; font-weight: 600; }
+.nexus-avatar > img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.nexus-avatar__status { position: absolute; right: -1px; bottom: -1px; width: 9px; height: 9px; border: 1.5px solid #07111a; border-radius: 50%; background: #7290a9; }
+.nexus-avatar--online .nexus-avatar__status { background: var(--nexus-positive); box-shadow: 0 0 6px rgb(0 230 160 / 30%); }
+.nexus-avatar--busy { border-color: #8355d6; }
+.nexus-avatar--busy .nexus-avatar__status { background: var(--nexus-accent-violet); }
+.nexus-avatar--offline { border-color: #4c6179; }
+
+.nexus-tabs { display: flex; align-items: stretch; gap: 16px; min-width: 0; border-bottom: 1px solid var(--nexus-border-subtle); overflow-x: auto; scrollbar-width: thin; }
+.nexus-tabs__tab { position: relative; flex: 0 0 auto; border: 0; border-radius: 0; padding: 11px 13px 12px; color: var(--nexus-text-secondary); background: transparent; font-size: 12px; line-height: 1.3; white-space: nowrap; transition: color var(--nexus-motion-fast) ease-out, background-color var(--nexus-motion-fast) ease-out; }
+.nexus-tabs__tab:hover:not(:disabled) { color: #f0f7ff; background: rgb(12 34 54 / 50%); }
+.nexus-tabs__tab--selected { color: #88dcff; font-weight: 600; }
+.nexus-tabs__tab--selected::after { content: ''; position: absolute; right: 0; left: 0; bottom: 0; height: 3px; border-radius: 2px 2px 0 0; background: #00b7ff; box-shadow: 0 -2px 10px rgb(0 183 255 / 28%); }
+.nexus-tabs__tab:focus-visible { z-index: 1; outline-offset: -4px; }
+.nexus-tabs__tab:disabled { opacity: .38; }
+
 .nexus-empty-state { padding: 48px 24px; text-align: center; }
-.nexus-empty-state__mark { display: inline-grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--nexus-border-strong); border-radius: 12px; background: var(--nexus-bg-raised); color: var(--nexus-accent-cyan); font-size: 28px; font-weight: 700; }
+.nexus-empty-state__mark { display: inline-grid; place-items: center; width: 52px; height: 52px; border: 1px solid var(--nexus-border-strong); border-radius: 12px; background: var(--nexus-bg-raised); }
 .nexus-empty-state h1 { margin: 20px 0 12px; font-size: clamp(1.35rem, 4vw, 1.75rem); line-height: 1.3; font-weight: 600; }
-.nexus-empty-state__description { max-width: 520px; margin: 0 auto; color: var(--nexus-text-secondary); font-size: 0.925rem; }
-.nexus-status { display: inline-flex; align-items: center; gap: 8px; color: var(--nexus-text-secondary); font-size: 0.875rem; }
+.nexus-empty-state__description { max-width: 520px; margin: 0 auto; color: var(--nexus-text-secondary); font-size: .925rem; }
+.nexus-status { display: inline-flex; align-items: center; gap: 8px; color: var(--nexus-text-secondary); font-size: 12px; }
 .nexus-status__dot { width: 7px; height: 7px; flex-shrink: 0; border-radius: 50%; background: currentColor; }
 .nexus-status--positive { color: var(--nexus-positive); }
 .nexus-status--pending, .nexus-status--warning { color: var(--nexus-warning); }
 .nexus-status--danger { color: var(--nexus-danger); }
+.nexus-skeleton { display: block; width: 100%; min-height: 12px; border-radius: 4px; background: linear-gradient(90deg, #102031, #182d42, #102031); background-size: 200% 100%; animation: nexus-skeleton 1.8s ease-in-out infinite; }
+@keyframes nexus-skeleton { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.nexus-sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+:root[data-reduced-motion='true'] { --nexus-motion-fast: 0ms; --nexus-motion-panel: 0ms; --nexus-motion-progress: 0ms; }
+:root[data-reduced-motion='true'] .nexus-badge__dot, :root[data-reduced-motion='true'] .nexus-skeleton { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .nexus-badge__dot, .nexus-skeleton { animation: none; }
+}

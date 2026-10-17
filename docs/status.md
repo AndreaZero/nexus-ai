@@ -1,64 +1,51 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. Fase: **T01 implementato, in attesa di verifica utente**. Il maintainer ha autorizzato T01 con multiagenti; i tre fronti sono integrati. T02 non avviato.
+Aggiornato: **17 ottobre 2026**. **T02 consegnato, in attesa di verifica visiva del maintainer** ([issue #2](https://github.com/AndreaZero/nexus-ai/issues/2)). T01 è accettato su Windows: il maintainer conferma che la build funziona ([issue #1 chiusa](https://github.com/AndreaZero/nexus-ai/issues/1)). T03 non avviato.
 
-## Risultato della preparazione
+## Risultato T02
 
-- Recuperati cinque turni leggibili della conversazione e incorporata la scelta esplicita desktop Windows/macOS/Linux. Limiti delle risposte assistente dichiarati in `sources.md`.
-- Ispezionate le tre PNG originali, rilevate dimensioni/hash e preparate specifiche di layout, palette, componenti, asset, particelle, grafici e movimento inferito.
-- Scritti requisiti, architettura proposta, dati/eventi, integrazione Codex e piano T00–T16.
-- Predisposti regole agenti, coordinamento per ownership, contributi e registro verifiche per OS.
-
-- Creato il repository pubblico MIT [AndreaZero/nexus-ai](https://github.com/AndreaZero/nexus-ai), con base versionata sul branch `main`.
-- Creata e validata la skill `.agents/skills/nexus-coordination/`; discovery locale al repository, nessuna installazione globale richiesta.
-- Verificati 19 documenti Markdown, 43 collegamenti locali, i tre hash PNG, i due file YAML e il whitespace Git. Nessun errore residuo nei controlli documentali.
-- Aperto il primo task operativo [T01 — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1), pronto senza avviare l'implementazione.
-
-## Risultato T01
-
-- Monorepo a otto progetti (root più sette workspace), versioni esatte e lockfile; TypeScript strict, lint e controllo dei confini degli import.
-- Renderer comune React/Vite e primitive UI minime. Stato iniziale reale, dati desktop via bridge validato, health HTTP con timeout/retry e stati non configurato/offline.
-- Electron main/preload isolati, protocollo `nexus://app`, controllo path/symlink/origini/frame e permessi negati per default. Nessuna API generica di shell/filesystem esposta.
-- Fastify con `/health`, CORS per origini esatte, errori senza echo di input sensibili, configurazione PostgreSQL senza connessioni simulate e shutdown.
-- Comandi dev/build/check/test e packaging nativo per i tre OS. Installer Windows unsigned generato in `release/win/Nexus-AI-0.1.0-win-x64.exe` e programma in `release/win/win-unpacked/Nexus AI.exe`; artefatti esclusi da Git.
-- CI check/test/build per Windows/macOS/Linux aggiunta. La presenza del workflow non dimostra l'esito dei runner: consultare la run effettiva dopo il push.
-
-## Prossimo passo
-
-Il maintainer esegue la verifica Windows di **[T01 — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1)** con i comandi e i passi in `CONTRIBUTING.md`. Registrare il suo esito; correggere eventuali difetti di T01 prima di passare a **T02 — Sistema visivo e shell definitiva**. Il codice è implementato, ma l'accettazione manuale e le prove native Mac/Linux sono evidenze ancora distinte.
+- Sistema visivo condiviso: token, componenti, tracciati SVG originali, font locali Inter/JetBrains Mono con OFL, icone native Windows/macOS/Linux.
+- Shell definitive Overview, Client & Team Pulse e AI Session, con griglie e proporzioni delle reference a 1586 × 992. Stati vuoti reali; nessun progetto, membro, messaggio o indicatore di salute inventato.
+- Pianeta/orbite nella sidebar, particelle Pulse, wave e mappa schematica. Canvas limitati a 30 fps/DPR 1.5, sospensione in background/fuori viewport e composizione statica con movimento ridotto.
+- Sidebar, rotte e tab collegati; dialogo di navigazione Ctrl/⌘ K, notifiche vuote, preferenza movimento persistita e impostazioni con dati desktop/HTTP reali. Le funzioni successive restano disabilitate con motivazione.
+- Versione desktop/renderer/UI **0.2.0**; server/contratti/DB/bridge restano 0.1.0, non modificati nel dominio. Nessuna migrazione o connessione PostgreSQL introdotta.
+- Catture reali e differenze rispetto alle PNG in [confronto T02](design/t02-review.md). Il contenuto pieno delle reference sarà collegato nei task successivi; questa consegna verifica frame/componenti, non l'intera applicazione.
 
 ## Registro task e deleghe
 
-| Task | Stato | Owner | Fronti/file riservati | Esito integrazione |
-| --- | --- | --- | --- | --- |
-| T00 | Completato | Coordinatore | Nessuna ownership di sviluppo attiva | Documentazione e skill verificate, base pubblicata |
-| T01 | Implementato; verifica utente pendente | Coordinatore | Ownership di integrazione conclusa | Check/test/build e pacchetto Windows verificati |
-| T01 desktop | Integrato | `/root/desktop` | Ownership rilasciata | Main/preload, sicurezza, build e packaging |
-| T01 server | Integrato | `/root/server` | Ownership rilasciata | Fastify, health/config e confine DB |
-| T01 renderer | Integrato | `/root/renderer` | Ownership rilasciata | Renderer comune e stato iniziale reale |
+| Task/fronte | Stato | Owner | Percorsi e integrazione |
+| --- | --- | --- | --- |
+| T00 | Completato | Coordinatore | Documenti, repository MIT pubblico e skill versionata |
+| T01 | Accettato Windows | Coordinatore + desktop/server/renderer | Ownership concluse; base, sicurezza, health e packaging |
+| T02 | Consegnato | Coordinatore | Routing, impostazioni, font/manifest/lockfile, icone native, QA, docs e pubblicazione |
+| T02 UI | Integrato, ownership rilasciata | `/root/t02_ui` | `packages/ui/src/**` escluso `effects/**`; token, primitive, logo e icone |
+| T02 effetti | Integrato, ownership rilasciata | `/root/t02_effects` | `packages/ui/src/effects/**`; scene e lifecycle canvas |
+| T02 layout | Integrato, ownership rilasciata | `/root/t02_layout` | `apps/web/src/shell/**`, `views/**`, `app.css`; griglie e correzioni misurate |
 
-T02–T16 sono pianificati e non avviati. Nessuna delega di sviluppo ancora attiva. Dipendenze condivise, contratti e pubblicazione sono stati gestiti dal coordinatore.
+Tre fronti paralleli con percorsi disgiunti; un solo autore per dipendenze/config condivise e integrazione. T03–T16 non avviati. Skill usata: `.agents/skills/nexus-coordination/SKILL.md`.
 
-## Evidenze build e prove
+## Evidenze tecniche
 
-| Ambito | Stato | Evidenza |
-| --- | --- | --- |
-| Toolchain Windows | Verificata | Node 22.19.0 x64, pnpm 10.32.1; dipendenze esatte nel lockfile |
-| `pnpm check` | Passato | Typecheck, lint e confini renderer/UI/contratti, nove file sorgente controllati |
-| `pnpm test` | 16/16 passati | Tre test DB, tre desktop, otto server/config, due confini import; dopo correzione API logging ripetuti solo i controlli server pertinenti |
-| `pnpm build` | Passato | Sette package/app compilati in ordine di dipendenza |
-| Electron Windows | Passato | Smoke produzione e dev Vite: mount renderer, schema bridge, CSP, capability e assenza di Node |
-| Server e dev | Passati | Avvio reale Vite/Fastify, `/health` via HTTP, arresto con porte 3001/5173 libere |
-| Packaging Windows | Passato | `pnpm package:win`, installer NSIS x64 di circa 113 MB, Authenticode `NotSigned`; smoke eseguibile impacchettato exit 0. Installer non installato automaticamente |
-| Prova Windows del maintainer | Pendente | Comandi e checklist in `CONTRIBUTING.md` |
-| macOS | Configurato, non provato qui | DMG arm64/x64; build nativa dal Mac del maintainer più avanti |
-| Linux | Configurato, non provato qui | AppImage x64; build/prova da registrare sul relativo sistema |
-| UI contro reference | T02 e task seguenti | Solo schermata iniziale T01; nessuna corrispondenza completa con le tre PNG ancora dichiarata |
+| Ambito | Esito registrato |
+| --- | --- |
+| Toolchain | Windows x64, Node 22.19.0, pnpm 10.32.1, versioni esatte e lockfile |
+| `pnpm check` | Passato: TypeScript, lint, confini renderer/UI/contratti (29 sorgenti); verifiche mirate durante integrazione |
+| `pnpm test` | 16/16 passati dopo integrazione: DB/config, desktop origine/path/IPC, server health/CORS, import renderer |
+| `pnpm build` | Passato, sette package/app; font e licenze inclusi nel renderer |
+| `pnpm verify:shell` | Passato nel renderer Electron produzione: tre catture 1586 × 992, canvas inizializzati, nessun overflow orizzontale, Ctrl K/focus input, preferenza ridotta e Session 960 × 800 |
+| Confronto PNG | Eseguito sulle tre viste; corretto wrapping sidebar e scroll Pulse. Catture in `docs/design/captures/`; limiti in `design/t02-review.md` |
+| Packaging Windows | `pnpm package:win` passato; installer `release/win/Nexus-AI-0.2.0-win-x64.exe`, 113449222 byte, unsigned; non installato automaticamente |
+| Eseguibile Windows impacchettato | Smoke exit 0: renderer montato, bridge validato, CSP e Node non disponibile. Log GPU alla chiusura del processo nascosto, senza errore dello smoke |
+| Prova umana T02 Windows | Pendente: usare i cinque passi in `CONTRIBUTING.md`, soprattutto movimento normale/ridotto e riapertura |
+| macOS/Linux | Configurazioni e icone presenti, prove native non eseguite qui. Il maintainer userà il Mac più avanti |
+| CI tre OS | Workflow presente; verificare la run effettiva dopo il push, senza dedurne l'esito dalla configurazione |
 
-## Dipendenze future
+Le verifiche Electron sono state eseguite fuori dal sandbox di esecuzione dopo che questo ne impediva l'avvio; nessun allentamento della sandbox del renderer o `--no-sandbox` introdotto. Screenshot QA con device scale 1 solo nel percorso `--verify-shell`, non nella normale app.
 
-Nessun blocco tecnico residuo di T01 sulla piattaforma verificata. Hosting/email, account integrazione GitHub, storage esterno e credenziali di firma verranno configurati nei task interessati. Nessun servizio a pagamento creato; nessuna credenziale AI richiesta/usata per T01. Gli asset finali di brand e l'interfaccia delle reference iniziano con T02.
+## Prossimo passo
 
-## Formato degli aggiornamenti successivi
+Il maintainer esegue build/verifica Windows **T02** secondo [CONTRIBUTING.md](../CONTRIBUTING.md). Registrare feedback e correggere difetti di questo task prima di T03.
 
-Aggiornare questo file nello stesso cambiamento del task: obiettivo corrente, owner e percorsi, comportamento consegnato, controlli effettivamente eseguiti, build utente per OS, problemi residui e prossimo task. Tenere solo lo stato utile alla ripresa; la storia dei cambiamenti sta nel changelog e nei commit.
+**PostgreSQL:** il maintainer creerà personalmente il DB locale quando richiesto. Non serve per T02. All'avvio di T03 definire libreria auth/schema, poi comunicargli versione supportata e istruzioni per database/utente dedicati e configurazione locale; non chiedere password nella chat.
+
+Hosting/email, runtime Codex, GitHub del prodotto, storage esterno e credenziali di firma saranno trattati nei rispettivi task. Nessun servizio a pagamento creato o chiave AI richiesta. Il repository del codice è [AndreaZero/nexus-ai](https://github.com/AndreaZero/nexus-ai).

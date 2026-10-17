@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T01 implementato, in attesa di verifica utente**, autorizzato dal maintainer il 17 ottobre 2026 con richiesta esplicita di usare multiagenti. Base multipiattaforma e comandi Windows sono consegnati; T02 resta separato e segue il feedback del maintainer. Concludere il task autorizzato senza introdurre conferme per scelte reversibili già comprese nel task.
+La fase corrente è **T02 consegnato, in attesa di verifica visiva Windows del maintainer**. T01 è accettato su Windows; shell, sistema visivo ed effetti T02 sono integrati. Registrare feedback e correggere eventuali difetti prima di avviare T03. Il maintainer creerà PostgreSQL locale quando servirà: avvisarlo in T03 prima di introdurre persistenza/migrazioni, senza richiedere DB per T02. Catture e limiti in `docs/design/t02-review.md`.
 
 ## Prodotto e architettura
 

@@ -29,7 +29,7 @@ Consegna: documenti di prodotto/architettura/protocollo/design, regole `AGENTS.m
 
 ### T01 — Monorepo e build native
 
-**Stato:** [implementato, in attesa di verifica utente — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1). **Dipendenze:** T00 e via ricevuto il 17 ottobre 2026. **Owner:** coordinatore/integratore, con tre fronti desktop/server/renderer integrati.
+**Stato:** [accettato dal maintainer su Windows — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1). **Dipendenze:** T00 e via ricevuto il 17 ottobre 2026. **Owner:** coordinatore/integratore, con tre fronti desktop/server/renderer integrati.
 
 Creare `apps/desktop`, `apps/web`, `apps/server`, `packages/contracts`, `packages/ui`, `packages/codex-bridge`, `packages/db`; fissare versioni stabili, workspace e lockfile, TS strict, entrypoint reali e comandi dev/build/check/package. Rendere il renderer comune caricabile in Electron isolato e web. Predisporre packaging Windows/macOS/Linux e app ID stabile. Creare solo i contratti necessari alla struttura e i confini IPC, senza generare pagine dimostrative.
 
@@ -37,19 +37,23 @@ Fronti possibili dopo i contratti: desktop/build; backend/bootstrap; renderer/bo
 
 **Uscita:** installazione riproducibile e compilazione della base sul sistema disponibile; configurazioni native per tutti gli OS; istruzioni esatte per l'utente. Verifica mirata dei confini renderer/main. **Build utente:** Windows qui; macOS differita al Mac; Linux indicata separatamente. Non dichiarare packaging verificato dove non eseguito.
 
-**Evidenza T01:** `pnpm check`, 16 test mirati, `pnpm build`, smoke Electron produzione e Vite, liveness HTTP reale, `pnpm package:win` e smoke dell'eseguibile impacchettato passati su Windows x64. Installer unsigned, nessuna installazione automatica. Le configurazioni macOS/Linux e la CI sono presenti; esiti nativi/accettazione utente restano da registrare. Comandi e prova manuale in `CONTRIBUTING.md`.
+**Evidenza T01:** `pnpm check`, 16 test mirati, `pnpm build`, smoke Electron produzione e Vite, liveness HTTP reale, `pnpm package:win` e smoke dell'eseguibile impacchettato passati su Windows x64. Installer unsigned, nessuna installazione automatica. Il maintainer conferma la build Windows funzionante; configurazioni macOS/Linux e CI presenti, prove native Mac/Linux ancora da registrare. Comandi in `CONTRIBUTING.md`.
 
 ### T02 — Sistema visivo e shell definitiva
 
-**Dipendenze:** T01. **Ownership:** UI per token/primitive/effetti, renderer per frame/rotte; integrazione centrale.
+**Stato:** [consegnato, in attesa di verifica utente — issue #2](https://github.com/AndreaZero/nexus-ai/issues/2). **Dipendenze:** T01 accettato e via del maintainer con multiagenti. **Ownership:** fronti UI, effetti e layout integrati; ownership rilasciate, coordinatore responsabile della consegna.
 
 Trasferire token CSS, font e licenze; costruire logo, sidebar con pianeta/orbite, header, ricerca e tab, card, badge, avatar, pulsanti, progressi e donut. Impostare layout distinti delle tre viste e rotte future con stati vuoti reali. Effetti ambientali e reduced motion fanno parte del task, non di un generico polish futuro. Le feature ancora assenti non espongono pulsanti finti.
 
 **Uscita:** frame riconoscibile e proporzioni delle PNG a 1586 × 992, focus/tastiera e finestra ridotta utilizzabili. Controllo visuale una volta su frame e componenti, correggendo differenze materiali. **Build utente:** verificare shell, sidebar, resize, movimento normale/ridotto.
 
+**Evidenza T02:** token e font locali, tre griglie, effetti procedurali, primitive, navigazione e impostazioni integrate nella stessa app. Check statici e 16 test passati; renderer reale catturato a 1586 × 992 e 960 × 800, con verifica focus ricerca e preferenza movimento ridotto. Rettangoli e differenze residue in [confronto T02](design/t02-review.md). Le PNG contengono dati di progetto; la shell consegnata mantiene stati vuoti finché le capacità reali non arrivano. Accettazione visiva e movimento dal vivo a cura del maintainer. PostgreSQL non serve qui.
+
 ### T03 — Identità Nexus e accesso
 
 **Dipendenze:** T01–T02. **Ownership:** backend auth/dati, renderer onboarding, desktop integrazione browser; schema auth con un autore.
+
+Prima dell'implementazione della persistenza avvisare il maintainer: creerà personalmente PostgreSQL locale. Comunicare versione supportata, database/utente dedicati e variabili richieste dopo aver definito schema e libreria auth; non richiedere credenziali in chat.
 
 Implementare account Nexus, email verificata, sessioni, logout/revoca e reset tramite libreria mantenuta; flusso desktop nel browser di sistema e ritorno validato. Distinguere chiaramente login Nexus e collegamento Codex. Configurazione email reale/self-host e errori recuperabili; nessun segreto nel renderer.
 

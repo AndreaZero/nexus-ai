@@ -12,20 +12,20 @@ Non modificare le PNG di riferimento. Il loro uso è confronto e specifica, non 
 
 Le immagini sono state fornite dal maintainer come mockup. Non dedurre il loro font, motore grafico o licenza di singoli brand dai pixel. Gli asset introdotti nell'app avranno provenienza registrata nella tabella seguente e relativo avviso/licenza quando necessario.
 
-## Asset da costruire nei task di design
+## Inventario dopo T02
 
 | ID | Asset | Percorso previsto | Fonte/stato |
 | --- | --- | --- | --- |
-| A01 | Simbolo Nexus, wordmark e app icon per OS | `packages/ui/assets/brand/`, icone packaging desktop | Ricostruzione vettoriale dai tratti della reference; da realizzare |
-| A02 | Pianeta, orbite e rete sidebar | `packages/ui/effects/sidebar-planet/` | Procedurale originale, T02 |
-| A03 | Superficie pulse e percorsi nodi | `packages/ui/effects/project-pulse/` | Procedurale originale, T10 |
-| A04 | Mappa schematica e nodi presenza | `packages/ui/effects/presence-map/` | Procedurale, senza geolocalizzazione implicita, T09 |
-| A05 | Sparkline, waveform e microdecorazione | `packages/ui/charts/` e `effects/` | Componenti SVG/canvas, T02/T09/T10 |
-| A06 | UI font Inter e codice JetBrains Mono | `packages/ui/assets/fonts/` | Proposta; scaricare font ufficiali e registrare licenza quando aggiunti |
-| A07 | Icone outline, tipi file e brand Codex/GitHub | `packages/ui/icons/` | Famiglia coerente/asset ufficiali quando inseriti, provenienza da registrare |
+| A01 | Simbolo Nexus, wordmark e app icon per OS | `packages/ui/assets/brand/`, `apps/desktop/resources/` | SVG originale costruito in T02; PNG 1024, ICO 16–256 e ICNS esportati dallo stesso SVG, licenza MIT del repository |
+| A02 | Pianeta, orbite e rete sidebar | `packages/ui/src/effects/SidebarPlanet.tsx` | Canvas procedurale originale, texture calcolata localmente e memorizzata; MIT |
+| A03 | Superficie pulse e percorsi nodi | `packages/ui/src/effects/AmbientWave.tsx` | Scena originale T02 con punti deterministici e curve; label ambientali, collegamento a dati reali in T10 |
+| A04 | Mappa schematica e nodi presenza | `packages/ui/src/effects/PresenceMap.tsx` | Scena originale T02, senza geolocalizzazione o utenti simulati; conteggi reali in T09 |
+| A05 | Sparkline, waveform e microdecorazione | `packages/ui/src/effects/`, `apps/web/src/views/` | Canvas/SVG/CSS originali; le griglie dei grafici dati rimangono vuote quando manca la fonte |
+| A06 | UI font Inter e codice JetBrains Mono | Dipendenze `@fontsource/inter@5.3.0`, `@fontsource/jetbrains-mono@5.3.0`; `apps/web/public/licenses/` | Font locali dal pacchetto Fontsource, SIL Open Font License 1.1 allegata; nessuna richiesta CDN |
+| A07 | Icone outline | `packages/ui/src/icons.tsx` | Tracciati SVG originali coerenti, MIT; nessuna dipendenza Lucide introdotta. Simboli generici per capacità, nessun logo provider copiato dalle PNG |
 | A08 | Avatar e miniature preview | Risorse per utente/progetto | Dati veri, iniziali come fallback; non ritagliare volti casuali dalla PNG |
 
-Non esistono ancora questi asset: la tabella è assegnazione del lavoro, non inventario di file già prodotti. Evitare risorse remote obbligatorie per font/decorazioni a runtime. Le miniature deploy possono provenire da immagine caricata o fonte configurata, mai da uno screenshot fittizio presentato come produzione.
+I file A01–A07 sono presenti in T02; A08 richiede dati utente/progetto nei task successivi. Le icone native sono esportazioni dell'asset originale, senza una dipendenza di conversione a runtime. Le miniature deploy possono provenire da immagine caricata o fonte configurata, mai da uno screenshot fittizio presentato come produzione. Licenze incluse nel bundle in `/licenses/Inter-OFL.txt` e `/licenses/JetBrainsMono-OFL.txt`.
 
 ## Confronto di accettazione
 
@@ -33,4 +33,4 @@ Per ciascuna reference verificare, in questo ordine: frame/sidebar/header, retta
 
 Registrare uno screenshot per vista a ogni tranche che ne completa la composizione, più annotazione breve delle differenze materiali. Non imporre screenshot a ogni commit. Le schermate finali devono poi essere provate con dati veri, titoli lunghi, liste vuote e permessi diversi. Un confronto statico non prova streaming, accessibilità, prestazioni o build native.
 
-La fedeltà resta da verificare fino all'implementazione: non è dimostrata dalla sola presenza di questi documenti o dal token CSS.
+La composizione T02 è stata confrontata nel renderer reale: [catture, misure e limiti](t02-review.md). La corrispondenza dei contenuti completi richiede i dati e le capacità dei task T06–T14; accettazione visiva finale in T15.

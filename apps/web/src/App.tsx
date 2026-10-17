@@ -1,84 +1,63 @@
-import { EmptyState, StatusIndicator } from '@nexus-ai/ui';
-import { strings } from './strings.js';
-import { useDesktopInfo } from './use-desktop-info.js';
-import { useServerHealth } from './use-server-health.js';
-import type { HealthState } from './use-server-health.js';
+import { useEffect, useState } from 'react';
+import { Card, EmptyPanel, Icon } from '@nexus-ai/ui';
+import { AppShell } from './shell/AppShell.js';
+import type { ShellRoute } from './shell/types.js';
+import { OverviewView } from './views/OverviewView.js';
+import { PulseView } from './views/PulseView.js';
+import { SessionView } from './views/SessionView.js';
+import { ApplicationSettings } from './ApplicationSettings.js';
+import { NavigationDialog } from './NavigationDialog.js';
+import { NotificationsDialog } from './NotificationsDialog.js';
+import { navigate, parseRoute, routes } from './routes.js';
+import { useMotionPreference } from './use-motion-preference.js';
 import './app.css';
+import './integration.css';
 
-const platformNames = { win32: 'Windows', darwin: 'macOS', linux: 'Linux' } as const;
-
-function ServerStatus({ state }: { state: HealthState }) {
-  switch (state.status) {
-    case 'checking': return <StatusIndicator tone="pending">{strings.serverPending}</StatusIndicator>;
-    case 'healthy': return <StatusIndicator tone="positive">{strings.serverHealthy}</StatusIndicator>;
-    case 'offline': return <StatusIndicator tone="danger">{strings.serverOffline}</StatusIndicator>;
-    case 'invalid': return <StatusIndicator tone="danger">{strings.serverInvalid}</StatusIndicator>;
-    case 'not_configured': return <StatusIndicator tone="neutral">{strings.serverNotConfigured}</StatusIndicator>;
-  }
-}
+const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
+  projects: 'No projects are connected to this workspace.',
+  team: 'Workspace members will appear here once a workspace is connected.',
+  tasks: 'No tasks or milestones are available for this project.',
+  repos: 'Connect a project to access its repositories.',
+  code: 'No repository is connected. Project files and changes will appear here.',
+  deployments: 'No environments or deployment builds are available.',
+  docs: 'No project documents have been shared.',
+};
 
 export function App() {
-  const desktop = useDesktopInfo();
-  const server = useServerHealth();
+  const [route, setRoute] = useState(() => parseRoute(window.location.hash));
+  const [dialog, setDialog] = useState<'navigation' | 'notifications' | null>(null);
+  const motion = useMotionPreference();
 
-  return (
-    <div className="app">
-      <header className="app-header">
-        <span className="app-wordmark">{strings.brand}</span>
-        <span className="app-tagline">{strings.tagline}</span>
-      </header>
-      <main className="app-main">
-        <EmptyState title={strings.workspaceTitle}>
-          <p>{strings.workspaceDescription}</p>
-        </EmptyState>
+  useEffect(() => {
+    if (!window.location.hash) window.history.replaceState(null, '', '#/overview');
+    const update = () => { setRoute(parseRoute(window.location.hash)); setDialog(null); };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setDialog((previous) => previous === 'navigation' ? null : 'navigation');
+      }
+    };
+    window.addEventListener('hashchange', update);
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('hashchange', update);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
 
-        <section className="configuration" aria-labelledby="configuration-title">
-          <h2 id="configuration-title">{strings.configuration}</h2>
-          <div className="configuration-grid">
-            <section className="configuration-panel" aria-labelledby="environment-title">
-              <h3 id="environment-title">{strings.environment}</h3>
-              <div aria-live="polite" aria-atomic="true" data-testid="desktop-state">
-                {desktop.status === 'loading' && <StatusIndicator tone="pending">{strings.runtimePending}</StatusIndicator>}
-                {desktop.status === 'error' && <StatusIndicator tone="danger">{strings.runtimeError}</StatusIndicator>}
-                {desktop.status === 'web' && <StatusIndicator tone="neutral">{strings.browser}</StatusIndicator>}
-                {desktop.status === 'ready' && <StatusIndicator tone="neutral">{strings.desktop} · {platformNames[desktop.info.platform]}</StatusIndicator>}
-              </div>
-              {desktop.status === 'ready' && (
-                <dl className="details" data-testid="desktop-info">
-                  <div><dt>{strings.version}</dt><dd data-testid="app-version">{desktop.info.appVersion}</dd></div>
-                  <div><dt>{strings.platform}</dt><dd data-testid="platform">{desktop.info.platform}</dd></div>
-                  <div><dt>{strings.architecture}</dt><dd>{desktop.info.architecture}</dd></div>
-                  <div><dt>{strings.electron}</dt><dd>{desktop.info.electronVersion}</dd></div>
-                </dl>
-              )}
-              <div className="runtime-status">
-                <span className="detail-label">{strings.runtime}</span>
-                <p>{desktop.status === 'web' ? strings.runtimeWeb : strings.runtimeUnavailable}</p>
-              </div>
-            </section>
+  const viewProps = { onNavigate: navigate, reducedMotion: motion.reducedMotion };
+  const section = routes.find((entry) => entry.id === route);
+  const content = route === 'overview' ? <OverviewView {...viewProps} />
+    : route === 'pulse' || route === 'portal' ? <PulseView {...viewProps} />
+    : route === 'session' ? <SessionView {...viewProps} />
+    : route === 'settings' ? <ApplicationSettings motion={motion} />
+    : <div className="route-empty-layout"><Card title={section?.label ?? 'Workspace'} icon={<Icon name={route === 'team' ? 'team' : route === 'tasks' ? 'tasks' : route === 'repos' ? 'repos' : route === 'docs' ? 'book' : route === 'deployments' ? 'upload' : route === 'code' ? 'code' : 'projects'} />}><EmptyPanel title={`No ${route === 'code' ? 'files' : section?.label.toLowerCase() ?? 'items'} yet`} description={sectionDescriptions[route] ?? 'No content has been shared in this workspace.'} /></Card></div>;
 
-            <section className="configuration-panel" aria-labelledby="server-title">
-              <h3 id="server-title">{strings.server}</h3>
-              <div role="status" aria-atomic="true" data-testid="server-state"><ServerStatus state={server.state} /></div>
-              {server.endpoint && <dl className="details"><div className="detail-endpoint"><dt>{strings.endpoint}</dt><dd>{server.endpoint}</dd></div></dl>}
-              {(server.state.status === 'not_configured' || server.state.status === 'invalid') && <p className="configuration-note">{strings.serverNotConfiguredDetail}</p>}
-              {server.state.status === 'offline' && (
-                <p className="configuration-note">{server.state.reason === 'timeout' ? strings.serverTimeout : server.state.reason === 'response' ? strings.serverInvalidResponse : strings.serverNetworkError}</p>
-              )}
-              {server.state.status === 'healthy' && (
-                <>
-                  <dl className="details">
-                    <div><dt>{strings.database}</dt><dd>{server.state.response.database === 'not_configured' ? strings.databaseNotConfigured : strings.databaseNotConnected}</dd></div>
-                    <div><dt>{strings.checkedAt}</dt><dd><time dateTime={server.state.checkedAt.toISOString()}>{server.state.checkedAt.toLocaleTimeString()}</time></dd></div>
-                  </dl>
-                  <p className="configuration-note">{strings.healthNote}</p>
-                </>
-              )}
-              {server.endpoint && <button className="retry-button" type="button" onClick={server.retry} disabled={server.state.status === 'checking'}>{strings.retry}</button>}
-            </section>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+  return <>
+    <AppShell route={route} onNavigate={navigate} onSearch={() => setDialog('navigation')} onNotifications={() => setDialog('notifications')} reducedMotion={motion.reducedMotion} onToggleMotion={motion.systemReduced ? () => navigate('settings') : motion.toggle}>
+      <div data-shell-route={route} className="route-content" key={route}>{content}</div>
+    </AppShell>
+    {dialog === 'navigation' && <NavigationDialog onNavigate={navigate} onClose={() => setDialog(null)} />}
+    {dialog === 'notifications' && <NotificationsDialog onClose={() => setDialog(null)} />}
+  </>;
 }
