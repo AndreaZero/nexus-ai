@@ -67,17 +67,21 @@ async function fixture() {
   const browserUrls: string[] = [];
   const homes: string[] = [];
   let browserAvailable = true;
+  let attachments: { name: string; text: string }[] = [];
+  let attachmentFailure = false;
   const service = new DesktopCodex({ userData: directory, executable: path.join(directory, 'codex.exe'), clientVersion: '0.5.0', platform: 'win32',
     auth: { getState: async () => account,
       authorizeRepository: async () => allowed ? { userId: account.user!.id } : { ok: false as const, code: 'forbidden', message: 'Denied' } },
     bindings: { get: async (userId, project, repository) => ({ projectId: project, repositoryId: repository, deviceId: projectId, rootPath: currentFolder, label: userId, updatedAt: '2026-10-17T00:00:00.000Z' }) },
     createProcess: options => { homes.push(options.home); return runtime.client(); }, publish: state => snapshots.push(structuredClone(state)), openExternal: async url => { if (!browserAvailable) throw new Error('Browser unavailable.'); browserUrls.push(url); },
+    readAttachments: async () => { if (attachmentFailure) throw new Error('Attachment unavailable.'); return attachments; },
   });
   return { directory, folder, runtime, service, snapshots, browserUrls, homes, setAccount: (value: NexusAuthState) => { account = value; service.nexusStateChanged(value); }, setAllowed: (value: boolean) => { allowed = value; }, setFolder: (value: string) => { currentFolder = value; }, setBrowserAvailable: (value: boolean) => { browserAvailable = value; },
+    setAttachments: (files: { name: string; text: string }[]) => { attachments = files; }, setAttachmentFailure: () => { attachmentFailure = true; },
     close: async () => { await service.dispose(); await rm(directory, { recursive: true, force: true }); } };
 }
 const open: CodexRequest = { operation: 'openSession', projectId, repositoryId, model: 'official-model' };
-const send: CodexRequest = { operation: 'send', projectId, repositoryId, model: 'official-model', effort: 'medium', text: 'Explain the existing files.' };
+const send: CodexRequest = { operation: 'send', projectId, repositoryId, model: 'official-model', effort: 'medium', text: 'Explain the existing files.', attachmentIds: [] };
 
 test('native runtime paths, official login URLs and IPC inputs prevent arbitrary process/path injection', () => {
   assert.equal(codexRuntimePath(true, '/resources', '/app', 'linux'), path.join('/resources', 'codex/bin/codex'));
@@ -223,6 +227,48 @@ test('login uses official browser/device flow, explicit API key stays outside DT
     const refused = await test.service.request({ operation: 'login', method: 'browser' });
     assert.equal(refused.ok, false); assert.equal(test.browserUrls.length, 2);
   } finally { await test.close(); }
+});
+
+test('explicit attachments become separate turn inputs while streamed/resumed user text remains the typed prompt', async () => {
+  const state = await fixture();
+  try {
+    await state.service.request({ operation: 'connect' });
+    state.setAttachments([{ name: 'src/source.ts', text: 'export const selected = "snapshot";' }]);
+    const result = await state.service.request({ ...send, attachmentIds: [repositoryId] });
+    assert.equal(result.ok, true);
+    const input = (state.runtime.calls.find(call => call.method === 'turn/start')!.params as { input: { type: string; text: string }[] }).input;
+    assert.equal(input.length, 2); assert.equal(input[0]?.text, send.text); assert.match(input[1]!.text, /selected = "snapshot"/);
+    state.runtime.notification({ method: 'item/completed', params: { threadId: 'thread-1', turnId: 'turn-1', item: { id: 'user-1', type: 'userMessage', content: input } } });
+    const snapshot = await state.service.request({ operation: 'getState' });
+    assert.equal(snapshot.state.session?.messages.length, 1); assert.equal(snapshot.state.session?.messages[0]?.text, send.text);
+    assert.equal(JSON.stringify(snapshot.state).includes('export const selected'), false);
+    state.runtime.notification({ method: 'turn/completed', params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed', items: [], error: null } } });
+    state.setAttachmentFailure();
+    const denied = await state.service.request({ ...send, attachmentIds: [repositoryId] });
+    assert.equal(denied.ok, false); assert.equal(state.runtime.calls.filter(call => call.method === 'turn/start').length, 1);
+  } finally { await state.close(); }
+});
+
+test('only current-thread exposed plan/token metrics update the session and a new turn clears the plan', async () => {
+  const state = await fixture();
+  try {
+    await state.service.request({ operation: 'connect' }); await state.service.request(send);
+    const emit = (method: string, params: Record<string, unknown>) => state.runtime.notification({ method, params: { threadId: 'thread-1', turnId: 'turn-1', ...params } });
+    emit('turn/plan/updated', { explanation: 'Visible execution plan.', plan: [{ step: 'Read selected files', status: 'completed' }, { step: 'Explain implementation', status: 'inProgress' }] });
+    emit('thread/tokenUsage/updated', { tokenUsage: { total: { totalTokens: 420, inputTokens: 300, cachedInputTokens: 100, cacheWriteInputTokens: 0, outputTokens: 120, reasoningOutputTokens: 20 }, last: {}, modelContextWindow: 200000 } });
+    let snapshot = await state.service.request({ operation: 'getState' });
+    assert.equal(snapshot.state.session?.plan.length, 2); assert.equal(snapshot.state.session?.planExplanation, 'Visible execution plan.');
+    assert.deepEqual(snapshot.state.session?.usage, { totalTokens: 420, inputTokens: 300, cachedInputTokens: 100, outputTokens: 120, contextWindow: 200000 });
+    assert.ok(snapshot.state.session?.startedAt);
+    emit('turn/plan/updated', { threadId: 'other-thread', plan: [{ step: 'Wrong thread', status: 'pending' }] });
+    emit('turn/plan/updated', { turnId: 'old-turn', plan: [{ step: 'Old turn', status: 'pending' }] });
+    emit('thread/tokenUsage/updated', { tokenUsage: { total: { totalTokens: -1, inputTokens: 0, cachedInputTokens: 0, outputTokens: 0 }, modelContextWindow: null } });
+    emit('turn/completed', { turn: { id: 'turn-1', status: 'completed', items: [], error: null } });
+    snapshot = await state.service.request({ operation: 'getState' });
+    assert.equal(snapshot.state.session?.plan[0]?.step, 'Read selected files'); assert.equal(snapshot.state.session?.usage?.totalTokens, 420);
+    await state.service.request(send); snapshot = await state.service.request({ operation: 'getState' });
+    assert.deepEqual(snapshot.state.session?.plan, []); assert.equal(snapshot.state.session?.planExplanation, null);
+  } finally { await state.close(); }
 });
 
 test('device code remains usable when the OS cannot launch a browser; browser OAuth cancels the failed launch', async () => {

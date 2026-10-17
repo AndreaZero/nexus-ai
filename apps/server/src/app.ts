@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema } from '@nexus-ai/contracts';
+import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema, sessionsRequestSchema, sessionsResponseSchema } from '@nexus-ai/contracts';
 import { createDatabaseBoundary } from '@nexus-ai/db';
 import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { fromNodeHeaders } from 'better-auth/node';
@@ -14,6 +14,7 @@ import { createEmailSender, EmailDeliveryError } from './email.js';
 import type { ServerConfig } from './config.js';
 import { createCollaborationService } from './collaboration.js';
 import { createServerLogStream, errorDiagnostic, installRequestLogging, logRoute, type LogOutput } from './logging.js';
+import { createSessionsService } from './sessions.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -41,13 +42,14 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const mail = config.auth.mail ? createEmailSender(config.auth.mail) : null;
   const auth = createNexusAuth(config.auth, database, mail);
   const collaboration = createCollaborationService(database, mail, config.auth.webURL);
+  const sessions = createSessionsService(database, error => app.log.error({ event: 'sessions.failure', ...errorDiagnostic(error) }));
   app.addHook('onClose', async () => {
     mail?.close();
     await database.close();
   });
 
   app.setErrorHandler((error, request, reply) => {
-    const isCollaboration = request.url.split('?')[0] === '/api/collaboration';
+    const isCollaboration = ['/api/collaboration', '/api/sessions'].includes(request.url.split('?')[0] ?? '');
     if (error instanceof OriginNotAllowedError) {
       if (isCollaboration) return reply.code(403).send({ ok: false, code: 'forbidden', message: 'Origine della richiesta non consentita.' });
       return reply.code(403).send({ error: 'origin_not_allowed', message: 'Origin non consentita.' });
@@ -68,7 +70,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   await app.register(cors, {
     delegator(request, callback) {
       const requestPath = request.url.split('?')[0];
-      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration';
+      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions';
       const origin = request.headers.origin;
       const allowed = isAuth
         ? origin === config.auth.webURL || origin === new URL(config.auth.baseURL).origin || origin === DESKTOP_AUTH_ORIGIN
@@ -119,6 +121,33 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     } catch (error) {
       app.log.error({ event: 'collaboration.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
       return fail(503, 'unavailable', 'Servizio collaborazione temporaneamente non disponibile.');
+    }
+  });
+
+  app.post('/api/sessions', { bodyLimit: 1024 * 1024 }, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer');
+    const fail = (status: number, code: 'invalid_request' | 'forbidden' | 'auth_required' | 'unavailable', message: string) =>
+      reply.code(status).send(sessionsResponseSchema.parse({ ok: false, code, message }));
+    const origin = request.headers.origin;
+    if (!origin || ![config.auth.webURL, new URL(config.auth.baseURL).origin, DESKTOP_AUTH_ORIGIN].includes(origin)) return fail(403, 'forbidden', 'Origine della richiesta non consentita.');
+    if (request.headers['content-type']?.split(';')[0]?.trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_request', 'È richiesta una richiesta JSON.');
+    const input = sessionsRequestSchema.safeParse(request.body);
+    if (!input.success) return fail(400, 'invalid_request', 'Estratto o richiesta sessione non validi.');
+    if (!auth) return fail(503, 'unavailable', 'Servizio account non disponibile.');
+    try {
+      const headers = fromNodeHeaders(request.headers);
+      headers.set(AUTH_CLIENT_IP_HEADER, request.ip);
+      for (const name of ['x-forwarded-for', 'x-real-ip', 'forwarded']) headers.delete(name);
+      const result = await auth.api.getSession({ headers, query: { disableCookieCache: true }, returnHeaders: true });
+      const cookies = result.headers.getSetCookie(); if (cookies.length) reply.header('Set-Cookie', cookies);
+      const account = result.response;
+      if (!account?.user.emailVerified || account.session.expiresAt.getTime() <= Date.now()) return fail(401, 'auth_required', 'Accedi con un account verificato per continuare.');
+      const outcome = sessionsResponseSchema.parse(await sessions.execute({ id: account.user.id, email: account.user.email }, input.data));
+      if (!outcome.ok) app.log.warn({ event: 'sessions.failure', requestId: request.id, operation: input.data.operation, outcome: outcome.code });
+      return reply.send(outcome);
+    } catch (error) {
+      app.log.error({ event: 'sessions.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
+      return fail(503, 'unavailable', 'Servizio sessioni temporaneamente non disponibile.');
     }
   });
 

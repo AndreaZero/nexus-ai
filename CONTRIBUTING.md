@@ -35,6 +35,7 @@ pnpm package:win
 | `pnpm verify:accounts` | Prova esplicita account PostgreSQL/SMTP reali con fixture locale temporanea |
 | `pnpm verify:auth-desktop` | Scambio PKCE, cifratura OS, ripristino/revoca in Electron isolato |
 | `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
+| `pnpm verify:sessions` | Tre account temporanei: estratti/audience, versioni/concorrenza, idempotenza, task visibili e revoca su HTTP/PostgreSQL/SMTP |
 | `pnpm codex:prepare` | Copia il runtime ufficiale fissato della piattaforma dalla dipendenza installata; eseguito anche dal build desktop |
 | `pnpm codex:schema` | Rigenera i tipi dal binario 0.159.2; non modificare manualmente `generated/` |
 | `pnpm verify:codex` | Handshake, account anonimo isolato, catalogo e shutdown del binario reale; richiede build, non esegue inferenza |
@@ -44,11 +45,13 @@ Gli harness account richiedono backend e Mailpit attivi. Quello HTTP elimina il 
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T05
+## Build e prova Windows T06
 
-Versione T05 corretta: **0.5.1**. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.5.1-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Codex nativo 0.159.2 è incluso, senza CLI globale o WSL richiesti; il pacchetto è più grande perché contiene il runtime ufficiale. Pacchetto unsigned; nessuna installazione automatica. Arrestare app/server precedenti prima della build e riavviarli dopo. Da T04 non occorrono nuove migrazioni o modifiche al DB/`.env`.
+Versione T06: **0.6.0**. Eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.6.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Migrazione additiva 0002 per estratti/versioni, senza cambiare credenziali o creare un nuovo DB. Codex nativo 0.159.2 è incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app/backend precedenti prima della build e riavviarli dopo.
 
 Dopo la build tenere aperti:
+
+Per T06 verificare selezione file/preview, bozza Saved dopo navigazione/riavvio, piano/token osservati e Share con preview/audience in [session.md](docs/session.md). La cronologia pubblicata è leggibile in Session Info anche dal browser con il ruolo appropriato; nessuno stream live o controllo remoto anticipato.
 
 ```powershell
 # Terminale 1

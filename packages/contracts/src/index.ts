@@ -1,8 +1,12 @@
 import { z } from 'zod';
 import type { CollaborationRequest, CollaborationResponse, LocalBindingRequest, LocalBindingResponse } from './collaboration.js';
 import type { CodexRequest, CodexResponse, CodexState } from './codex.js';
+import type { ContextRequest, ContextResponse } from './context.js';
+import type { SessionsRequest, SessionsResponse } from './sessions.js';
 export * from './collaboration.js';
 export * from './codex.js';
+export * from './context.js';
+export * from './sessions.js';
 
 export const DESKTOP_IPC = {
   getInfo: 'nexus:desktop:get-info',
@@ -15,6 +19,8 @@ export const DESKTOP_IPC = {
   localBindingRequest: 'nexus:repository:local-binding',
   codexRequest: 'nexus:codex:request',
   codexStateChanged: 'nexus:codex:state-changed',
+  contextRequest: 'nexus:context:request',
+  sessionsRequest: 'nexus:sessions:request',
 } as const;
 
 export const nexusUserSchema = z.object({
@@ -52,6 +58,8 @@ export interface DesktopBridge {
   getInfo(): Promise<DesktopInfo>;
   readonly collaboration: { request(request: CollaborationRequest): Promise<CollaborationResponse> };
   readonly localBinding: { request(request: LocalBindingRequest): Promise<LocalBindingResponse> };
+  readonly context: { request(request: ContextRequest): Promise<ContextResponse> };
+  readonly sessions: { request(request: SessionsRequest): Promise<SessionsResponse> };
   readonly codex: {
     request(request: CodexRequest): Promise<CodexResponse>;
     onStateChanged(callback: (state: CodexState) => void): () => void;

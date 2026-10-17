@@ -119,8 +119,8 @@ export const collaborationEvent = pgTable('collaboration_event', {
   payload: jsonb('payload').notNull(), createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [index('collaboration_event_scope_idx').on(table.workspaceId, table.createdAt)]);
 
-// Empty domain foundations. Operational task/session APIs arrive in their tasks;
-// private content stays on the device and cannot be inserted in these shared tables.
+// Task foundations arrive in T11. T06 session rows contain only explicitly
+// published excerpts; private runtime history and credentials stay local.
 export const milestone = pgTable('milestone', {
   id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
   title: text('title').notNull(), createdBy: text('created_by').notNull().references(() => user.id),
@@ -143,9 +143,11 @@ export const aiSession = pgTable('ai_session', {
   deviceId: text('device_id').notNull(), title: text('title').notNull(),
   status: text('status', { enum: ['created', 'running', 'completed', 'interrupted', 'failed'] }).notNull().default('created'),
   visibility: text('visibility', { enum: ['team', 'client'] }).notNull().default('team'),
+  version: integer('version').notNull().default(1),
+  messages: jsonb('messages').$type<{ id: string; role: 'user' | 'assistant'; text: string }[]>().notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index('ai_session_project_idx').on(table.projectId), check('ai_session_visibility_check', sql`${table.visibility} IN ('team', 'client')`), check('ai_session_status_check', sql`${table.status} IN ('created', 'running', 'completed', 'interrupted', 'failed')`)]);
+}, (table) => [index('ai_session_project_idx').on(table.projectId), check('ai_session_visibility_check', sql`${table.visibility} IN ('team', 'client')`), check('ai_session_status_check', sql`${table.status} IN ('created', 'running', 'completed', 'interrupted', 'failed')`), check('ai_session_version_check', sql`${table.version} > 0`), check('ai_session_messages_check', sql`jsonb_typeof(${table.messages}) = 'array' AND jsonb_array_length(${table.messages}) <= 20`)]);
 
 export const collaborationSchema = { workspace, workspaceMember, project, projectMember, repository, invitation, collaborationEvent, milestone, task, aiSession };
 export const databaseSchema = { ...authSchema, ...collaborationSchema };

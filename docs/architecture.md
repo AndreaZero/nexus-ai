@@ -66,6 +66,8 @@ T05 aggiunge runtime Codex nativo 0.159.2 incluso nel desktop, supervisore stdio
 
 ## Confini del desktop
 
+T06 aggiunge `DesktopContext`: file scelti nativamente e bozza cifrata con controllo root/generation/account, preview esplicita, input file Codex e Git in sola osservazione. Il server conserva esclusivamente estratti revisionati tramite il dominio sessions e migrazione additiva 0002; nessun token o percorso provider/localhome. La condivisione è pull con permessi correnti; realtime resta T08. Fonte operativa: [session.md](session.md).
+
 - `main`: lifecycle runtime, selezione cartella, Git, processi locali e segreti Nexus protetti dal sistema operativo. Path mediante API native, processi con argomenti separati e senza composizione di comandi shell da input remoto.
 - `preload`: metodi espliciti e validati, con verifica del mittente IPC. Nessun `exec`, `readFile` generico o accesso indiscriminato a `ipcRenderer` esposto alla pagina.
 - `renderer`: stesso prodotto del web; sceglie le azioni da capability reali come `canRunLocalSession` e `canOpenLocalEditor`. Renderer isolato, sandbox, `nodeIntegration: false`, `contextIsolation: true` e CSP.

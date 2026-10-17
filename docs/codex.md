@@ -1,5 +1,7 @@
 # Integrazione Codex
 
+**T06:** la sessione aggiunge [contesto e cronologia esplicita](session.md): file selezionati/preview, bozza cifrata, Git osservato, piano/token dagli eventi reali e Share con preview. Il protocollo/runtime resta 0.159.2 e la modalità readOnly; i limiti T05 sotto sono descritti nel loro contesto storico.
+
 ## Contratto T05 fissato
 
 Il maintainer ha autorizzato T05 il 17 ottobre 2026. Runtime ufficiale **Codex CLI 0.159.2**, schema TypeScript ottenuto con il suo `app-server generate-ts` e conservato immutato in `packages/codex-bridge/generated/`. La documentazione corrente può descrivere campi successivi: l'implementazione usa quelli effettivamente generati per la versione fissata. Fonte ufficiale letta: [App Server](https://learn.chatgpt.com/docs/app-server), sezioni autenticazione, thread, turni e sandbox.

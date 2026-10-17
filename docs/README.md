@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01–T03 sono accettati su Windows; T04 collaborazione e T05 Codex personale/sessioni locali sono implementati, con prove manuali distinte ancora da registrare. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`, collegamento AI in `codex.md`.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T06 aggiunge contesto locale, bozza cifrata e cronologia condivisa soltanto con conferma. Prove automatiche, native e accettazione manuale sono distinte in `status.md`; setup/build in `../CONTRIBUTING.md`, runtime in `codex.md`, sessione in `session.md`.
 
 | Documento | Uso |
 | --- | --- |
@@ -21,5 +21,6 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [PostgreSQL locale](setup/postgresql.md) | Database/ruolo dedicati, script manuale, configurazione e verifica prima della persistenza |
 | [Account T03](auth.md) | Setup, migrazioni, Mailpit, accesso web/desktop, confini e prove eseguite |
 | [Collaborazione T04](collaboration.md) | Workspace/progetti, ruoli, inviti, repository, cartella locale e verifica manuale |
+| [Sessione T06](session.md) | File scelti, bozza cifrata, Git osservato, piano/token e pubblicazione esplicita della cronologia |
 
 Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.

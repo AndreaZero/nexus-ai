@@ -7,6 +7,8 @@ import { AuthAttempt } from './auth-attempt.js';
 import { AUTH_CALLBACK_PATH, AUTH_CLIENT_ID, AUTH_SCHEME, publicServiceUrl } from './auth-config.js';
 import { AuthStorageError, EncryptedAuthStorage } from './auth-storage.js';
 import { requestCollaboration } from './collaboration-transport.js';
+import { requestSessions } from './sessions-transport.js';
+import { sessionsResponseSchema, type SessionsRequest, type SessionsResponse } from '@nexus-ai/contracts';
 
 declare const __NEXUS_AUTH_SERVER_URL__: string;
 declare const __NEXUS_WEB_URL__: string;
@@ -209,6 +211,12 @@ export class DesktopAuth {
   /** This method stays in main; only the validated domain DTO crosses preload. */
   collaborationRequest(request: CollaborationRequest): Promise<CollaborationResponse> {
     return this.withSession(async () => requestCollaboration(desktopAccountEndpoints().server, this.client.getCookie(), request));
+  }
+
+  async sessionsRequest(request: SessionsRequest): Promise<SessionsResponse> {
+    const result = await this.withSession(async () => requestSessions(desktopAccountEndpoints().server, this.client.getCookie(), request));
+    const parsed = sessionsResponseSchema.safeParse(result);
+    return parsed.success ? parsed.data : { ok: false, code: 'unavailable', message: 'The session server could not complete this operation.' };
   }
 
   authorizeRepository(projectId: string, repositoryId: string): Promise<{ userId: string } | Exclude<CollaborationResponse, { ok: true }>> {

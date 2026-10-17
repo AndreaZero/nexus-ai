@@ -25,6 +25,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 
 ## Da concretizzare al momento opportuno
 
+**T06:** bozza/selezione restano cifrate sul dispositivo; il backend persiste solo messaggi scelti con preview e conferma di audience. Nessuna promozione automatica di un thread completo a contenuto cliente. Osservazioni Git locali separate dall'autenticazione/API GitHub T12; condivisione pull separata dal realtime T08. Limiti e prova in [session.md](session.md).
+
 - **T01 implementato:** versioni effettive fissate nel lockfile e riepilogate in `CONTRIBUTING.md`; app ID `io.github.andreazero.nexusai`. Packaging NSIS x64, DMG arm64/x64 e AppImage x64; Windows generato/verificato, altre prove native da registrare.
 - **T05 implementato, prova personale pendente:** runtime 0.159.2 e isolamento fissati. Verificare login/keyring/inferenza su Windows e in seguito su Mac/Linux; T07 completa le approvazioni interattive e scritture sullo stesso protocollo.
 - **T03/T16:** URL server, servizio email per verifica/reset/inviti e provider PostgreSQL/object storage. Preparare configurazione self-host senza impegnare servizi a pagamento non richiesti.

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, protocol, session, shell, safeStorage } from 'electron';
 import { readFile, realpath, rm } from 'node:fs/promises';
 import { mkdtempSync } from 'node:fs';
 import os from 'node:os';
@@ -12,6 +12,9 @@ import { AUTH_SCHEME } from './auth-config.js';
 import { verifyDesktopAuth } from './auth-verification.js';
 import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
 import { DesktopCodex, codexRuntimePath } from './codex.js';
+import { DesktopContext } from './context.js';
+import { EncryptedAuthStorage } from './auth-storage.js';
+import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema } from '@nexus-ai/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -29,6 +32,7 @@ if (shellVerification) app.commandLine.appendSwitch('force-device-scale-factor',
 let mainWindow: BrowserWindow | undefined;
 let desktopAuth: DesktopAuth | undefined;
 let desktopCodex: DesktopCodex | undefined;
+let desktopContext: DesktopContext | undefined;
 
 function receiveAccountCallback(value: string) {
   // Never log OS callback URLs: their fragment contains a temporary credential.
@@ -147,6 +151,7 @@ async function initialize() {
 
   desktopAuth = new DesktopAuth((state) => {
     desktopCodex?.nexusStateChanged(state);
+    desktopContext?.nexusStateChanged(state);
     const window = mainWindow;
     if (window && !window.isDestroyed() && isTrustedIpcSender({
       senderId: window.webContents.id,
@@ -169,10 +174,30 @@ async function initialize() {
     },
   );
 
+  desktopContext = new DesktopContext({
+    userData: app.getPath('userData'), auth: desktopAuth, bindings: bindingStorage,
+    storage: new EncryptedAuthStorage(path.join(app.getPath('userData'), 'session-context.bin'), safeStorage, process.platform),
+    pickFiles: async rootPath => {
+      const window = mainWindow;
+      if (!window || window.isDestroyed()) return [];
+      const selection = await dialog.showOpenDialog(window, { title: 'Select project text files', defaultPath: rootPath, properties: ['openFile', 'multiSelections'] });
+      return selection.canceled ? [] : selection.filePaths;
+    },
+  });
+  ipcMain.handle(DESKTOP_IPC.contextRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopContext!.request(contextRequestSchema.parse(args[0])).then(result => contextResponseSchema.parse(result));
+  });
+  ipcMain.handle(DESKTOP_IPC.sessionsRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopAuth!.sessionsRequest(sessionsRequestSchema.parse(args[0])).then(result => sessionsResponseSchema.parse(result));
+  });
+
   desktopCodex = new DesktopCodex({
     userData: app.getPath('userData'), clientVersion: app.getVersion(), platform: process.platform,
     executable: codexRuntimePath(app.isPackaged, process.resourcesPath, app.getAppPath(), process.platform),
     auth: desktopAuth, bindings: bindingStorage, openExternal: url => shell.openExternal(url),
+    readAttachments: (...args) => desktopContext!.resolveForSend(...args),
     publish: (state) => {
       const window = mainWindow;
       if (window && !window.isDestroyed() && isTrustedIpcSender({
@@ -274,12 +299,17 @@ async function initialize() {
         localBindingKeys: Object.keys(window.nexusDesktop.localBinding),
         codexKeys: Object.keys(window.nexusDesktop.codex),
         codexState: await window.nexusDesktop.codex.request({operation:'getState'}),
+        contextState: await window.nexusDesktop.context.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
+        sessionsState: await window.nexusDesktop.sessions.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
+        contextKeys: Object.keys(window.nexusDesktop.context), sessionsKeys: Object.keys(window.nexusDesktop.sessions),
         collaborationState: await window.nexusDesktop.collaboration.request({operation:'listWorkspaces'}),
         localBindingState: await window.nexusDesktop.localBinding.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         invalidRequestsDenied: await Promise.all([
           window.nexusDesktop.collaboration.request({operation:'listWorkspaces',url:'https://invalid.example'}),
           window.nexusDesktop.localBinding.request({operation:'select',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',rootPath:'/arbitrary'}),
           window.nexusDesktop.codex.request({operation:'connect',executable:'/arbitrary'}),
+          window.nexusDesktop.context.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',path:'/arbitrary'}),
+          window.nexusDesktop.sessions.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -293,10 +323,14 @@ async function initialize() {
       const collaborationState = collaborationResponseSchema.parse(check['collaborationState']);
       const localBindingState = localBindingResponseSchema.parse(check['localBindingState']);
       const codexState = codexResponseSchema.parse(check['codexState']);
+      const contextState = contextResponseSchema.parse(check['contextState']);
+      const sessionsState = sessionsResponseSchema.parse(check['sessionsState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['contextKeys']) !== '["request"]' || JSON.stringify(check['sessionsKeys']) !== '["request"]' ||
+          contextState.ok || contextState.code !== 'auth_required' || sessionsState.ok || sessionsState.code !== 'auth_required' ||
           localBindingState.ok || localBindingState.code !== 'auth_required' ||
           JSON.stringify(check['codexKeys']) !== '["request","onStateChanged"]' || codexState.ok || codexState.code !== 'auth_required' || codexState.state.runtime !== 'stopped' ||
           JSON.stringify(check['authKeys']) !== '["getState","signIn","cancelSignIn","signOut","onStateChanged"]' ||

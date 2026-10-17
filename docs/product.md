@@ -8,6 +8,22 @@ Il caso guida è uno sviluppatore che lavora a un gestionale e invita colleghi e
 
 ## Esperienza completa
 
+### Da dove arrivano i dati dei pannelli
+
+Creare un progetto salva anagrafica, ruoli e collegamento repository. Non crea automaticamente task, persone online, test, deploy o metriche. I pannelli si popolano attraverso le azioni e le integrazioni reali seguenti; le PNG restano la composizione visiva, non un dataset iniziale.
+
+| Pannello | Fonte e comportamento | Task |
+| --- | --- | --- |
+| Sessione / Context & Files | Chat Codex locale, file scelti, branch/HEAD osservati, piano/token se forniti dal runtime; bozza per progetto | T05–T06 |
+| Cronologia condivisa | Share: messaggi selezionati, preview e audience confermata; altri membri leggono soltanto estratti autorizzati | T06, aggiornamento live T08 |
+| Team online / Live activity | Dispositivi connessi, presenza con scadenza ed eventi autorizzati, senza dedurre online dalla sola membership | T08–T10 |
+| Tasks / Roadmap / Outcomes | Task e milestone creati, sessioni collegate, risultati/deliverable pubblicati e feedback | T11 |
+| GitHub / Code / Recent changes | Prima cartella/repo locale; poi collegamento GitHub autorizzato, branch, commit e PR via API/eventi. Nessun push automatico dedotto dal login Nexus | Osservazione Git locale T06, diff T07, integrazione GitHub completa T12 |
+| Deploy / Preview / Builds | Ambienti del progetto collegati a un provider configurato o deploy registrato esplicitamente: URL reale, commit/build e stato datato, apertura preview isolata | T13 |
+| Health / Tests / System activity | Report e probe riconosciuti con fonte/timestamp; nessun verde automatico per aver creato un progetto o collegato GitHub | T07/T13 |
+
+Collegare GitHub identifica repository e autorizzazioni: non significa che quel progetto sia già distribuito. Deploy riguarda l'app sviluppata nel progetto; hosting del backend Nexus è un ambito separato. In T13 si configureranno provider/ambiente e permessi effettivi, senza creare servizi a pagamento o distribuire qualcosa automaticamente. **Publish Update** produrrà un aggiornamento cliente revisionato (T11), distinto da Share di una conversazione.
+
 1. Installare Nexus su Windows/macOS/Linux; accedere all'identità Nexus e connettere il proprio account Codex separatamente.
 2. Creare un workspace e un progetto, collegare una cartella/repository locale, impostare cosa condividere e invitare membri.
 3. Aprire una sessione Codex sul proprio computer, allegare contesto scelto e inviare richieste. Chat, piano, output, file modificati e approvazioni mostrano stati reali.

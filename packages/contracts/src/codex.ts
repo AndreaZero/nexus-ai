@@ -21,6 +21,10 @@ export const codexSessionSchema = z.object({
   status: z.enum(['idle', 'running', 'completed', 'interrupted', 'failed']),
   messages: z.array(codexMessageSchema).max(200), activities: z.array(codexActivitySchema).max(100),
   error: z.string().max(1000).nullable(),
+  plan: z.array(z.object({ step: z.string().max(1000), status: z.enum(['pending', 'inProgress', 'completed']) }).strict()).max(30).default([]),
+  planExplanation: z.string().max(2000).nullable().default(null),
+  usage: z.object({ totalTokens: z.number().int().nonnegative(), inputTokens: z.number().int().nonnegative(), cachedInputTokens: z.number().int().nonnegative(), outputTokens: z.number().int().nonnegative(), contextWindow: z.number().int().positive().nullable() }).strict().nullable().default(null),
+  startedAt: z.iso.datetime().nullable().default(null),
 }).strict();
 export const codexStateSchema = z.object({
   runtime: z.enum(['stopped', 'starting', 'ready', 'missing', 'incompatible', 'error']),
@@ -44,7 +48,7 @@ export const codexRequestSchema = z.discriminatedUnion('operation', [
   z.object({ operation: z.literal('setupSandbox') }).strict(),
   z.object({ operation: z.literal('openSession'), ...context, model: z.string().min(1).max(200) }).strict(),
   z.object({ operation: z.literal('newSession'), ...context, model: z.string().min(1).max(200) }).strict(),
-  z.object({ operation: z.literal('send'), ...context, model: z.string().min(1).max(200), effort: z.string().max(30).nullable(), text: z.string().trim().min(1).max(32000) }).strict(),
+  z.object({ operation: z.literal('send'), ...context, model: z.string().min(1).max(200), effort: z.string().max(30).nullable(), text: z.string().trim().min(1).max(32000), attachmentIds: z.array(z.uuid()).max(8).default([]) }).strict(),
   z.object({ operation: z.literal('interrupt'), ...context }).strict(),
 ]);
 export const codexResponseSchema = z.union([

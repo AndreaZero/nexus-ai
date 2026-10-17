@@ -1,5 +1,14 @@
 # Changelog
 
+### 2026-10-17 — T06: sessione, contesto e cronologia esplicita
+
+- Aggiunti selezione nativa/anteprima di sorgenti UTF-8, file chip e invio reale al proprio Codex; esclusione file sensibili/binari, limiti e controlli canonical path/descriptor contro traversal e symlink esterni.
+- Bozza e selezione locali cifrate per account/progetto/repository/cartella, autosalvataggio 1,5 s, flush focus e stato Saved/Not saved. Un controllo autorizzativo per salvataggio, senza moltiplicare le chiamate account.
+- Collegati Git locale osservato, piano/step/token del protocollo e tempo osservato nella sessione/overview; reference 2 preservata, niente progressi o health inventati.
+- Share con selezione messaggi, audience e preview prima della conferma. Nuovo dominio server sessioni con cronologia autorizzata, versioni/retry e audit atomico senza contenuto. Migrazione additiva 0002, nessuna importazione chat/credenziali o upload automatico.
+- Aggiornati mappa dei dati/pannelli, percorso GitHub T12 e Deploy T13. ReadOnly e approvazioni T07/realtime T08 restano distinti. Versione app/server/contratti/DB 0.6.0, runtime Codex invariato.
+- Passati check, 101 test, build, cinque scenari reali PG/SMTP/HTTP, shell e smoke sviluppo/pacchetto Windows 0.6.0. Migrazione applicata, fixture rimossi e account reale conservato; prova personale popolata/inferenza e Mac/Linux restano distinte.
+
 ### 2026-10-17 — T05 0.5.1: ripristino account e log server
 
 - Ricevuta conferma del login Codex; segnalati refresh manuali a ogni avvio e account Nexus indisponibile dopo una chat, con backend ancora attivo. T06 rimane fermo.

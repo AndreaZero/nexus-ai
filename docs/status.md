@@ -1,6 +1,41 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T05 0.5.1 corretto e consegnato per nuova verifica Windows**. Login Codex confermato; riavvio e blocco account dopo chat da riprovare con correzioni/log. T01–T03 accettati dal maintainer; T04 consegnato con prova manuale ancora distinta. T06 non avviato.
+Aggiornato: **17 ottobre 2026**. **T06 0.6.0 implementato e consegnato per verifica Windows**, al via «ok bene, proseguiamo» e creazione progetto confermata. Il via non è una prova esaustiva di inferenza/interruzione T05 o inviti T04. T07 non avviato.
+
+## Ownership T06 integrate/rilasciate e contratto
+
+| Fronte | Percorsi scrivibili | Obiettivo |
+| --- | --- | --- |
+| `/root/t06_desktop` — integrato | `apps/desktop/src/codex*.ts`, nuovo `context*.ts`, test disgiunti | File scelti nativamente, testo sicuro entro root, draft cifrato, Git locale osservato, input Codex, piano/token reali |
+| `/root/t06_server` — integrato | nuovo `apps/server/src/sessions.ts`, `sessions.test.ts` | Pubblicazione esplicita di estratti e cronologia autorizzata, lettura task di progetto esistenti |
+| `/root/t06_web` — integrato | `apps/web/src/**`, test web | Reference 2, file chip/preview, bozza, piano, metriche reali, condivisione con preview e cronologia pubblicata |
+| Coordinatore | contratti/DB/migrazioni, auth/main/preload desktop, route server/logging, manifest, QA/docs | Contratti unici, integrazione, migrazione additiva e consegna |
+
+Contratti fissati in `packages/contracts/src/{context,sessions,codex}.ts`. Fino a 8 file UTF-8 da 64 KiB e 256 KiB complessivi, soltanto selezione nativa dentro il binding autorizzato e senza file segreti/binari. Bozza locale cifrata e nessun path arbitrario dal renderer. La chat resta locale finché l'utente seleziona e conferma un estratto in preview: max 20 messaggi, 128 Ki caratteri complessivi; audience team/client e versione attesa. Il backend non riceve thread provider/path locali/credenziali/attività grezze. Scrittura/approvazioni T07 e realtime T08; niente task CRUD/GitHub/deploy anticipati. Ogni fronte ricontrolla account/ruoli/binding e conserva la correzione auth 0.5.1.
+
+La selezione non garantisce assenza di segreti dentro normali sorgenti. L'estratto scelto può contenere testo con percorsi/codice: preview e conferma servono a revisionarlo, non viene promessa redazione automatica. Versioni root/app/server/contratti/DB **0.6.0**, bridge 0.5.0 e UI 0.2.0; runtime Codex invariato 0.159.2. Nessuna nuova dipendenza.
+
+## Evidenze T06
+
+| Ambito | Esito |
+| --- | --- |
+| Statici | `pnpm check` passato: typecheck, lint e confini 61 file |
+| Test | **101/101**: bridge 13, DB 3, desktop 40, server 32, web 11, confini 2. Contesto/TOCTOU, scoping, Git spoof/hooks, draft, autorizzazioni/versioni/audience e IPC/trasporti |
+| Build | Passata, 310 moduli web; warning Vite per chunk principale circa 506 kB minificati, nessun errore o aumento dipendenze |
+| Migrazione | `0002_session_snapshots.sql` applicata sul DB dedicato esistente; 3 migrazioni registrate, account/progetti conservati. Additiva, nessuna migrazione all'avvio |
+| `pnpm verify:sessions` | **5 scenari reali** PostgreSQL/SMTP/HTTP: publish/retry, audience/isolation, driver/device e CAS concorrente, task/revoca, audit e route/origin. Nessuna inferenza |
+| Pulizia QA | 0 account e 0 workspace T06 QA residui, **1 account reale conservato**. Rimosse soltanto email/fixture della prova |
+| Electron/shell | Smoke sviluppo passato con bridge context/sessions, input path/cookie arbitrari negati e Node assente. Tre layout reference/gate, tastiera/reduced motion e 960 px passati; cattura sessione ispezionata, forme autenticate da prova manuale |
+| Pacchetto Windows | NSIS 0.6.0 x64, `release/win/Nexus-AI-0.6.0-win-x64.exe`, **219880788 byte**, unsigned. Smoke dell'eseguibile impacchettato passato |
+| Segreti | Scan **974 file** sorgenti/build senza valori privati del `.env`; nessun dump di contenuti/chat/credenziali nei rapporti |
+| Prova personale | Picker/bozza/preview/Share, streaming/token/piano con il proprio Codex e confronto popolato da verificare dal maintainer; nessuna inferenza personale eseguita dall'agente |
+| macOS/Linux | Implementazione portabile, build/keyring/Git/picker nativi non provati qui |
+
+Rapporto `.nexus/visual/t06/sessions-report.json` e smoke pacchetto locali; catture nel percorso storico `.nexus/visual/t02/`. Scelte/test e limiti dettagliati in [session.md](session.md). I subagenti non hanno installato dipendenze o fatto commit; un solo autore per contratti/migrazioni/lockfile.
+
+## Prossimo passo T06
+
+Chiudere app/backend precedenti: `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`, quindi server e app aggiornati. DB e `.env` esistenti bastano. Verificare file/preview, Saved dopo navigazione/riavvio, piano/token se presenti, Share con audience e lettura da secondo account. [Procedura completa](session.md#build-e-prova-del-maintainer). GitHub T12 e Deploy T13 sono spiegati nella [mappa pannelli/dati](product.md#da-dove-arrivano-i-dati-dei-pannelli). Attendere feedback prima di T07.
 
 ## Correzione T05 0.5.1
 
@@ -61,10 +96,10 @@ Rapporti locali `.nexus/visual/t05/`: runtime, runtime impacchettato e smoke. L'
 
 T04 implementa workspace/progetti PostgreSQL, membri/ruoli, inviti SMTP monouso, repository remoti e binding locale separato. Migrazione additiva `0001_collaboration.sql`, 42 test, 12 scenari reali PG/SMTP/HTTP con tre account temporanei e pacchetto Windows 0.4.0/smoke passati. Fixture rimossi, unico account reale conservato. Form autenticati, invito con secondo account e selettore cartella nativo restano da prova manuale secondo [collaboration.md](collaboration.md). L'autorizzazione a T05 non è un'accettazione implicita di quei passi.
 
-## Prossimo passo del maintainer
+## Procedura storica T05
 
 Chiudere app/backend precedenti, eseguire `pnpm install --frozen-lockfile` e `pnpm package:win`, riavviare `pnpm start:server` e app aggiornata oppure `pnpm start:desktop`. PostgreSQL e `.env` esistenti vanno bene. Mailpit una sola istanza per email Nexus/inviti; non riceve il login Codex.
 
 Avviare **prima il backend aggiornato**, poi l'app 0.5.1. Il login Nexus viene ripristinato e Codex ricollegato automaticamente usando la home/keyring dedicata. Connect/login manuali restano disponibili quando necessari. Seguire [prova personale T05](codex.md#prova-manuale-t05), verificare chat/interruzione/riapertura e recupero senza refresh obbligatorio a ogni avvio. Se ricompare il blocco, riportare le righe server WARN/ERROR o i completamenti auth/collaboration vicini all'errore; [log e livelli](../CONTRIBUTING.md#log-server-e-diagnosi). Nessuna password o API key da inviare in chat.
 
-Registrare feedback prima di avviare T06. Firma/notarizzazione/hosting restano T16. Modalità offline avanzata T08: per T05 il backend deve essere raggiungibile per riaccertare sessione e ruolo.
+Il maintainer ha poi autorizzato T06, consegnato sopra. Firma/notarizzazione/hosting restano T16. Modalità offline avanzata T08: il backend deve essere raggiungibile per riaccertare sessione e ruolo.

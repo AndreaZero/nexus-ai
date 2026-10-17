@@ -85,11 +85,15 @@ Adottare runtime ufficiale/versione, schema generato, home dedicata e supervisor
 
 ### T06 — Sessione AI e contesto, reference 2
 
+**Stato:** [implementato e consegnato per verifica Windows — issue #6](https://github.com/AndreaZero/nexus-ai/issues/6), al via «ok bene, proseguiamo» dopo 0.5.1 e creazione progetto confermata. **Ownership:** desktop, server e renderer integrati; coordinatore contratti/DB/IPC/route/QA/documenti. [Guida effettiva](session.md). Il via non è prova esaustiva di tutti i percorsi T04/T05.
+
 **Dipendenze:** T05. **Ownership:** chat/composer; contesto/repository; backend cronologia. Contratti già stabiliti prima della divisione.
 
 Collegare toolbar, stepper, stream messaggi, attività strumenti, piano esposto, contesto, file chip, task correlati e informazioni sessione. Collegare ogni comando del composer a una capacità reale; allegati locali sicuri e condivisione esplicita. Persistenza/ripresa della cronologia consentita.
 
 **Uscita:** layout sinistra/destra fedele, richiesta e output reali, invio/interruzione/errori/riapertura senza perdita di bozza. L'ambiente non configurato resta unknown. **Build utente:** eseguire sessione reale e verificare chat, contesto e dimensioni pannelli.
+
+**Evidenze T06:** check, 101 test, build, migrazione additiva 0002 e cinque scenari reali PostgreSQL/SMTP/HTTP per audience/concorrenza/revoca passati; account/progetti reali conservati e fixture rimossi. Shell e smoke sviluppo passati, pacchetto Windows 0.6.0 generato; picker autenticato/bozza/Share/inferenza attendono prova del maintainer. Niente dati simulati nel normale avvio, GitHub/deploy nei task T12/T13, readOnly fino a T07.
 
 ### T07 — Diff, output e approvazioni
 
