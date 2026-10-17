@@ -16,6 +16,7 @@ import { CodeWorkspace } from '../session/CodeWorkspace.js';
 import { useLocalWorkspace } from '../session/workspace.js';
 import { DomainDialog } from '../collaboration/components.js';
 import { ConnectionPanel, LiveShares, SHARE_LIVE_EVENT, ShareLiveSession } from '../realtime/RealtimePanels.js';
+import { sessionTarget } from '../overview/state.js';
 
 const contextTabs = [{ id: 'context', label: 'Context & Files' }, { id: 'tasks', label: 'Tasks' }, { id: 'info', label: 'Session Info' }];
 
@@ -26,8 +27,10 @@ export function SessionView({ onNavigate }: WorkspaceViewProps) {
   const project = collaboration.project;
   const repository = project?.repository;
   const session = codex.state.session;
-  const [contextTab, setContextTab] = useState(window.nexusDesktop ? 'context' : 'info');
-  const [mobilePanel, setMobilePanel] = useState(window.nexusDesktop ? 'chat' : 'context');
+  const target = sessionTarget(window.location.hash);
+  const linked = Boolean(target.live || target.excerpt);
+  const [contextTab, setContextTab] = useState(linked || !window.nexusDesktop ? 'info' : 'context');
+  const [mobilePanel, setMobilePanel] = useState(linked || !window.nexusDesktop ? 'context' : 'chat');
   const local = useSessionContext();
   const workspace = useLocalWorkspace();
   const [approvals, setApprovals] = useState(false);
@@ -54,10 +57,10 @@ export function SessionView({ onNavigate }: WorkspaceViewProps) {
 
   useEffect(() => { opened.current = ''; follow.current = true; setNewMessages(false); }, [projectId, repositoryId, account.state.user?.id]);
   useEffect(() => {
-    if (!openKey || opened.current === openKey || !projectId || !repositoryId || !modelName) return;
+    if (linked || !openKey || opened.current === openKey || !projectId || !repositoryId || !modelName) return;
     opened.current = openKey;
     void codex.request({ operation: 'openSession', projectId, repositoryId, model: modelName });
-  }, [openKey, projectId, repositoryId, modelName, codex.request]);
+  }, [linked, openKey, projectId, repositoryId, modelName, codex.request]);
   useEffect(() => {
     const element = transcript.current;
     if (!element || !session?.messages.length) return;

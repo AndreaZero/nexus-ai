@@ -8,6 +8,8 @@ import { AUTH_CALLBACK_PATH, AUTH_CLIENT_ID, AUTH_SCHEME, publicServiceUrl } fro
 import { AuthStorageError, EncryptedAuthStorage } from './auth-storage.js';
 import { requestCollaboration } from './collaboration-transport.js';
 import { requestSessions } from './sessions-transport.js';
+import { requestOverview } from './overview-transport.js';
+import { type OverviewRequest, type OverviewResponse } from '@nexus-ai/contracts';
 import { sessionsResponseSchema, type SessionsRequest, type SessionsResponse } from '@nexus-ai/contracts';
 
 declare const __NEXUS_AUTH_SERVER_URL__: string;
@@ -217,6 +219,15 @@ export class DesktopAuth {
     const result = await this.withSession(async () => requestSessions(desktopAccountEndpoints().server, this.client.getCookie(), request));
     const parsed = sessionsResponseSchema.safeParse(result);
     return parsed.success ? parsed.data : { ok: false, code: 'unavailable', message: 'The session server could not complete this operation.' };
+  }
+
+  async overviewRequest(request: OverviewRequest): Promise<OverviewResponse> {
+    const before = await this.realtimeSession();
+    if (!before) return { ok: false, code: this.state.status === 'unavailable' ? 'unavailable' : 'auth_required', message: 'Reconnect your Nexus account to read this project.' };
+    const result = await requestOverview(before.server, before.cookie, request);
+    const after = await this.realtimeSession();
+    if (!after || after.userId !== before.userId || after.cookie !== before.cookie) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
+    return result;
   }
 
   /** Main-process capability only; cookie is never part of DesktopBridge or renderer DTOs. */

@@ -1,6 +1,6 @@
 # Realtime, presenza e recupero — T08
 
-T08 collega desktop e osservatori web allo stesso progetto con presenza reale e testo condiviso esplicitamente. La sessione Codex resta sulla macchina del driver; né presenza né condivisione concedono controllo remoto. Runtime e approvazioni T07 rimangono locali. T09, GitHub T12 e deploy T13 non sono avviati da questo task.
+T08 collega desktop e osservatori web allo stesso progetto con presenza reale e testo condiviso esplicitamente. La sessione Codex resta sulla macchina del driver; né presenza né condivisione concedono controllo remoto. Runtime e approvazioni T07 rimangono locali. Da T09 questi dati alimentano anche l'[overview operativa](overview.md); GitHub T12 e deploy T13 seguono il piano.
 
 ## Flusso nell'app
 

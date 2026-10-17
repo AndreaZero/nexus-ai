@@ -32,6 +32,8 @@ Area contenuti principale x≈229–1188 (w≈959), rail destro x≈1199–1568 
 
 Metriche della sessione: token e context solo se disponibili dal runtime; durata da lifecycle, numero file da contesto selezionato. `Step 12/18`, `67%`, `92%`, `248/248` e gli altri numeri nelle PNG non vengono copiati nel prodotto. Un task senza piano misurabile ha stato testuale e barra indeterminata solo durante attività osservata.
 
+**T09 implementato:** griglia e altezze reference3 preservate; strip presenza reale, selezione This device/share osservata, timeline con filtri/pagine e nuovi eventi da applicare, card task in lettura, campioni CPU/memoria opt-in, diff e report locali, preview configurata e notifiche con stato letto. Posizioni mappa schematiche, nessuna geolocalizzazione; chart dai campioni OS e nessun dato health/deploy presunto. Cattura popolata1586×992 in `.nexus/visual/t09/`, font/bordi/glow T02, stati offline e target revocati nascosti. [Fonti e limiti operativi](../overview.md).
+
 ## Reference 2 — Sessione AI
 
 File: [`../../examples/design/2.png`](../../examples/design/2.png). Area operativa con chat e contesto/codice simultanei.

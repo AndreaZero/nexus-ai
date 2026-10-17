@@ -6,6 +6,12 @@ T01 implementa la base; T03 aggiunge identità e `DesktopBridge.auth` ristretto.
 
 `GET /health` descrive liveness e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag e `/auth/me` solo profilo sanitizzato e scadenza. Schema/account in [auth.md](auth.md). Le rotte REST per task, allegati e runtime elencate sotto restano progettuali; nessun download allegati disponibile. Le route operative per collaborazione, sessioni e realtime sono descritte nei paragrafi dedicati.
 
+## Contratti overview T09
+
+`DesktopBridge.overview.request` e `POST /api/overview` accettano snapshot(projectId,filter,before,limit) e markRead(projectId,through), schema strict in `overview.ts`. Feed metadata coalescente per entità, pagine fino a50, notifiche ultimi30 degli altri autori, conteggi e audience correnti. `authorizedTargets` comprende i target della finestra recente autorizzata: il renderer rimuove subito quelli revocati anche dalle righe lasciate ferme durante lettura. Cursore letto monotono in `overview_read_cursor`, futuro rifiutato; invalidazione tramite WS T08.
+
+`DesktopBridge.telemetry.request` accetta getState/setEnabled con progetto/repository. Solo ruolo tecnico e binding canonico corrente, default off, campioni CPU/memoria OS locali ogni2s fino a60, rete null. Nessun evento push, upload o persistenza del consenso; lease10s senza consumatore ferma/azzera. Tipo/limiti e flussi in [overview.md](overview.md).
+
 ## Contratti realtime T08
 
 `DesktopBridge.realtime.request` accetta getState/connect/disconnect/retry/discardPending/readShare/startSharing/stopSharing; `onStateChanged` consegna soltanto il DTO validato. `RealtimeState` distingue connection, cursor, snapshot autorizzato, presence, pending, sharing e lastSyncedAt. Nessun URL/path/cookie/socket arbitrario dal renderer.

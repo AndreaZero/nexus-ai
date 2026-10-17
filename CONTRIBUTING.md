@@ -46,13 +46,13 @@ Gli harness account richiedono backend e Mailpit attivi. Quello HTTP elimina il 
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T08
+## Build e prova Windows T09
 
-Versione T08: **0.8.0**. Eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.8.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. La migrazione additiva 0003 è già applicata sul DB locale; il comando è idempotente. Nessun cambio credenziali o nuovo DB. Codex nativo 0.159.2 è incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app/backend precedenti prima della build e riavviarli dopo.
+Versione T09: **0.9.0**. Eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.9.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. La migrazione additiva0004 è già applicata sul DB locale; il comando è idempotente. Nessun cambio credenziali o nuovo DB. Codex nativo0.159.2 incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app/backend precedenti prima della build e riavviarli dopo.
 
 Dopo la build tenere aperti:
 
-Per T08 verificare due account sullo stesso progetto, presenza, **Share selected messages live**, audience, Stop sharing, riavvio backend e revoca secondo [realtime.md](docs/realtime.md#build-e-prova-del-maintainer). `pnpm verify:realtime` esegue la prova locale PostgreSQL/Mailpit/HTTP/WS con fixture temporanei propri; `pnpm verify:workspace` verifica anche preview/consenso e pannello connessione nel renderer reale con trasporto controllato. I percorsi T07 restano in [session.md](docs/session.md#build-e-prova-del-maintainer). **Open in Editor** richiede VS Code con protocollo `vscode://` registrato.
+Per T09 seguire la [prova a due account](docs/overview.md#build-e-prova-windows): presenza, feed e link al testo autorizzato, selezione locale/remota, nuovi eventi senza salto della lettura, Mark all read, metriche locali opt-in e revoca. `pnpm verify:overview` esegue la prova locale PG/Mailpit/HTTP/WS con fixture propri; `pnpm verify:workspace` verifica anche overview popolata, campioni OS reali e privacy delle righe trattenute nel renderer/preload effettivi con trasporti controllati. I percorsi [T08](docs/realtime.md) e [T07](docs/session.md) restano disponibili. **Open in Editor** richiede VS Code con protocollo `vscode://` registrato.
 
 ```powershell
 # Terminale 1

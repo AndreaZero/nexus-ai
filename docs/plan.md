@@ -107,7 +107,7 @@ Completare Code Preview/Terminal/Tests/Preview, diff reale, output strumenti, re
 
 ### T08 — Realtime, presenza e recupero
 
-**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #8](https://github.com/AndreaZero/nexus-ai/issues/8). Fronti server, desktop e renderer integrati; ownership rilasciate. Contratti/DB/IPC, lockfile e consegna gestiti dal coordinatore. Guida effettiva e limiti in [realtime.md](realtime.md); evidenze in [status.md](status.md). T09 non avviato.
+**Stato:** [build Windows confermata dal maintainer — issue #8 chiusa](https://github.com/AndreaZero/nexus-ai/issues/8), con via esplicito a T09. Fronti server, desktop e renderer integrati/rilasciati. Guida effettiva e limiti in [realtime.md](realtime.md); evidenze in [status.md](status.md). Il feedback non certifica ogni percorso personale o le altre piattaforme.
 
 **Dipendenze:** T07; contratti di evento da T01/T04. **Ownership:** backend outbox/replay; desktop coda upload; renderer reducer/presenza.
 
@@ -116,6 +116,8 @@ Connettere due dispositivi/account al server ospitabile con upload selezionato, 
 **Uscita:** due client mostrano stessa attività autorizzata; reconnect senza duplicazioni/perdita di dati accettati; membership revocata chiude accesso; evento interno non inviato al client. Test mirati a questi invarianti. **Build utente:** due finestre/account, disconnettere e riconnettere, cambiare ruolo.
 
 ### T09 — Overview operativa, reference 3
+
+**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #9](https://github.com/AndreaZero/nexus-ai/issues/9). Backend, desktop e renderer integrati con contratti/migrazione0004 coordinati. Guida effettiva in [overview.md](overview.md), prove e limiti in [status.md](status.md). T10 non avviato.
 
 **Dipendenze:** T08. **Ownership:** renderer overview/feed; UI grafici/presence-map; backend proiezioni.
 

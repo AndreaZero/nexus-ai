@@ -42,6 +42,8 @@ Queste fonti supportano la fattibilità della proposta, non sostituiscono la ver
 
 **Aggiornamento T08:** [ws — autenticazione dell'upgrade HTTP](https://github.com/websockets/ws#client-authentication) e API browser nativa; `ws`8.22.0 e `@types/ws`8.18.2 verificati sul registro tramite pnpm. Origin/cookie verificati prima dell'upgrade, no query token e no compressione. Schema Codex0.159.2 invariato; protocollo realtime Nexus distinto dal protocollo provider. PNG2 e3 aperte per presenza/header e Session Info. Contratto, limiti e verifiche effettive in [realtime.md](realtime.md).
 
+**Aggiornamento T09:** PNG3 originale aperta prima delle deleghe e confrontata con il renderer effettivo1586×992 popolato da fixture dichiarati, Git/TAP isolati reali e campioni OS reali dopo Enable. Contratti e fonti dei pannelli in [overview.md](overview.md): eventi outbox T08, entità correnti e contatori `node:os` cpus/totalmem/freemem, nessuna nuova libreria o promessa di dati remoti. Build/personale e prove native distinte in status.
+
 ## Preparazione T03
 
 Il maintainer ha confermato T02 Windows funzionante e UI approvata, autorizzando T03 con multiagenti e chiedendo i prerequisiti PostgreSQL prima di introdurre account/persistenza. Il database locale sarà creato personalmente dal maintainer.

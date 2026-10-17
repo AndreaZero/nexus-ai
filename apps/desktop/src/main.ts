@@ -15,9 +15,11 @@ import { DesktopCodex, codexRuntimePath } from './codex.js';
 import { DesktopContext } from './context.js';
 import { DesktopWorkspace } from './workspace.js';
 import { DesktopRealtime } from './realtime.js';
+import { DesktopTelemetry } from './telemetry.js';
 import { EncryptedAuthStorage } from './auth-storage.js';
 import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema } from '@nexus-ai/contracts';
 import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema } from '@nexus-ai/contracts';
+import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema } from '@nexus-ai/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -38,6 +40,7 @@ let desktopCodex: DesktopCodex | undefined;
 let desktopContext: DesktopContext | undefined;
 let desktopWorkspace: DesktopWorkspace | undefined;
 let desktopRealtime: DesktopRealtime | undefined;
+let desktopTelemetry: DesktopTelemetry | undefined;
 
 function receiveAccountCallback(value: string) {
   // Never log OS callback URLs: their fragment contains a temporary credential.
@@ -156,6 +159,7 @@ async function initialize() {
 
   desktopAuth = new DesktopAuth((state) => {
     desktopRealtime?.nexusStateChanged(state);
+    desktopTelemetry?.nexusStateChanged(state);
     desktopCodex?.nexusStateChanged(state);
     desktopContext?.nexusStateChanged(state);
     desktopWorkspace?.nexusStateChanged(state);
@@ -223,6 +227,19 @@ async function initialize() {
   ipcMain.handle(DESKTOP_IPC.realtimeRequest, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args, 1);
     return desktopRealtime!.request(realtimeRequestSchema.parse(args[0])).then(result => realtimeResponseSchema.parse(result));
+  });
+
+  desktopTelemetry = new DesktopTelemetry({ auth: {
+    getState: () => desktopAuth!.getState(),
+    authorizeRepository: (projectId, repositoryId) => desktopAuth!.authorizeRealtimeRepository(projectId, repositoryId),
+  }, bindings: bindingStorage });
+  ipcMain.handle(DESKTOP_IPC.overviewRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopAuth!.overviewRequest(overviewRequestSchema.parse(args[0])).then(result => overviewResponseSchema.parse(result));
+  });
+  ipcMain.handle(DESKTOP_IPC.telemetryRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopTelemetry!.request(telemetryRequestSchema.parse(args[0])).then(result => telemetryResponseSchema.parse(result));
   });
 
   desktopCodex = new DesktopCodex({
@@ -338,6 +355,9 @@ async function initialize() {
         workspaceKeys: Object.keys(window.nexusDesktop.workspace),
         realtimeKeys: Object.keys(window.nexusDesktop.realtime),
         realtimeState: await window.nexusDesktop.realtime.request({operation:'getState'}),
+        overviewKeys: Object.keys(window.nexusDesktop.overview), telemetryKeys: Object.keys(window.nexusDesktop.telemetry),
+        overviewState: await window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
+        telemetryState: await window.nexusDesktop.telemetry.request({operation:'getState',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         workspaceState: await window.nexusDesktop.workspace.request({operation:'getChanges',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         collaborationState: await window.nexusDesktop.collaboration.request({operation:'listWorkspaces'}),
         localBindingState: await window.nexusDesktop.localBinding.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
@@ -350,6 +370,8 @@ async function initialize() {
           window.nexusDesktop.workspace.request({operation:'openEditor',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',fileId:null,path:'/arbitrary'}),
           window.nexusDesktop.codex.request({operation:'resolveApproval',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',approvalId:'b6981157-a6fb-4947-a392-8ed54b0d7d57',decision:'acceptForSession'}),
           window.nexusDesktop.realtime.request({operation:'connect',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary',url:'ws://invalid.example'}),
+          window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
+          window.nexusDesktop.telemetry.request({operation:'setEnabled',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',enabled:true,command:'arbitrary'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -367,10 +389,14 @@ async function initialize() {
       const sessionsState = sessionsResponseSchema.parse(check['sessionsState']);
       const workspaceState = workspaceResponseSchema.parse(check['workspaceState']);
       const realtimeState = realtimeResponseSchema.parse(check['realtimeState']);
+      const overviewState = overviewResponseSchema.parse(check['overviewState']);
+      const telemetryState = telemetryResponseSchema.parse(check['telemetryState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['overviewKeys']) !== '["request"]' || overviewState.ok || !['auth_required', 'unavailable'].includes(overviewState.code) ||
+          JSON.stringify(check['telemetryKeys']) !== '["request"]' || telemetryState.ok || !['auth_required', 'unavailable'].includes(telemetryState.code) ||
           JSON.stringify(check['contextKeys']) !== '["request"]' || JSON.stringify(check['sessionsKeys']) !== '["request"]' ||
           contextState.ok || contextState.code !== 'auth_required' || sessionsState.ok || sessionsState.code !== 'auth_required' ||
           JSON.stringify(check['workspaceKeys']) !== '["request"]' || workspaceState.ok || workspaceState.code !== 'auth_required' ||
@@ -409,6 +435,7 @@ app.on('window-all-closed', () => {
 let runtimeShutdown = false;
 app.on('before-quit', (event) => {
   desktopAuth?.dispose();
+  desktopTelemetry?.dispose();
   if (desktopCodex && !runtimeShutdown) {
     event.preventDefault();
     runtimeShutdown = true;

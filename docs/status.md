@@ -1,6 +1,38 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T08 consegnato, in attesa di verifica utente** su via esplicito del maintainer dopo conferma della build Windows T07. Il feedback non certifica tutti i percorsi personali o le altre piattaforme. [Issue T08 aperta](https://github.com/AndreaZero/nexus-ai/issues/8), T07 chiusa; T09 non avviato.
+Aggiornato: **17 ottobre 2026**. **T09 consegnato, in attesa di verifica utente** dopo conferma build Windows T08 e via del maintainer. Il feedback non certifica tutti i percorsi personali o le altre piattaforme. [Issue T08 chiusa](https://github.com/AndreaZero/nexus-ai/issues/8), [T09 aperta](https://github.com/AndreaZero/nexus-ai/issues/9). T10 non avviato.
+
+## Ownership T09 integrate/rilasciate e contratto
+
+| Fronte | Percorsi scrivibili | Obiettivo / handoff |
+| --- | --- | --- |
+| `/root/t09_server` — integrato | `apps/server/src/overview*.ts`, `app.ts` | Proiezione autorizzata feed/notification/read cursor, task esistenti e share attive; HTTP valido e test ruoli/isolation/pagination |
+| `/root/t09_desktop` — integrato | nuovi `apps/desktop/src/overview-transport.ts`, `telemetry.ts`, test corrispondenti | Trasporto overview main-only e misure CPU/memoria opt-in scoped account/project/binding, campioni limitati, rete unknown |
+| `/root/t09_web` — integrato | `apps/web/src/**`, test web T09 | Reference3 popolata da proiezioni reali, feed/filtri/lettura stabile/link, diff/sessione/health locali, notifiche e presenza |
+| Coordinatore — integrato | contratti/DB/migrazione0004, auth/main/preload, manifest/lock, logging, QA/docs/GitHub | Integrazione unica, contratti fissi e consegna Windows |
+
+Contratti fissi in `packages/contracts/src/overview.ts`: POST `/api/overview` snapshot(project/filter/before/limit) e markRead(through). Snapshot cursor/observedAt/activity/nextBefore/notifications/unreadCount/readThrough/tasks/activeShares/memberCount. Activity soltanto metadata sessions da outbox T08, raggruppata per entità aggiornata (non una riga per delta), filtri non ancora alimentati vuoti; target shared_session/live_share riaperto con permessi correnti. Notifiche degli altri autori, read cursor monotono per account/progetto in tabella overview_read_cursor migrazione0004; niente alert inventati da deploy/GitHub. WS T08 invalida proiezioni per cursore, nessun nuovo payload privato nel socket. Telemetry request getState/setEnabled con project/repository; state samples<=60/2s CPU/memoria del dispositivo, rete null, nessun upload o permesso permanente implicito. Desktop serve misure soltanto su ruolo tecnico e binding corrente; default off, stato resettato su cambio contesto/logout. Link a dettaglio autorizzato in sessione, nessuna esecuzione remota. Nessun task CRUD/T10/T11/T12/T13 anticipato. PNG3 aperta dal coordinatore prima delle deleghe.
+
+## Evidenze T09 e prossimo passo
+
+| Ambito | Esito |
+| --- | --- |
+| Installazione/statici | `pnpm install --frozen-lockfile`, `pnpm check` passati; controlli mirati su ultimo collegamento Tasks/QA passati, confini finali **79 file** |
+| Test integrati | **184/184**: bridge13, DB3, desktop84, server50, web32, confini2. Feed/coalescenza/pagine/ruoli/lettura, trasporto ristretto, telemetria opt-in/lease/binding/generazioni e target revocati inclusi |
+| Build | `pnpm build` passato, renderer **330 moduli**, chunk principale567,65kB minificati (warning Vite di dimensione, nessun errore). Nessuna dipendenza o schema Codex nuovi |
+| Migrazione | **0004_overview.sql** applicata sul DB locale dedicato, **5 migrazioni** registrate. Solo cursore notifiche per account/progetto; account, progetti e `.env` conservati, nessuna migrazione all'avvio |
+| Percorso reale overview | `pnpm verify:overview`: **7 scenari PG/SMTP/HTTP/WS reali** con tre account temporanei. Audience prima di conteggi/pagine, estraneo negato, task autorizzati, filtri indipendenti da notifiche, delta coalescenti, read cursor monotono/futuro e riavvio, cambio audience/target rimossi, revoca su socket aperto/Origin/noStore |
+| UI/IPC e OS | `pnpm verify:workspace`: **22 controlli** nel renderer/preload effettivi, Git e TAP reali isolati, trasporti provider/shared controllati dichiarati. Confronto overview1586×992 popolata, Enable→CPU/memoria OS reali, rete null, Mark read/filtri, locale vs osservato con Stop disabilitato, deep link, feed stabile con nuovi eventi e rimozione immediata target/offline |
+| Confronto visivo | PNG3 originale aperta e cattura `overview-populated.png` ispezionata. Strip84px/sessione278px/feed420px e rail preservati con planet/particelle T02; niente health/deploy numerici di esempio. Nessuna uguaglianza pixel di contenuti differenti o OS non provati dichiarata |
+| Electron/shell | Smoke sviluppo e pacchetto Windows passati: overview/telemetry IPC validati, input cookie/path/command arbitrari negati e Node assente. Shell3 layout/4gate, tastiera, reduced motion e960px passati |
+| Pacchetto Windows | NSIS **0.9.0 x64**, `release/win/Nexus-AI-0.9.0-win-x64.exe`, **220029062 byte**, unsigned; nessuna installazione automatica |
+| Segreti/pulizia | Scan **1536 file** sorgenti/build senza valori privati `.env`; **0 account/workspace QA T09** residui e **1 account reale** conservato. Email/fixture propri rimossi; Mailpit preesistente conservato |
+| Prova personale/limiti | Task CRUD/T11, GitHub/T12, deploy/T13 restano futuri; feed recente retained, notifiche altri autori. Nessuna inferenza personale automatica. Monitor solo dispositivo locale opt-in/lease10s; test report con fonte/data, health aggregata assente |
+| macOS/Linux | Implementazione/packaging portabili; build/keyring/campionamento nativi non provati qui |
+
+Versioni root/desktop/web/server/contratti/DB **0.9.0**, bridge0.5.0/UI0.2.0 e Codex ufficiale **0.159.2** invariati. Contratto finale include `authorizedTargets` (max1.000), set metadata corrente che elimina i target revocati anche dalle righe congelate durante lettura; nessun contenuto grezzo aggiunto al WS. Fronti integrati e ownership rilasciate; nessun agente ha installato dipendenze o fatto commit autonomo.
+
+Chiudere app/backend precedenti, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`; avviare server e app separatamente. [Prova completa T09](overview.md#build-e-prova-windows): due account, share/estratto, feed/link/read, locale/remoto, opt-in e revoca. Rapporti/catture `.nexus/visual/t09/`, shell nel percorso storico `.nexus/visual/t02/`. Attendere feedback del maintainer prima di T10.
 
 ## Ownership T08 integrate/rilasciate e contratto
 
@@ -13,7 +45,7 @@ Aggiornato: **17 ottobre 2026**. **T08 consegnato, in attesa di verifica utente*
 
 Contratti fissati in `packages/contracts/src/realtime.ts`: HTTP `POST /api/realtime` snapshot/readShare/upload; WS `/api/realtime` join/heartbeat/ack, frame snapshot/events/presence/heartbeat/denied. Cursori decimali per progetto, eventi durevoli solo metadata con proiezioni attuali: i dettagli selezionati si rileggono tramite readShare, senza raw protocol/tool/file. Migrazione 0003: project_realtime_cursor, live_share, realtime_event, realtime_upload; receipt idempotente con hash e ACK dopo COMMIT. Upload start/append/stop con offset testuali, max20 messaggi/128Ki caratteri, batch append16Ki. Condivisione soltanto messaggi scelti e confermati, futuri delta degli stessi ID; nessun nuovo messaggio o comando aggiunto implicitamente. Queue main cifrata max100/1MiB, riautorizzata prima del flush, scoping account/progetto/repo/root e nessun consenso/esecuzione in coda. Reconnect massimo8 tentativi con backoff+jitter e retry manuale; presenza heartbeat15s/scadenza45s, permessi/sessione ricontrollati anche a connessione aperta. Singolo backend con outbox PostgreSQL, nessun Redis/provider/deploy aggiunto. T09 non avviato.
 
-## Evidenze T08 e prossimo passo
+## Evidenze e procedura storica T08
 
 | Ambito | Esito |
 | --- | --- |
@@ -31,7 +63,7 @@ Contratti fissati in `packages/contracts/src/realtime.ts`: HTTP `POST /api/realt
 
 Versioni root/desktop/web/server/contratti/DB **0.8.0**, bridge0.5.0/UI0.2.0 invariati; Codex ufficiale **0.159.2** e generated schema invariati. Nuova dipendenza `ws`8.22.0 con tipi8.18.2, Zod4.6.7 nel desktop come nei contratti. Il main riusa la credenziale corrente senza duplicare `/auth/get-session` a ogni delta; autorizzazione corrente comunque applicata dal server per ogni operazione e dal controllo membership live. Nessun agente ha installato dipendenze o fatto commit; integrazione unica.
 
-Chiudere app/backend precedenti, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`; riavviare server e app in terminali separati. Guida a due account, Share live, Stop, reconnect e revoca in [realtime.md](realtime.md#build-e-prova-del-maintainer). Rapporti/catture `.nexus/visual/t08/`; shell nel percorso storico `.nexus/visual/t02/`. Attendere feedback del maintainer prima di T09.
+Procedura consegnata con T08: installazione/migrazione/packaging, due account, Share live, Stop, reconnect e revoca in [realtime.md](realtime.md#build-e-prova-del-maintainer). Rapporti/catture `.nexus/visual/t08/`; shell nel percorso storico `.nexus/visual/t02/`. Il maintainer ha confermato la build Windows e autorizzato T09, ora consegnato sopra.
 
 ## Ownership T07 integrate/rilasciate e contratto
 

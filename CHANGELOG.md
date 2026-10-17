@@ -1,5 +1,12 @@
 # Changelog
 
+### 2026-10-17 — T09: overview operativa e attività reali
+
+- Overview reference3 collegata a presenza, sessione locale/condivisa, feed filtrabile/paginato con link al dettaglio autorizzato, task in lettura, diff/report/preview locali e notifiche reali. Nuovi eventi applicati esplicitamente mentre si legge; target revocati rimossi subito.
+- Proiezione backend da outbox T08 coalescente per entità, audience prima di pagine/conteggi e cursore letto monotono persistente per account/progetto. Migrazione additiva0004; nessun testo provider grezzo nel feed e nessun controllo remoto.
+- CPU/memoria OS locali solo opt-in, campioni2s/max60, rete unknown, nessun upload/persistenza; lease10s e reset su account/binding/ruolo. Health/deploy assenti restano sconosciuti.
+- Versione0.9.0 app/server/contratti/DB, runtime0.159.2 invariato e nessuna nuova dipendenza. 184 test, 7 scenari PG/HTTP/WS e22controlli UI/IPC passati; check/build/shell/smoke e pacchetto Windows x64 verificati. Account reale conservato, fixture propri rimossi. Guida `docs/overview.md`; prova personale e Mac/Linux distinte, T10 non avviato.
+
 ### 2026-10-17 — T08: realtime, presenza e recupero
 
 - WebSocket Nexus autenticato e presenza per progetto, audience/ruoli verificati durante la connessione e revoca su socket aperto. Outbox metadata PostgreSQL atomica, snapshot autorevole e upload idempotenti con ACK dopo COMMIT.

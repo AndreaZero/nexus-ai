@@ -165,4 +165,11 @@ export const realtimeUpload = pgTable('realtime_upload', {
   projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }), batchId: text('batch_id').notNull(), authorId: text('author_id').notNull().references(() => user.id), shareId: text('share_id').notNull().references(() => liveShare.id, { onDelete: 'cascade' }), payloadHash: text('payload_hash').notNull(), sequence: bigint('sequence', { mode: 'bigint' }).notNull(), committedAt: timestamp('committed_at', { withTimezone: true }).notNull().defaultNow(),
 }, table => [primaryKey({ columns: [table.projectId, table.batchId] }), check('realtime_upload_sequence_check', sql`${table.sequence} > 0`)]);
 export const realtimeSchema = { projectRealtimeCursor, liveShare, realtimeEvent, realtimeUpload };
-export const databaseSchema = { ...authSchema, ...collaborationSchema, ...realtimeSchema };
+export const overviewReadCursor = pgTable('overview_read_cursor', {
+  projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  sequence: bigint('sequence', { mode: 'bigint' }).notNull().default(0n),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [primaryKey({ columns: [table.projectId, table.userId] }), check('overview_read_cursor_sequence_check', sql`${table.sequence} >= 0`)]);
+export const overviewSchema = { overviewReadCursor };
+export const databaseSchema = { ...authSchema, ...collaborationSchema, ...realtimeSchema, ...overviewSchema };

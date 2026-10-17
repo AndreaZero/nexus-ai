@@ -26,6 +26,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D20 | Adottata in T07 | Diff locale mediante oggetti Git e letture descriptor bounded, senza filtri repository; apertura VS Code via URI fissa costruita dal main. Preview URL scelta esplicitamente e aperta nel browser di sistema, nessun embed con privilegi o deploy/probe implicito |
 | D21 | Adottata in T08 | Outbox metadata PostgreSQL atomica e receipt UUID/hash/offset dopo COMMIT. Snapshot corrente al join/reconnect, letture dei dettagli riautorizzate, retention1.000 eventi; presenza effimera e poll2s su una sola istanza, senza broker obbligatorio |
 | D22 | Adottata in T08 | Solo messaggi scelti e loro futuri delta dopo preview/consenso; coda main cifrata e limitata, ripristino sospeso con Retry esplicito. Nessun nuovo messaggio, file, comando o consenso eseguibile accodato; indisponibilità Nexus conserva processo Codex ma interrompe il turno e torna readOnly |
+| D23 | Adottata in T09 | Overview come proiezione metadata della finestra outbox T08, coalescente per entità e autorizzata prima di pagine/conteggi. Feed stabile durante lettura ma rimozione immediata dei target revocati. Notifiche altri autori con cursore letto monotono per account/progetto; non un sistema notifiche universale anticipato |
+| D24 | Adottata in T09 | CPU/memoria aggregate OS solo opt-in sul dispositivo, nessun upload/persistenza/consenso permanente. Campioni2s/max60, rete unknown; timer senza HTTP e lease10s del consumatore, ruoli/binding ricontrollati. Health/deploy senza dati restano unknown |
 
 ## Da concretizzare al momento opportuno
 

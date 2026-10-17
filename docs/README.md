@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T08 aggiunge presenza, testo condiviso live esplicitamente e recupero alla sessione T06/T07. Prove automatiche, native e accettazione manuale sono distinte in `status.md`; setup/build in `../CONTRIBUTING.md`, runtime in `codex.md`, sessione in `session.md`, sincronizzazione in `realtime.md`.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T09 collega overview operativa, feed e notifiche reali alla presenza e al recupero T08. Prove automatiche, native e accettazione manuale sono distinte in `status.md`; setup/build in `../CONTRIBUTING.md`, runtime in `codex.md`, sessione in `session.md`, sincronizzazione in `realtime.md`, overview in `overview.md`.
 
 | Documento | Uso |
 | --- | --- |
@@ -23,5 +23,6 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [Collaborazione T04](collaboration.md) | Workspace/progetti, ruoli, inviti, repository, cartella locale e verifica manuale |
 | [Sessione T06/T07](session.md) | File/bozza, diff e output reali, report test, policy/approvazioni locali e pubblicazione esplicita |
 | [Realtime T08](realtime.md) | Presenza, selezione/consenso live, outbox, recupero, revoca e prova a due account |
+| [Overview T09](overview.md) | Reference3, feed/filtri/link, notifiche e lettura persistente, misure locali opt-in e prova |
 
 Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.

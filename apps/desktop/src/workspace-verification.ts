@@ -8,6 +8,8 @@ import { DesktopCodex } from './codex.ts';
 import { DesktopWorkspace } from './workspace.ts';
 import { APP_URL, isTrustedIpcSender, rendererAssetPath } from './security.ts';
 import { realtimeRequestSchema, realtimeResponseSchema, type RealtimeState } from '@nexus-ai/contracts';
+import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema, type OverviewActivity } from '@nexus-ai/contracts';
+import { DesktopTelemetry } from './telemetry.ts';
 
 // Standalone verification entry, bundled into the disposable QA directory by scripts/verify-workspace.mjs.
 // Not imported by main.ts, exposed as a renderer route, or included in application startup.
@@ -85,8 +87,22 @@ handle(DESKTOP_IPC.collaborationRequest, value => {
 });
 handle(DESKTOP_IPC.contextRequest, value => { const request = contextRequestSchema.parse(value); return contextResponseSchema.parse({ ok: true, context: { projectId, repositoryId, folderLabel: binding.label, files: [], repository: { isGit: true, branch: 'main', head: null, dirty: true, ahead: null, behind: null, observedAt: now }, draft: request.operation === 'saveDraft' ? request.text : '', updatedAt: now }, preview: null }); });
 handle(DESKTOP_IPC.sessionsRequest, value => { const request = sessionsRequestSchema.parse(value); return sessionsResponseSchema.parse(request.operation === 'listProjectTasks' ? { ok: true, kind: 'tasks', items: [] } : { ok: true, kind: 'sessions', items: [] }); });
-const realtime: RealtimeState = { projectId, connection: 'online', cursor: '0', snapshot: { projectId, cursor: '0', sessions: [], shares: [] }, presence: [{ userId: account.user!.id, name: account.user!.name, role: 'owner', connections: 1, lastSeenAt: now }], pending: 0, sharing: null, lastSyncedAt: now, notice: 'Isolated UI fixture; no remote connection.' };
-handle(DESKTOP_IPC.realtimeRequest, value => { const request = realtimeRequestSchema.parse(value); return realtimeResponseSchema.parse({ ok: true, state: request.operation === 'disconnect' ? { ...realtime, connection: 'idle', snapshot: null, presence: [] } : realtime, share: null }); });
+const shareId = '0bdd2528-e0f4-41bf-bda0-4de027fc4dda';
+const qaShare = { id: shareId, projectId, title: 'Reviewed API contract excerpt', visibility: 'client' as const, author: { id: 'qa-reviewer', name: 'QA Reviewer' }, status: 'active' as const, updatedAt: now };
+const realtime: RealtimeState = { projectId, connection: 'online', cursor: '2', snapshot: { projectId, cursor: '2', sessions: [], shares: [qaShare] }, presence: [{ userId: account.user!.id, name: account.user!.name, role: 'owner', connections: 1, lastSeenAt: now }, { userId: 'qa-reviewer', name: 'QA Reviewer', role: 'developer', connections: 1, lastSeenAt: now }], pending: 0, sharing: null, lastSyncedAt: now, notice: 'Isolated UI fixture; no remote connection.' };
+handle(DESKTOP_IPC.realtimeRequest, value => { const request = realtimeRequestSchema.parse(value); return realtimeResponseSchema.parse({ ok: true, state: request.operation === 'disconnect' ? { ...realtime, connection: 'idle', snapshot: null, presence: [] } : realtime, share: request.operation === 'readShare' && request.shareId === shareId ? { ...qaShare, messages: [{ id: 'selected-qa', role: 'assistant', text: 'Explicitly selected QA text. Controlled shared projection, no personal inference.', status: 'complete' }] } : null }); });
+const activity: OverviewActivity[] = [{ id: '9bdafc78-5e65-4a67-a474-bae539b81761', sequence: '2', category: 'sessions', kind: 'live.updated', target: { kind: 'live_share', id: shareId }, actor: qaShare.author, title: qaShare.title, visibility: 'client', occurredAt: now }];
+let readThrough = '0';
+let snapshotCursor = '2';
+let authorizedTargets = activity.map(item => item.target);
+handle(DESKTOP_IPC.overviewRequest, value => {
+  const request = overviewRequestSchema.parse(value);
+  const visibleActivity = activity.filter(item => authorizedTargets.some(target => target.id === item.target.id && target.kind === item.target.kind));
+  if (request.operation === 'markRead') { readThrough = request.through; return overviewResponseSchema.parse({ ok: true, kind: 'read', projectId, readThrough, unreadCount: visibleActivity.filter(item => BigInt(item.sequence) > BigInt(readThrough)).length }); }
+  return overviewResponseSchema.parse({ ok: true, kind: 'overview', snapshot: { projectId, cursor: snapshotCursor, observedAt: now, activity: ['all', 'sessions'].includes(request.filter) ? visibleActivity : [], nextBefore: null, authorizedTargets, notifications: visibleActivity, unreadCount: visibleActivity.filter(item => BigInt(item.sequence) > BigInt(readThrough)).length, readThrough, tasks: [{ id: '3d9d5121-6049-44f6-8472-a650cc8b3c34', title: 'Review document service contract', status: 'in_progress', visibility: 'client' }], activeShares: authorizedTargets.length ? [qaShare] : [], memberCount: 3 } });
+});
+const telemetry = new DesktopTelemetry({ auth, bindings }); telemetry.nexusStateChanged(account);
+handle(DESKTOP_IPC.telemetryRequest, value => telemetry.request(telemetryRequestSchema.parse(value)).then(result => telemetryResponseSchema.parse(result)));
 const checks: string[] = [];
 async function waitFor(expression: string) {
   await window.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const test=()=>{if(${expression}){observer.disconnect();clearTimeout(timer);resolve(true)}};const observer=new MutationObserver(test);const timer=setTimeout(()=>{observer.disconnect();reject(new Error('Workspace UI condition timed out'))},8000);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true});test()})`);
@@ -142,8 +158,43 @@ try {
   await window.webContents.executeJavaScript(`document.querySelector('.realtime-consent input').click()`);
   await click('Confirm live sharing'); await waitFor("!document.querySelector('.realtime-consent')");
   checks.push('Live share confirmation reaches the validated production preload (upload transport controlled in this UI fixture)');
+  fixture.notify({ method: 'item/completed', params: { threadId: 'qa-thread', turnId: 'qa-active-turn', item: { id: 'qa-overview-test-report', type: 'commandExecution', command: 'node --test --test-reporter=tap local.test.mjs', cwd: input.repository, aggregatedOutput: input.tap, exitCode: 0, durationMs: 100, status: 'completed' } } });
+  await window.webContents.executeJavaScript(`window.location.hash='/overview'`);
+  await waitFor("document.querySelector('.overview-event') && document.querySelector('.overview-recent-diff') && document.querySelector('.health-card')?.textContent.includes('1/1')");
+  checks.push('Reference3 overview renders authorized feed, actual Git diff and actual local TAP report');
+  await click('Enable');
+  await waitFor("Number(document.querySelector('.overview-system-chart svg')?.getAttribute('aria-label')?.match(/latest (\\d+)/)?.[1] ?? 0) >= 2");
+  const metrics = await telemetry.request({ operation: 'getState', projectId, repositoryId });
+  assert.equal(metrics.ok, true); if (metrics.ok) { assert.ok(metrics.state.samples.length >= 2); assert.ok(metrics.state.samples.at(-1)!.memoryTotalBytes > 0); assert.equal(metrics.state.networkBytesPerSecond, null); }
+  await capture('overview-populated'); checks.push('Explicit UI opt-in renders real OS CPU/memory samples through production preload; network remains unknown');
+  await click('Mark all read'); await waitFor("!document.querySelector('.overview-notifications .is-unread')");
+  assert.equal(readThrough, '2'); checks.push('Mark all read reaches the captured project cursor through IPC');
+  await click('Commits'); await waitFor("!document.querySelector('.overview-event') && document.querySelector('.overview-feed')?.textContent.includes('No activity in this category')");
+  await click('All'); await waitFor("document.querySelector('.overview-event')"); checks.push('Feed filters show real empty categories and restore authorized session activity');
+  await window.webContents.executeJavaScript(`(()=>{const field=document.querySelector('select[aria-label="Shared active session"]');field.value=${JSON.stringify(shareId)};field.dispatchEvent(new Event('change',{bubbles:true}))})()`);
+  await waitFor("document.querySelector('.active-session-card')?.textContent.includes('Shared by QA Reviewer')");
+  assert.equal(await window.webContents.executeJavaScript(`[...document.querySelectorAll('.active-session-card button')].find(button=>button.textContent.includes('Stop Session')).disabled`), true);
+  checks.push('Selecting an observed session changes the card and cannot control the remote runtime');
+  await window.webContents.executeJavaScript(`document.querySelector('.overview-event a').click()`);
+  await waitFor("document.body.textContent.includes('Explicitly selected QA text.')");
+  checks.push('Feed deep link opens the selected authorized live text in Session Info');
+  await window.webContents.executeJavaScript(`window.location.hash='/overview'`); await waitFor("document.querySelector('.overview-event')");
+  snapshotCursor = '3'; activity[0] = { ...activity[0]!, id: '8e7cc0c3-d2d6-4a9b-9102-2cbec23f101b', sequence: '3', title: 'Updated selected QA text' };
+  window.webContents.send(DESKTOP_IPC.realtimeStateChanged, { ...realtime, cursor: '3', snapshot: { ...realtime.snapshot!, cursor: '3' } });
+  await waitFor("document.querySelector('.overview-new-events')");
+  assert.equal(await window.webContents.executeJavaScript(`document.querySelector('.overview-event a').textContent`), qaShare.title);
+  await click('New activity available · show latest ↑');
+  await waitFor("document.querySelector('.overview-event a')?.textContent === 'Updated selected QA text'");
+  checks.push('Incoming shared changes wait behind explicit apply and preserve the feed being read');
+  snapshotCursor = '4'; authorizedTargets = [];
+  window.webContents.send(DESKTOP_IPC.realtimeStateChanged, { ...realtime, cursor: '4', snapshot: { ...realtime.snapshot!, cursor: '4', shares: [] } });
+  await waitFor("!document.querySelector('.overview-event') && document.querySelector('.overview-feed')?.textContent.includes('No activity in this category')");
+  checks.push('A target removed from the authorized projection disappears immediately from held rows');
+  window.webContents.send(DESKTOP_IPC.realtimeStateChanged, { ...realtime, connection: 'offline', snapshot: null, presence: [] });
+  await waitFor("!document.querySelector('.overview-event') && !document.querySelector('.overview-notifications .is-unread')");
+  checks.push('Realtime outage immediately hides shared overview data');
   await writeFile(path.join(input.output, 'workspace-report.json'), JSON.stringify({ checks, provider: 'controlled transport, no inference', realtime: 'controlled projection and request transport; see verify:realtime for real HTTP/WS/DB', filesystem: 'real isolated Git files', tests: 'actual Node TAP', osOpens: 'intercepted', personalCredentials: false }, null, 2));
-  await codex.dispose(); window.destroy(); app.exit(0);
-} catch (error) { await codex.dispose(); console.error(error instanceof Error ? error.message : 'Workspace QA failed'); app.exit(1); }
+  telemetry.dispose(); await codex.dispose(); window.destroy(); app.exit(0);
+} catch (error) { telemetry.dispose(); await codex.dispose(); console.error(error instanceof Error ? error.message : 'Workspace QA failed'); app.exit(1); }
 }
 void verify().catch(error => { console.error(error instanceof Error ? error.message : 'Workspace QA setup failed'); app.exit(1); });

@@ -1,6 +1,6 @@
 import chalk, { Chalk } from 'chalk';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { collaborationRequestSchema, sessionsRequestSchema, realtimeApiRequestSchema } from '@nexus-ai/contracts';
+import { collaborationRequestSchema, sessionsRequestSchema, realtimeApiRequestSchema, overviewRequestSchema } from '@nexus-ai/contracts';
 
 export type LogOutput = (line: string) => void;
 const events: Record<string, string> = {
@@ -11,13 +11,14 @@ const events: Record<string, string> = {
   'auth.failure': 'Errore account', 'email.failure': 'Errore invio email',
   'collaboration.failure': 'Operazione workspace non riuscita',
   'sessions.failure': 'Operazione sessione non riuscita',
+  'overview.failure': 'Panoramica progetto non disponibile',
   'realtime.failure': 'Sincronizzazione non riuscita', 'realtime.connected': 'Connessione realtime aperta', 'realtime.closed': 'Connessione realtime chiusa',
 };
 const routes = new Set([
   '/', '/health', '/auth/status', '/auth/me', '/auth/get-session', '/auth/sign-in/email',
   '/auth/sign-up/email', '/auth/sign-out', '/auth/send-verification-email', '/auth/verify-email',
   '/auth/request-password-reset', '/auth/reset-password', '/auth/revoke-sessions',
-  '/auth/electron/token', '/auth/electron/transfer-user', '/api/collaboration', '/api/sessions', '/api/realtime',
+  '/auth/electron/token', '/auth/electron/transfer-user', '/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview',
   '/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password',
 ]);
 const categories = new Set(['internal', 'configuration', 'database_authentication', 'database_unavailable',
@@ -28,7 +29,7 @@ const knownCodes = new Set(['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAI
 const settings = new Set(['DATABASE_URL', 'BETTER_AUTH_URL', 'BETTER_AUTH_SECRET', 'NEXUS_WEB_URL',
   'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASSWORD', 'NEXUS_EMAIL_FROM',
   'NEXUS_SERVER_HOST', 'NEXUS_SERVER_PORT', 'NEXUS_LOG_LEVEL', 'NEXUS_ALLOWED_ORIGINS']);
-const operations = new Set<string>([...collaborationRequestSchema.options, ...sessionsRequestSchema.options, ...realtimeApiRequestSchema.options].map(option => option.shape.operation.value));
+const operations = new Set<string>([...collaborationRequestSchema.options, ...sessionsRequestSchema.options, ...realtimeApiRequestSchema.options, ...overviewRequestSchema.options].map(option => option.shape.operation.value));
 const outcomes = new Set(['invalid_request', 'auth_required', 'forbidden', 'not_found', 'conflict', 'expired',
   'email_mismatch', 'already_member', 'last_owner', 'email_unavailable', 'unavailable']);
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;

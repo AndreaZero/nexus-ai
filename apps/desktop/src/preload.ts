@@ -3,6 +3,7 @@ import { DESKTOP_IPC, collaborationRequestSchema, collaborationResponseSchema, d
 import type { CollaborationRequest, DesktopBridge, LocalBindingRequest, NexusAuthState, CodexRequest, CodexState } from '@nexus-ai/contracts';
 import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema, type ContextRequest, type SessionsRequest, type WorkspaceRequest } from '@nexus-ai/contracts';
 import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema, type RealtimeRequest, type RealtimeState } from '@nexus-ai/contracts';
+import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema, type OverviewRequest, type TelemetryRequest } from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -41,6 +42,12 @@ const bridge: DesktopBridge = Object.freeze({
       ipcRenderer.on(DESKTOP_IPC.realtimeStateChanged, listener);
       return () => { ipcRenderer.removeListener(DESKTOP_IPC.realtimeStateChanged, listener); };
     },
+  }),
+  overview: Object.freeze({
+    async request(input: OverviewRequest) { return overviewResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.overviewRequest, overviewRequestSchema.parse(input))); },
+  }),
+  telemetry: Object.freeze({
+    async request(input: TelemetryRequest) { return telemetryResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.telemetryRequest, telemetryRequestSchema.parse(input))); },
   }),
   codex: Object.freeze({
     async request(input: CodexRequest) {
