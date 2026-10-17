@@ -117,7 +117,7 @@ Connettere due dispositivi/account al server ospitabile con upload selezionato, 
 
 ### T09 — Overview operativa, reference 3
 
-**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #9](https://github.com/AndreaZero/nexus-ai/issues/9). Backend, desktop e renderer integrati con contratti/migrazione0004 coordinati. Guida effettiva in [overview.md](overview.md), prove e limiti in [status.md](status.md). T10 non avviato.
+**Stato:** [build Windows0.9.1 confermata dal maintainer e429 assente — issue #9 chiusa](https://github.com/AndreaZero/nexus-ai/issues/9), con via esplicito a T10. Guida effettiva in [overview.md](overview.md), prove e limiti in [status.md](status.md). Il feedback non certifica ogni percorso personale o altri OS.
 
 **Dipendenze:** T08. **Ownership:** renderer overview/feed; UI grafici/presence-map; backend proiezioni.
 
@@ -126,6 +126,8 @@ Completare Team Online, Active AI Session, Live Activity, Task Overview, System 
 **Uscita:** griglia e densità reference 3 rispettate, aggiornamenti reali, lettura feed senza auto-scroll invasivo. **Build utente:** seguire una sessione da secondo client e navigare dagli eventi ai dettagli.
 
 ### T10 — Client & Team Pulse, reference 1
+
+**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #10](https://github.com/AndreaZero/nexus-ai/issues/10). Fronti backend, renderer ed effetti integrati; contratti/main/preload/QA coordinati. Fonti, limiti e prova in [pulse.md](pulse.md); evidenze in [status.md](status.md). T11 non avviato.
 
 **Dipendenze:** T09. **Ownership:** hero/effetti; renderer pulse/card; backend proiezioni audience.
 

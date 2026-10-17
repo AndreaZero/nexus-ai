@@ -6,6 +6,10 @@ T01 implementa la base; T03 aggiunge identità e `DesktopBridge.auth` ristretto.
 
 `GET /health` descrive liveness e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag e `/auth/me` solo profilo sanitizzato e scadenza. Schema/account in [auth.md](auth.md). Le rotte REST per task, allegati e runtime elencate sotto restano progettuali; nessun download allegati disponibile. Le route operative per collaborazione, sessioni e realtime sono descritte nei paragrafi dedicati.
 
+## Contratti Pulse T10
+
+`DesktopBridge.pulse.request` e `POST /api/pulse` espongono snapshot(projectId,view auto|client,scope project|mine,filter,before,limit). Schema strict in `pulse.ts`: audience effettiva, overview autorizzata, milestone max100 e totale esatto, progresso globale visible_tasks, summary UTC con task aggiornate/entità condivise retained, outcomes max20 estratti completed pubblicati. Client/viewer sempre client; preview tecnica client restrittiva anche su overview/feed/tooltip. Nessun testo, path locale o metrica non collegata aggiunti al DTO. Singola transazione/lock workspace→project; niente nuova migrazione. Semantica, limiti e prova in [pulse.md](pulse.md).
+
 ## Contratti overview T09
 
 `DesktopBridge.overview.request` e `POST /api/overview` accettano snapshot(projectId,filter,before,limit) e markRead(projectId,through), schema strict in `overview.ts`. Feed metadata coalescente per entità, pagine fino a50, notifiche ultimi30 degli altri autori, conteggi e audience correnti. `authorizedTargets` comprende i target della finestra recente autorizzata: il renderer rimuove subito quelli revocati anche dalle righe lasciate ferme durante lettura. Cursore letto monotono in `overview_read_cursor`, futuro rifiutato; invalidazione tramite WS T08.

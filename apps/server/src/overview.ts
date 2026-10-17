@@ -13,7 +13,7 @@ type ActivityRow = {
 };
 type ShareRow = { id: string; project_id: string; title: string; visibility: 'team' | 'client'; status: 'active'; author_id: string; author_name: string; updated_at: Date };
 type ErrorCode = Extract<OverviewResponse, { ok: false }>['code'];
-class OverviewError extends Error {
+export class OverviewError extends Error {
   constructor(readonly code: ErrorCode, message: string) { super(message); }
 }
 
@@ -51,8 +51,7 @@ async function activity(db: Client, projectId: string, team: boolean): Promise<O
   }));
 }
 
-async function dispatch(db: Client, actor: Actor, request: OverviewRequest): Promise<OverviewResponse> {
-  const team = await authorize(db, actor, request.projectId);
+async function dispatch(db: Client, actor: Actor, request: OverviewRequest, team: boolean): Promise<OverviewResponse> {
   const cursor = (await db.query<{ sequence: string }>('SELECT sequence::text FROM project_realtime_cursor WHERE project_id = $1', [request.projectId])).rows[0]?.sequence ?? '0';
   if (request.operation === 'markRead' && BigInt(request.through) > BigInt(cursor)) {
     throw new OverviewError('invalid_request', 'Il cursore di lettura non è ancora disponibile. Aggiorna l’overview.');
@@ -97,6 +96,13 @@ async function dispatch(db: Client, actor: Actor, request: OverviewRequest): Pro
   } };
 }
 
+/** Compose another authorized projection inside its existing transaction. No nested BEGIN or cached role. */
+export async function readOverviewInTransaction(db: Client, actor: Actor, request: OverviewRequest, options: { clientOnly?: boolean } = {}) {
+  const technical = await authorize(db, actor, request.projectId);
+  const team = technical && !options.clientOnly;
+  return { response: await dispatch(db, actor, request, team), team };
+}
+
 export function createOverviewService(database: DatabaseBoundary, reportError?: (error: unknown) => void) {
   return {
     async execute(actor: Actor, input: OverviewRequest): Promise<OverviewResponse> {
@@ -106,7 +112,8 @@ export function createOverviewService(database: DatabaseBoundary, reportError?: 
       let db: (Client & { release(): void }) | undefined;
       try {
         db = await database.pool.connect(); await db.query('BEGIN');
-        const response = overviewResponseSchema.parse(await dispatch(db, actor, parsed.data));
+        const { response: projection } = await readOverviewInTransaction(db, actor, parsed.data);
+        const response = overviewResponseSchema.parse(projection);
         await db.query('COMMIT'); return response;
       } catch (error) {
         await db?.query('ROLLBACK').catch(() => undefined);

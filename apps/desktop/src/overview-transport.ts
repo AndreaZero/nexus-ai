@@ -3,7 +3,7 @@ import { AUTH_SCHEME, publicServiceUrl } from './auth-config.ts';
 
 const MAX_RESPONSE_BYTES = 1024 * 1024;
 
-async function readBoundedJson(response: Response): Promise<unknown> {
+export async function readBoundedJson(response: Response): Promise<unknown> {
   if (!response.body) throw new Error('Invalid response size.');
   if (Number(response.headers.get('Content-Length')) > MAX_RESPONSE_BYTES) {
     await response.body.cancel().catch(() => undefined);

@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema, sessionsRequestSchema, sessionsResponseSchema, realtimeApiRequestSchema, realtimeApiResponseSchema, overviewRequestSchema, overviewResponseSchema } from '@nexus-ai/contracts';
+import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema, sessionsRequestSchema, sessionsResponseSchema, realtimeApiRequestSchema, realtimeApiResponseSchema, overviewRequestSchema, overviewResponseSchema, pulseRequestSchema, pulseResponseSchema } from '@nexus-ai/contracts';
 import { createDatabaseBoundary } from '@nexus-ai/db';
 import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { fromNodeHeaders } from 'better-auth/node';
@@ -19,6 +19,7 @@ import { createRealtimeService } from './realtime.js';
 import { installRealtimeSocket } from './realtime-socket.js';
 import { createRealtimeBudget } from './realtime-rate.js';
 import { createOverviewService } from './overview.js';
+import { createPulseService } from './pulse.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -52,7 +53,9 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const realtimeBudget = createRealtimeBudget();
   const sessionReadBudget = createRealtimeBudget();
   const overviewBudget = createRealtimeBudget();
+  const pulseBudget = createRealtimeBudget();
   const overview = createOverviewService(database, error => app.log.error({ event: 'overview.failure', ...errorDiagnostic(error) }));
+  const pulse = createPulseService(database, error => app.log.error({ event: 'pulse.failure', ...errorDiagnostic(error) }));
   const realtimeSocket = installRealtimeSocket(app, {
     service: realtime, origins: realtimeOrigins,
     async authorize(request) {
@@ -73,7 +76,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   });
 
   app.setErrorHandler((error, request, reply) => {
-    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview'].includes(request.url.split('?')[0] ?? '');
+    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview', '/api/pulse'].includes(request.url.split('?')[0] ?? '');
     if (isCollaboration) { reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer'); }
     if (error instanceof OriginNotAllowedError) {
       if (isCollaboration) return reply.code(403).send({ ok: false, code: 'forbidden', message: 'Origine della richiesta non consentita.' });
@@ -95,7 +98,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   await app.register(cors, {
     delegator(request, callback) {
       const requestPath = request.url.split('?')[0];
-      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime' || requestPath === '/api/overview';
+      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime' || requestPath === '/api/overview' || requestPath === '/api/pulse';
       const origin = request.headers.origin;
       const allowed = isAuth
         ? origin === config.auth.webURL || origin === new URL(config.auth.baseURL).origin || origin === DESKTOP_AUTH_ORIGIN
@@ -244,6 +247,35 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     } catch (error) {
       app.log.error({ event: 'overview.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
       return fail(503, 'unavailable', 'Overview temporaneamente non disponibile.');
+    }
+  });
+
+  app.post('/api/pulse', { bodyLimit: 16 * 1024 }, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer');
+    const fail = (status: number, code: 'invalid_request' | 'forbidden' | 'auth_required' | 'unavailable', message: string) =>
+      reply.code(status).send(pulseResponseSchema.parse({ ok: false, code, message }));
+    const ipBudget = pulseBudget.consume(`ip:${request.ip}`, 600);
+    if (!ipBudget.allowed) { reply.header('Retry-After', String(ipBudget.retryAfterSeconds)); return fail(429, 'unavailable', 'Troppe richieste Pulse. Riprova tra poco.'); }
+    if (!realtimeOrigins.includes(request.headers.origin ?? '')) return fail(403, 'forbidden', 'Origine della richiesta non consentita.');
+    if (request.headers['content-type']?.split(';')[0]?.trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_request', 'È richiesta una richiesta JSON.');
+    const input = pulseRequestSchema.safeParse(request.body);
+    if (!input.success) return fail(400, 'invalid_request', 'Richiesta Pulse non valida.');
+    if (!auth) return fail(503, 'unavailable', 'Servizio account non disponibile.');
+    try {
+      const headers = fromNodeHeaders(request.headers); headers.set(AUTH_CLIENT_IP_HEADER, request.ip);
+      for (const name of ['x-forwarded-for', 'x-real-ip', 'forwarded']) headers.delete(name);
+      const result = await auth.api.getSession({ headers, query: { disableCookieCache: true }, returnHeaders: true });
+      const cookies = result.headers.getSetCookie(); if (cookies.length) reply.header('Set-Cookie', cookies);
+      const account = result.response;
+      if (!account?.user.emailVerified || account.session.expiresAt.getTime() <= Date.now()) return fail(401, 'auth_required', 'Accedi con un account verificato per continuare.');
+      const accountBudget = pulseBudget.consume(`account:${account.user.id}`, 240);
+      if (!accountBudget.allowed) { reply.header('Retry-After', String(accountBudget.retryAfterSeconds)); return fail(429, 'unavailable', 'Troppe richieste Pulse. Riprova tra poco.'); }
+      const outcome = pulseResponseSchema.parse(await pulse.execute({ id: account.user.id, email: account.user.email }, input.data));
+      if (!outcome.ok) app.log.warn({ event: 'pulse.failure', requestId: request.id, operation: input.data.operation, outcome: outcome.code });
+      return reply.send(outcome);
+    } catch (error) {
+      app.log.error({ event: 'pulse.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
+      return fail(503, 'unavailable', 'Pulse temporaneamente non disponibile.');
     }
   });
 

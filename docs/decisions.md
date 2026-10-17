@@ -29,6 +29,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D23 | Adottata in T09 | Overview come proiezione metadata della finestra outbox T08, coalescente per entità e autorizzata prima di pagine/conteggi. Feed stabile durante lettura ma rimozione immediata dei target revocati. Notifiche altri autori con cursore letto monotono per account/progetto; non un sistema notifiche universale anticipato |
 | D24 | Adottata in T09 | CPU/memoria aggregate OS solo opt-in sul dispositivo, nessun upload/persistenza/consenso permanente. Campioni2s/max60, rete unknown; timer senza HTTP e lease10s del consumatore, ruoli/binding ricontrollati. Health/deploy senza dati restano unknown |
 
+| D25 | Adottata in T10 | Pulse è una lettura transazionale dei domini esistenti con preview client restrittiva. Progressi da tutte le task visibili prima dei limiti; summary UTC da record correnti e outbox retained. Outcomes sono estratti completed pubblicati con provenienza, distinti dai deliverable/feedback T11; nessuna nuova tabella o metrica illustrativa |
+
 ## Da concretizzare al momento opportuno
 
 **T06:** bozza/selezione restano cifrate sul dispositivo; il backend persiste solo messaggi scelti con preview e conferma di audience. Nessuna promozione automatica di un thread completo a contenuto cliente. Osservazioni Git locali separate dall'autenticazione/API GitHub T12; condivisione pull separata dal realtime T08. Limiti e prova in [session.md](session.md).

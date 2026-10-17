@@ -1,5 +1,11 @@
 # Changelog
 
+### 2026-10-17 — T10: Client & Team Pulse, reference1
+
+- Conferma Windows0.9.1/no429 ricevuta, T09 accettato; integrati backend, renderer ed effetti con multiagenti. Hero wave/particelle e nodi da milestone reali, donut, griglia tre righe e rail reference1; focus/reduced motion e960px.
+- Snapshot Pulse transazionale autorizzato con preview client restrittiva, progressi da tutte le task visibili prima dei limiti, milestone/roadmap in lettura, summary UTC/project-mine, sessioni e outcomes da estratti completed esplicitamente pubblicati. Presenza/feed reali e nuovi eventi applicati esplicitamente; dettagli locali esclusi dalla proiezione cliente.
+- App/server/contratti0.10.0, UI0.3.0; DB0.9.0 e Codex0.159.2 invariati. Nessuna nuova migrazione o dipendenza, correzione429 conservata. Passati check,198test, build,6scenari PG/HTTP/WS,28controlli UI/IPC, regressione429 e package/smoke Windows x64. CRUD task/milestone, deliverable/feedback restano T11; GitHub T12 e deploy condivisi T13. Guida `docs/pulse.md`, prove e package effettivi in `docs/status.md`; build personale Windows e Mac/Linux da distinguere.
+
 ### 2026-10-17 — T09 0.9.1: limite delle verifiche account
 
 - Corretto429 su `/auth/get-session` dopo polling continuo: nella libreria installata il contatore DB si azzera dopo inattività, accumulando letture anche attraverso più minuti. La sola lettura sessione usa ora il gate applicativo bounded a finestre fisse di60s/100 richieste per IP, con Retry-After e recupero non prolungato dai tentativi respinti. Limiti login/reset/verifica email invariati.

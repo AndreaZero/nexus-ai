@@ -4,6 +4,7 @@ import type { CollaborationRequest, DesktopBridge, LocalBindingRequest, NexusAut
 import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema, type ContextRequest, type SessionsRequest, type WorkspaceRequest } from '@nexus-ai/contracts';
 import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema, type RealtimeRequest, type RealtimeState } from '@nexus-ai/contracts';
 import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema, type OverviewRequest, type TelemetryRequest } from '@nexus-ai/contracts';
+import { pulseRequestSchema, pulseResponseSchema, type PulseRequest } from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -48,6 +49,9 @@ const bridge: DesktopBridge = Object.freeze({
   }),
   telemetry: Object.freeze({
     async request(input: TelemetryRequest) { return telemetryResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.telemetryRequest, telemetryRequestSchema.parse(input))); },
+  }),
+  pulse: Object.freeze({
+    async request(input: PulseRequest) { return pulseResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.pulseRequest, pulseRequestSchema.parse(input))); },
   }),
   codex: Object.freeze({
     async request(input: CodexRequest) {

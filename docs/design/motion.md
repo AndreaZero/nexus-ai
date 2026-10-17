@@ -32,6 +32,8 @@ Budget iniziale 500–900 punti, wave sinusoidali molto lente e drift 6–10 s; 
 
 ## Mappa e microvisualizzazioni
 
+T10 usa `PulseScene`: superficie deterministica3200punti e76particelle, curve blu/ciano con alone viola localizzato. Massimo5 nodi derivati dalle milestone autorizzate, posizioni schematiche e nessuna animazione che simuli completamento. DOM focusabile per selezione/dettaglio, tooltip titoli/stati/progresso reali. Canvas30fps/DPR1,5, pausa hidden/offscreen e reduced motion statico; hero non copre copy/CTA/donut. Le etichette troppo lunghe hanno ellissi e titolo completo accessibile.
+
 Mappa mondo della presence strip: silhouette/dot grid blu molto scura, 3–5 nodi luminosi legati a dispositivi attivi; archi brevi e luminosità localizzata. Non dedurre o esporre geolocalizzazione precisa degli utenti: posizioni decorative schematiche, conteggi reali e label coerente. Icona waveform globale e piccola visualizzazione nella card Working now usano lo stesso linguaggio grafico.
 
 ## Grafici con dati

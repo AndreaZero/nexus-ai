@@ -1,0 +1,159 @@
+.nexus-pulse-scene {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  isolation: isolate;
+}
+
+.nexus-pulse-scene__surface {
+  position: absolute;
+  inset: 0 17.5% 0 29%;
+  min-width: 0;
+}
+
+.nexus-pulse-scene__canvas {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 95%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 9%, #000 95%, transparent);
+}
+
+.nexus-pulse-scene__connections,
+.nexus-pulse-scene__milestones {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.nexus-pulse-scene__connections path {
+  fill: none;
+  stroke: #2997ef;
+  stroke-opacity: 0.55;
+  stroke-width: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.nexus-pulse-scene__node {
+  --pulse-color: #b2c4da;
+  position: absolute;
+  left: var(--pulse-x);
+  top: var(--pulse-y);
+  display: block;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 0;
+  border-radius: 50%;
+  outline-offset: 3px;
+  color: var(--pulse-color);
+  font: inherit;
+  text-align: left;
+  background: none;
+  pointer-events: auto;
+}
+
+button.nexus-pulse-scene__node {
+  cursor: pointer;
+}
+
+.nexus-pulse-scene__node--completed { --pulse-color: #00e6a0; }
+.nexus-pulse-scene__node--in_progress { --pulse-color: #00b7ff; }
+
+.nexus-pulse-scene__marker {
+  position: absolute;
+  inset: 5px;
+  display: grid;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: var(--pulse-color);
+  background: #071725;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--pulse-color) 20%, transparent);
+}
+
+.nexus-pulse-scene__marker > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 5px currentColor;
+}
+
+.nexus-pulse-scene__label {
+  position: absolute;
+  display: block;
+  width: max-content;
+  max-width: 112px;
+  color: #d4e6fc;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-shadow: 0 1px 4px #020810, 0 0 7px #020810;
+}
+
+.nexus-pulse-scene__label > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nexus-pulse-scene__label small {
+  display: block;
+  color: var(--pulse-color);
+  font-size: 10px;
+  font-weight: 400;
+}
+
+.nexus-pulse-scene__node:last-child .nexus-pulse-scene__label--right { max-width: 84px; }
+
+.nexus-pulse-scene__label--right {
+  top: 5px;
+  left: 33px;
+}
+
+.nexus-pulse-scene__label--above {
+  right: -65px;
+  bottom: 30px;
+  max-width: 150px;
+  padding: 5px 8px;
+  border: 1px solid #183d77;
+  border-radius: 5px;
+  background: linear-gradient(125deg, #071328, #0d0c28);
+}
+
+.nexus-pulse-scene__node.is-active .nexus-pulse-scene__marker,
+.nexus-pulse-scene__node:hover .nexus-pulse-scene__marker,
+.nexus-pulse-scene__node:focus-visible .nexus-pulse-scene__marker {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--pulse-color) 55%, transparent);
+}
+
+.nexus-pulse-scene__node:focus-visible { outline: 2px solid #00b7ff; }
+.nexus-pulse-scene__node:focus-visible .nexus-pulse-scene__label { background: #071328; }
+
+@media (max-width: 1199px) {
+  .nexus-pulse-scene__label { max-width: 78px; }
+  .nexus-pulse-scene__label--above { max-width: 110px; }
+}
+
+@media (max-width: 760px) {
+  .nexus-pulse-scene__surface { right: 0; left: 48%; opacity: 0.6; }
+  .nexus-pulse-scene__label { display: none; }
+  .nexus-pulse-scene__node:focus-visible .nexus-pulse-scene__label {
+    display: block;
+    right: 0;
+    left: auto;
+    max-width: 130px;
+  }
+}
+
+@media (forced-colors: active) {
+  .nexus-pulse-scene__connections { visibility: hidden; }
+  .nexus-pulse-scene__marker { color: CanvasText; background: Canvas; box-shadow: none; }
+  .nexus-pulse-scene__label { color: CanvasText; text-shadow: none; }
+}

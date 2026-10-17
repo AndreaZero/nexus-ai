@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 // Isolated UI/IPC QA: actual Git files and Node TAP, controlled provider transport, no personal login.
 const root = fileURLToPath(new URL('../', import.meta.url));
-const output = path.join(root, '.nexus/visual/t09');
+const output = path.join(root, '.nexus/visual/t10');
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(path.join(output, 'workspace-qa-'));
 const requireDesktop = createRequire(path.join(root, 'apps/desktop/package.json'));
@@ -34,13 +34,13 @@ try {
     const child = spawn(executable, [main, payload], { cwd: root, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'], env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'ELECTRON_RUN_AS_NODE')) });
     let text = '';
     for (const stream of [child.stdout, child.stderr]) stream.on('data', chunk => { if (text.length < 16000) text += chunk.toString(); });
-    const timer = setTimeout(() => child.kill(), 55000);
+    const timer = setTimeout(() => child.kill(), 75000);
     child.once('error', reject);
     child.once('close', code => { clearTimeout(timer); resolve({ code, text }); });
   });
   if (result.code !== 0) throw new Error(`Workspace QA failed (${result.code}): ${result.text}`);
   const report = JSON.parse(await readFile(path.join(output, 'workspace-report.json'), 'utf8'));
-  console.log(`Workspace UI/IPC QA passed: ${report.checks.length} checks; real Git/Node TAP, controlled provider transport. Captures: .nexus/visual/t09/`);
+  console.log(`Workspace UI/IPC QA passed: ${report.checks.length} checks; real Git/Node TAP, controlled provider/Pulse transport. Captures: .nexus/visual/t10/`);
 } finally {
   if (path.dirname(directory) === output && path.basename(directory).startsWith('workspace-qa-')) await rm(directory, { recursive: true, force: true });
   else { console.error('Unexpected QA cleanup target; cleanup skipped.'); process.exitCode = 1; }

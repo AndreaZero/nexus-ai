@@ -6,6 +6,7 @@ import type { SessionsRequest, SessionsResponse } from './sessions.js';
 import type { WorkspaceRequest, WorkspaceResponse } from './workspace.js';
 import type { RealtimeRequest, RealtimeResponse, RealtimeState } from './realtime.js';
 import type { OverviewRequest, OverviewResponse, TelemetryRequest, TelemetryResponse } from './overview.js';
+import type { PulseRequest, PulseResponse } from './pulse.js';
 export * from './collaboration.js';
 export * from './codex.js';
 export * from './context.js';
@@ -13,6 +14,7 @@ export * from './sessions.js';
 export * from './workspace.js';
 export * from './realtime.js';
 export * from './overview.js';
+export * from './pulse.js';
 
 export const DESKTOP_IPC = {
   getInfo: 'nexus:desktop:get-info',
@@ -32,6 +34,7 @@ export const DESKTOP_IPC = {
   realtimeStateChanged: 'nexus:realtime:state-changed',
   overviewRequest: 'nexus:overview:request',
   telemetryRequest: 'nexus:telemetry:request',
+  pulseRequest: 'nexus:pulse:request',
 } as const;
 
 export const nexusUserSchema = z.object({
@@ -75,6 +78,7 @@ export interface DesktopBridge {
   readonly realtime: { request(request: RealtimeRequest): Promise<RealtimeResponse>; onStateChanged(callback: (state: RealtimeState) => void): () => void };
   readonly overview: { request(request: OverviewRequest): Promise<OverviewResponse> };
   readonly telemetry: { request(request: TelemetryRequest): Promise<TelemetryResponse> };
+  readonly pulse: { request(request: PulseRequest): Promise<PulseResponse> };
   readonly codex: {
     request(request: CodexRequest): Promise<CodexResponse>;
     onStateChanged(callback: (state: CodexState) => void): () => void;

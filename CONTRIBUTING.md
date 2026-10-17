@@ -37,6 +37,7 @@ pnpm package:win
 | `pnpm verify:session-rate` | Regressione429, finestre reali del limiter con tempo QA virtuale e controlli auth Electron su backend proprio |
 | `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
 | `pnpm verify:sessions` | Tre account temporanei: estratti/audience, versioni/concorrenza, idempotenza, task visibili e revoca su HTTP/PostgreSQL/SMTP |
+| `pnpm verify:pulse` | Snapshot Pulse, audience e progressi oltre100task, summary UTC/mine, outcomes e revoca con PG/SMTP/HTTP/WS reali |
 | `pnpm verify:workspace` | Electron/IPC/UI reale con Git e TAP Node isolati, trasporto provider controllato e OS opens intercettati; nessuna credenziale o inferenza personale |
 | `pnpm codex:prepare` | Copia il runtime ufficiale fissato della piattaforma dalla dipendenza installata; eseguito anche dal build desktop |
 | `pnpm codex:schema` | Rigenera i tipi dal binario 0.159.2; non modificare manualmente `generated/` |
@@ -47,9 +48,11 @@ Gli harness account richiedono PostgreSQL locale e Mailpit attivi. `verify:accou
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T09
+## Build e prova Windows T10
 
-Versione T09: **0.9.1**, correzione429 dei controlli account. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.9.1-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Nessuna nuova migrazione rispetto a0.9.0; 0004 resta quella già applicata sul DB locale. Nessun cambio credenziali o nuovo DB. Codex nativo0.159.2 incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app e backend precedenti prima della build e riavviarli entrambi dopo: il vecchio processo server mantiene il limiter precedente finché non viene riavviato.
+Versione T10: **0.10.0**, Client & Team Pulse reference1; correzione429 conservata. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.10.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Nessuna nuova migrazione rispetto a0.9.0; 0004 resta quella già applicata sul DB locale. Nessun cambio credenziali o nuovo DB. Codex nativo0.159.2 incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app e backend precedenti prima della build e riavviarli entrambi dopo: il vecchio processo server mantiene il limiter precedente finché non viene riavviato.
+
+Per T10 seguire la [prova Pulse](docs/pulse.md#build-e-prova-windows): due account, client preview, share/outcomes, summary personale e accesso revocato. Nessuna migrazione nuova; task/milestone CRUD, deliverable e feedback sono T11. `pnpm verify:pulse` verifica audience e conteggi globali con fixture PG/HTTP/WS proprie; `pnpm verify:workspace` include griglia Pulse, roadmap, client preview, reduced motion e960px nel renderer/preload effettivi. Rapporti `.nexus/visual/t10/`.
 
 Dopo la build tenere aperti:
 

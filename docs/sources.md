@@ -23,6 +23,8 @@ Il lettore ha restituito cinque turni con messaggi utente, senza ulteriori pagin
 
 ## Reference visive
 
+Il maintainer conferma in questa sessione build Windows0.9.1 e scomparsa del429, poi autorizza T10 con multiagenti per Client & Team Pulse reference1. La conferma accetta T09 per Windows; non estende l'evidenza a macOS/Linux o a ogni percorso personale Codex.
+
 `examples/design/1.png`: vista cliente/team. `2.png`: sessione AI. `3.png`: overview progetto. Tutte **1586 × 992 pixel**. Geometria e colori sono stati ispezionati; i colori CSS sono una sintesi dei pixel con gradienti, non token originali recuperati. Font, frequenza delle particelle, durata animazioni e comportamento responsive non sono determinabili da una PNG: la specifica li definisce come ricostruzione.
 
 ## Documentazione ufficiale consultata

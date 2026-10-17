@@ -20,6 +20,7 @@ import { EncryptedAuthStorage } from './auth-storage.js';
 import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema } from '@nexus-ai/contracts';
 import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema } from '@nexus-ai/contracts';
 import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema } from '@nexus-ai/contracts';
+import { pulseRequestSchema, pulseResponseSchema } from '@nexus-ai/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -237,6 +238,10 @@ async function initialize() {
     requireTrustedCaller(event, args, 1);
     return desktopAuth!.overviewRequest(overviewRequestSchema.parse(args[0])).then(result => overviewResponseSchema.parse(result));
   });
+  ipcMain.handle(DESKTOP_IPC.pulseRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopAuth!.pulseRequest(pulseRequestSchema.parse(args[0])).then(result => pulseResponseSchema.parse(result));
+  });
   ipcMain.handle(DESKTOP_IPC.telemetryRequest, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args, 1);
     return desktopTelemetry!.request(telemetryRequestSchema.parse(args[0])).then(result => telemetryResponseSchema.parse(result));
@@ -356,6 +361,8 @@ async function initialize() {
         realtimeKeys: Object.keys(window.nexusDesktop.realtime),
         realtimeState: await window.nexusDesktop.realtime.request({operation:'getState'}),
         overviewKeys: Object.keys(window.nexusDesktop.overview), telemetryKeys: Object.keys(window.nexusDesktop.telemetry),
+        pulseKeys: Object.keys(window.nexusDesktop.pulse),
+        pulseState: await window.nexusDesktop.pulse.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         overviewState: await window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         telemetryState: await window.nexusDesktop.telemetry.request({operation:'getState',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         workspaceState: await window.nexusDesktop.workspace.request({operation:'getChanges',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
@@ -372,6 +379,7 @@ async function initialize() {
           window.nexusDesktop.realtime.request({operation:'connect',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary',url:'ws://invalid.example'}),
           window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
           window.nexusDesktop.telemetry.request({operation:'setEnabled',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',enabled:true,command:'arbitrary'}),
+          window.nexusDesktop.pulse.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -391,12 +399,14 @@ async function initialize() {
       const realtimeState = realtimeResponseSchema.parse(check['realtimeState']);
       const overviewState = overviewResponseSchema.parse(check['overviewState']);
       const telemetryState = telemetryResponseSchema.parse(check['telemetryState']);
+      const pulseState = pulseResponseSchema.parse(check['pulseState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           JSON.stringify(check['overviewKeys']) !== '["request"]' || overviewState.ok || !['auth_required', 'unavailable'].includes(overviewState.code) ||
           JSON.stringify(check['telemetryKeys']) !== '["request"]' || telemetryState.ok || !['auth_required', 'unavailable'].includes(telemetryState.code) ||
+          JSON.stringify(check['pulseKeys']) !== '["request"]' || pulseState.ok || !['auth_required', 'unavailable'].includes(pulseState.code) ||
           JSON.stringify(check['contextKeys']) !== '["request"]' || JSON.stringify(check['sessionsKeys']) !== '["request"]' ||
           contextState.ok || contextState.code !== 'auth_required' || sessionsState.ok || sessionsState.code !== 'auth_required' ||
           JSON.stringify(check['workspaceKeys']) !== '["request"]' || workspaceState.ok || workspaceState.code !== 'auth_required' ||

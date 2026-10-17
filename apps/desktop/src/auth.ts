@@ -9,6 +9,8 @@ import { AuthStorageError, EncryptedAuthStorage } from './auth-storage.js';
 import { requestCollaboration } from './collaboration-transport.js';
 import { requestSessions } from './sessions-transport.js';
 import { requestOverview } from './overview-transport.js';
+import { requestPulse } from './pulse-transport.js';
+import { type PulseRequest, type PulseResponse } from '@nexus-ai/contracts';
 import { type OverviewRequest, type OverviewResponse } from '@nexus-ai/contracts';
 import { sessionsResponseSchema, type SessionsRequest, type SessionsResponse } from '@nexus-ai/contracts';
 
@@ -225,6 +227,15 @@ export class DesktopAuth {
     const before = await this.realtimeSession();
     if (!before) return { ok: false, code: this.state.status === 'unavailable' ? 'unavailable' : 'auth_required', message: 'Reconnect your Nexus account to read this project.' };
     const result = await requestOverview(before.server, before.cookie, request);
+    const after = await this.realtimeSession();
+    if (!after || after.userId !== before.userId || after.cookie !== before.cookie) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
+    return result;
+  }
+
+  async pulseRequest(request: PulseRequest): Promise<PulseResponse> {
+    const before = await this.realtimeSession();
+    if (!before) return { ok: false, code: this.state.status === 'unavailable' ? 'unavailable' : 'auth_required', message: 'Reconnect your Nexus account to read this project.' };
+    const result = await requestPulse(before.server, before.cookie, request);
     const after = await this.realtimeSession();
     if (!after || after.userId !== before.userId || after.cookie !== before.cookie) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
     return result;

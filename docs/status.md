@@ -1,6 +1,38 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T09 0.9.1 consegnato, in attesa di verifica utente**: correzione429 su `/auth/get-session` dopo 1–2 minuti segnalato dal maintainer. Il feedback non certifica tutti i percorsi personali o le altre piattaforme. [Issue T08 chiusa](https://github.com/AndreaZero/nexus-ai/issues/8), [T09 aperta](https://github.com/AndreaZero/nexus-ai/issues/9). T10 non avviato.
+Aggiornato: **17 ottobre 2026**. **T10 consegnato, in attesa di verifica utente** — [issue10](https://github.com/AndreaZero/nexus-ai/issues/10). Il maintainer conferma build Windows0.9.1 e assenza del429; T09/issue9 accettato e chiuso. T10 sviluppato con multiagenti, integrato e controllato; build personale e accettazione restano distinte. Il feedback non certifica ogni percorso personale o altri OS. T11 non avviato.
+
+## Ownership T10 integrate/rilasciate e contratto
+
+| Fronte | Percorsi scrivibili | Obiettivo / handoff |
+| --- | --- | --- |
+| `/root/t10_server` — integrato | `apps/server/src/pulse*.ts`, `overview.ts`/test per helper transazionale, `app.ts` | Snapshot Pulse audience corrente, milestone/progresso da task visibili, summary UTC/mine, outcome da estratti completati; route e test |
+| `/root/t10_web` — integrato | `apps/web/src/**`, nuovo test webT10 | Vista reference1, provider scoped e client preview, progressi/summary/sessioni/presenza/feed/link/dialoghi reali; nessun dato inventato |
+| `/root/t10_effects` — integrato | `packages/ui/src/effects/**`, export effetti e CSS dedicato | PulseScene wave/particelle/nodi con milestone reali, focus/reduced motion e geometria reference1 |
+| `/root/t10_server` — QA integrata | solo `scripts/verify-pulse.mjs` | Sei scenari veri PG/HTTP/WS/Mailpit, fixture proprie e cleanup |
+| `/root/t10_effects` — QA integrata | solo `workspace-verification.ts`, `scripts/verify-workspace.mjs` | Renderer/preload nativi, proiezioni QA dichiarate, confronto PNG1 e28controlli inclusi22storici |
+| Coordinatore — integrato | contratti, auth/main/preload e trasporto Pulse desktop, manifest/lock, logging, QA/docs/GitHub | Contratto unico, integrazione transazioni/privilegi, prove e consegna Windows |
+
+Contratti fissi `packages/contracts/src/pulse.ts`: POST `/api/pulse`/bridge pulse.request snapshot(projectId,view auto|client,scope project|mine,filter,before,limit). Snapshot audience team|client, overview autorizzata T09 (feed/authorizedTargets), milestone max100 con conteggi task visibili/progressi e totale, progresso globale visible_tasks, summary giorno UTC con tasksUpdated e sharedUpdates retained_entities; commits/comments/builds null. Outcomes max20 estratti esplicitamente pubblicati e completed, non file/deliverable approvati. Nessuna nuova tabella/migrazione: scrittura task/milestone/deliverable/feedback resta T11. Client/viewer ricevono soltanto proiezione client; technical può preview client, mai elevazione dal request. Snapshot in singola transazione con lock workspace→project; riuso helper overview senza transazioni annidate. Presence WS T08 e snapshot/role/outage invalidano UI; progressi da scope dichiarato, niente percentuali PNG, geolocalizzazione o attività produttiva dedotte. PulseScene props: milestones readonly {id,title,state completed|in_progress|planned,progress number|null}[],reducedMotion,onSelect?(id),activeId?,className?. UI usa export @nexus-ai/ui/effects, nessuna sovrapposizione sui file effetti. PNG1 aperta prima delle deleghe; nessuna regressione0.9.1.
+
+## Evidenze T10 e consegna
+
+| Ambito | Esito |
+| --- | --- |
+| Installazione/statici | `pnpm install --frozen-lockfile --offline`, `pnpm check` passati; confini finali84file. Typecheck/lint mirati e build dei fronti ritoccati passati |
+| Test integrati | **198/198**: bridge13, DB3, desktop86, server59, web35, confini2. Esecuzione fuori sandbox per Git/rename/socket dei fixture Windows; il tentativo nel sandbox aveva EPERM dei percorsi temporanei, non è riportato come passato. Trasporto Pulse ritestato dopo controllo progetto interno e scope |
+| Build | `pnpm build` e build finale UI/web/desktop passati,335moduli, chunk principale587,75kB minificati; warning Vite dimensione senza errore. Nessuna nuova dipendenza o schema Codex |
+| PostgreSQL/audience reali | `pnpm verify:pulse`: **6 scenari** PostgreSQL/SMTP/HTTP/WS con3account temporanei,2progetti,105task client più task interne/estranee e oltre100milestone. Progressi globali prima dei limiti, figli stesso progetto/audience, summary UTC/mine, outcomes completed senza body, filtri e revoca su socket/snapshot, Origin/noStore |
+| Regressione429 | `pnpm verify:session-rate` passato anche con backend0.10:4scenari/180letture su6minuti virtuali, burst/recupero/revoca e10controlli auth Electron nativi isolati. Nessuna inferenza personale |
+| Desktop IPC | Smoke sviluppo e dell'eseguibile impacchettato passati: bridge Pulse validato, cookie arbitrari negati, mount/CSP e Node assente. Cookie/URL del main non esposti al renderer |
+| UI/IPC e confronto | `pnpm verify:workspace`: **28/28** controlli finali,22storici più6Pulse, Git/TAP reali e trasporti provider/Pulse controllati dichiarati. Cinque milestone/quattro outcomes/presenza nel renderer/preload effettivi, dialog e scope mine, preview client senza dettagli locali, canvas fermo fuori viewport e reduced motion con bitmap identica |
+| Fedeltà visiva | PNG1 originale e catture finali1586×992/960 aperte e ispezionate. Hero1050×232/railx1286, tre righe card, donut verde/ciano e wave3200punti; nessun overflow documento a1586, nessun overflow orizzontale a960, cinque membri visibili. Corretto footer che restringeva griglia di15px. Titoli/dati reali differenti e font/moto ricostruiti; nessuna uguaglianza pixel dichiarata |
+| Pacchetto Windows | NSIS **0.10.0 x64**, `release/win/Nexus-AI-0.10.0-win-x64.exe`, **220035314 byte**, `NotSigned`; nessuna installazione automatica. Smoke dell'eseguibile `win-unpacked` passato |
+| Segreti/pulizia | Scan1560file sorgenti/build:0valori privati;0account/workspace QA T10 residui,1account reale conservato,5migrazioni invariate. Fixture/email proprie rimosse, Mailpit/backend del maintainer conservati |
+| Limiti di prodotto | Milestone/task in lettura fino aT11; outcomes sono estratti pubblicati, non deliverable; feedback/approvazioni cliente T11, GitHub T12, deploy condivisi/probe T13. Nessun dato PNG simulato nel normale avvio |
+| Piattaforme | Windows x64 build/package/smoke passati; macOS/Linux portabili ma non buildati nativamente qui |
+
+Versioni root/desktop/web/server/contratti **0.10.0**, UI0.3.0; DB0.9.0, bridge0.5.0 e Codex0.159.2 invariati. Nessuna migrazione/configurazione nuova. Guide/prova in [pulse.md](pulse.md), rapporti/catture `.nexus/visual/t10/`. Tutti i fronti consegnati/ownership rilasciate, nessun install/commit autonomo degli agenti. Chiudere vecchi app/backend, `pnpm install --frozen-lockfile`, `pnpm package:win`, quindi server/app in terminali distinti. Attendere feedback del maintainer prima di T11.
 
 ## Correzione T09 0.9.1 — controlli account
 
@@ -12,7 +44,7 @@ Solo `/auth/get-session` usa ora il gate applicativo bounded 100 richieste/IP pe
 
 Installazione frozen passata. Pacchetto Windows x64 **0.9.1**, `release/win/Nexus-AI-0.9.1-win-x64.exe`, **220029372 byte**, unsigned, generato senza installazione automatica; smoke dell'eseguibile impacchettato passato. Scan **1538 file** sorgenti/build senza valori privati `.env`; **0 account QA rate/native** residui, **1 account reale** conservato e5migrazioni invariate. Email/account propri rimossi, servizi del maintainer non arrestati. Mac/Linux non provati nativamente; UI T09 invariata.
 
-Versioni app/root/desktop/web/server **0.9.1**, contratti/DB0.9.0 e Codex0.159.2 invariati. Per provare chiudere **sia app sia backend vecchi**, `pnpm package:win`, poi riavviare `pnpm start:server` e `pnpm start:desktop` separatamente. Nessuna nuova configurazione PostgreSQL o cancellazione login; il vecchio backend mantiene la vecchia regola finché non viene riavviato. Verificare Overview/telemetria e sessione oltre2minuti. T10 non avviato.
+Versioni app/root/desktop/web/server **0.9.1**, contratti/DB0.9.0 e Codex0.159.2 invariati. Per provare chiudere **sia app sia backend vecchi**, `pnpm package:win`, poi riavviare `pnpm start:server` e `pnpm start:desktop` separatamente. Nessuna nuova configurazione PostgreSQL o cancellazione login; il vecchio backend mantiene la vecchia regola finché non viene riavviato. Verificare Overview/telemetria e sessione oltre2minuti. La conferma0.9.1 è stata ricevuta all’avvio T10 (sopra).
 
 ## Ownership T09 integrate/rilasciate e contratto
 
@@ -44,7 +76,7 @@ Contratti fissi in `packages/contracts/src/overview.ts`: POST `/api/overview` sn
 
 Versioni root/desktop/web/server/contratti/DB **0.9.0**, bridge0.5.0/UI0.2.0 e Codex ufficiale **0.159.2** invariati. Contratto finale include `authorizedTargets` (max1.000), set metadata corrente che elimina i target revocati anche dalle righe congelate durante lettura; nessun contenuto grezzo aggiunto al WS. Fronti integrati e ownership rilasciate; nessun agente ha installato dipendenze o fatto commit autonomo.
 
-Chiudere app/backend precedenti, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`; avviare server e app separatamente. [Prova completa T09](overview.md#build-e-prova-windows): due account, share/estratto, feed/link/read, locale/remoto, opt-in e revoca. Rapporti/catture `.nexus/visual/t09/`, shell nel percorso storico `.nexus/visual/t02/`. Attendere feedback del maintainer prima di T10.
+Chiudere app/backend precedenti, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`; avviare server e app separatamente. [Prova completa T09](overview.md#build-e-prova-windows): due account, share/estratto, feed/link/read, locale/remoto, opt-in e revoca. Rapporti/catture `.nexus/visual/t09/`, shell nel percorso storico `.nexus/visual/t02/`. Feedback T09/0.9.1 ricevuto all’avvio T10 (sopra).
 
 ## Ownership T08 integrate/rilasciate e contratto
 

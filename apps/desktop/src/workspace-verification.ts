@@ -10,6 +10,7 @@ import { APP_URL, isTrustedIpcSender, rendererAssetPath } from './security.ts';
 import { realtimeRequestSchema, realtimeResponseSchema, type RealtimeState } from '@nexus-ai/contracts';
 import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema, type OverviewActivity } from '@nexus-ai/contracts';
 import { DesktopTelemetry } from './telemetry.ts';
+import { pulseRequestSchema, pulseResponseSchema, type PulseMilestone, type PulseRequest } from '@nexus-ai/contracts';
 
 // Standalone verification entry, bundled into the disposable QA directory by scripts/verify-workspace.mjs.
 // Not imported by main.ts, exposed as a renderer route, or included in application startup.
@@ -49,7 +50,7 @@ class ProviderFixture {
 }
 async function verify() {
 await app.whenReady();
-const qaSession = session.fromPartition(`t07-qa-${Date.now()}`);
+const qaSession = session.fromPartition(`t10-qa-${Date.now()}`);
 const renderer = path.join(input.root, 'apps/web/dist');
 qaSession.protocol.handle('nexus', async request => {
   const filename = rendererAssetPath(request.url, renderer);
@@ -63,7 +64,7 @@ const external: string[] = [];
 let opened: ((url: string) => void) | undefined;
 async function openExternal(url: string) { external.push(url); opened?.(url); }
 const fixture = new ProviderFixture();
-const codex = new DesktopCodex({ userData: input.directory, executable: 'controlled-provider-fixture', clientVersion: '0.7.0', platform: process.platform, auth, bindings, openExternal, createProcess: () => fixture as unknown as CodexProcess,
+const codex = new DesktopCodex({ userData: input.directory, executable: 'controlled-provider-fixture', clientVersion: '0.10.0', platform: process.platform, auth, bindings, openExternal, createProcess: () => fixture as unknown as CodexProcess,
   publish: state => window.webContents.send(DESKTOP_IPC.codexStateChanged, codexStateSchema.parse(state)) });
 const workspace = new DesktopWorkspace({ auth, bindings, openExternal });
 workspace.nexusStateChanged(account);
@@ -74,7 +75,7 @@ function handle(channel: string, handler: (value: unknown) => unknown) {
     return handler(value);
   });
 }
-handle(DESKTOP_IPC.getInfo, () => ({ appVersion: '0.7.0', platform: process.platform, architecture: process.arch, electronVersion: process.versions.electron, capabilities: { canRunLocalSession: true, canOpenLocalEditor: true } }));
+handle(DESKTOP_IPC.getInfo, () => ({ appVersion: '0.10.0', platform: process.platform, architecture: process.arch, electronVersion: process.versions.electron, capabilities: { canRunLocalSession: true, canOpenLocalEditor: true } }));
 for (const channel of [DESKTOP_IPC.authGetState, DESKTOP_IPC.authSignIn, DESKTOP_IPC.authCancelSignIn, DESKTOP_IPC.authSignOut]) handle(channel, () => account);
 handle(DESKTOP_IPC.localBindingRequest, value => { localBindingRequestSchema.parse(value); return localBindingResponseSchema.parse({ ok: true, binding }); });
 handle(DESKTOP_IPC.codexRequest, value => codex.request(codexRequestSchema.parse(value)));
@@ -90,6 +91,7 @@ handle(DESKTOP_IPC.sessionsRequest, value => { const request = sessionsRequestSc
 const shareId = '0bdd2528-e0f4-41bf-bda0-4de027fc4dda';
 const qaShare = { id: shareId, projectId, title: 'Reviewed API contract excerpt', visibility: 'client' as const, author: { id: 'qa-reviewer', name: 'QA Reviewer' }, status: 'active' as const, updatedAt: now };
 const realtime: RealtimeState = { projectId, connection: 'online', cursor: '2', snapshot: { projectId, cursor: '2', sessions: [], shares: [qaShare] }, presence: [{ userId: account.user!.id, name: account.user!.name, role: 'owner', connections: 1, lastSeenAt: now }, { userId: 'qa-reviewer', name: 'QA Reviewer', role: 'developer', connections: 1, lastSeenAt: now }], pending: 0, sharing: null, lastSyncedAt: now, notice: 'Isolated UI fixture; no remote connection.' };
+realtime.presence.push({ userId: 'qa-client', name: 'QA Client', role: 'client', connections: 1, lastSeenAt: now }, { userId: 'qa-viewer', name: 'QA Stakeholder', role: 'viewer', connections: 1, lastSeenAt: now }, { userId: 'qa-engineer', name: 'QA Engineer', role: 'developer', connections: 1, lastSeenAt: now });
 handle(DESKTOP_IPC.realtimeRequest, value => { const request = realtimeRequestSchema.parse(value); return realtimeResponseSchema.parse({ ok: true, state: request.operation === 'disconnect' ? { ...realtime, connection: 'idle', snapshot: null, presence: [] } : realtime, share: request.operation === 'readShare' && request.shareId === shareId ? { ...qaShare, messages: [{ id: 'selected-qa', role: 'assistant', text: 'Explicitly selected QA text. Controlled shared projection, no personal inference.', status: 'complete' }] } : null }); });
 const activity: OverviewActivity[] = [{ id: '9bdafc78-5e65-4a67-a474-bae539b81761', sequence: '2', category: 'sessions', kind: 'live.updated', target: { kind: 'live_share', id: shareId }, actor: qaShare.author, title: qaShare.title, visibility: 'client', occurredAt: now }];
 let readThrough = '0';
@@ -101,11 +103,31 @@ handle(DESKTOP_IPC.overviewRequest, value => {
   if (request.operation === 'markRead') { readThrough = request.through; return overviewResponseSchema.parse({ ok: true, kind: 'read', projectId, readThrough, unreadCount: visibleActivity.filter(item => BigInt(item.sequence) > BigInt(readThrough)).length }); }
   return overviewResponseSchema.parse({ ok: true, kind: 'overview', snapshot: { projectId, cursor: snapshotCursor, observedAt: now, activity: ['all', 'sessions'].includes(request.filter) ? visibleActivity : [], nextBefore: null, authorizedTargets, notifications: visibleActivity, unreadCount: visibleActivity.filter(item => BigInt(item.sequence) > BigInt(readThrough)).length, readThrough, tasks: [{ id: '3d9d5121-6049-44f6-8472-a650cc8b3c34', title: 'Review document service contract', status: 'in_progress', visibility: 'client' }], activeShares: authorizedTargets.length ? [qaShare] : [], memberCount: 3 } });
 });
+// These projections exist only in this disposable verification entry, never in production startup.
+const milestones: PulseMilestone[] = [
+  { id: '13d420ac-dac4-4566-9f02-4473f5ac1001', title: 'Core platform review', visibility: 'client', dueAt: null, state: 'completed', progress: { total: 4, completed: 4, inProgress: 0, planned: 0, percent: 100, source: 'visible_tasks' } },
+  { id: '13d420ac-dac4-4566-9f02-4473f5ac1002', title: 'Internal document workflow', visibility: 'team', dueAt: null, state: 'in_progress', progress: { total: 6, completed: 4, inProgress: 2, planned: 0, percent: 100 * 4 / 6, source: 'visible_tasks' } },
+  { id: '13d420ac-dac4-4566-9f02-4473f5ac1003', title: 'Integration contract', visibility: 'client', dueAt: null, state: 'in_progress', progress: { total: 4, completed: 1, inProgress: 2, planned: 1, percent: 25, source: 'visible_tasks' } },
+  { id: '13d420ac-dac4-4566-9f02-4473f5ac1004', title: 'Internal assistant review', visibility: 'team', dueAt: null, state: 'planned', progress: { total: 2, completed: 0, inProgress: 0, planned: 2, percent: 0, source: 'visible_tasks' } },
+  { id: '13d420ac-dac4-4566-9f02-4473f5ac1005', title: 'Release acceptance', visibility: 'client', dueAt: null, state: 'planned', progress: { total: 0, completed: 0, inProgress: 0, planned: 0, percent: null, source: 'visible_tasks' } },
+];
+const outcomes = ['Document service contract review', 'Notification delivery notes', 'API interface excerpt', 'Unit test observation'].map((title, index) => ({ id: `43d420ac-dac4-4566-9f02-4473f5ac100${index + 1}`, projectId, title, visibility: index % 2 ? 'team' as const : 'client' as const, status: 'completed' as const, author: qaShare.author, version: index + 1, messageCount: 1, createdAt: now, updatedAt: now }));
+const pulseRequests: PulseRequest[] = [];
+handle(DESKTOP_IPC.pulseRequest, value => {
+  const request = pulseRequestSchema.parse(value); pulseRequests.push(request);
+  const client = request.view === 'client'; const visibleMilestones = milestones.filter(item => !client || item.visibility === 'client');
+  const visibleOutcomes = outcomes.filter(item => !client || item.visibility === 'client');
+  const progress = visibleMilestones.reduce((sum, item) => ({ ...sum, total: sum.total + item.progress.total, completed: sum.completed + item.progress.completed, inProgress: sum.inProgress + item.progress.inProgress, planned: sum.planned + item.progress.planned }), { total: 0, completed: 0, inProgress: 0, planned: 0, percent: null as number | null, source: 'visible_tasks' as const });
+  progress.percent = progress.total ? progress.completed * 100 / progress.total : null;
+  const pulseActivity: OverviewActivity[] = [...activity, ...visibleOutcomes.map((item, index) => ({ id: `63d420ac-dac4-4566-9f02-4473f5ac100${index + 1}`, sequence: '2', category: 'sessions' as const, kind: 'excerpt.published' as const, target: { kind: 'shared_session' as const, id: item.id }, actor: item.author, title: item.title, visibility: item.visibility, occurredAt: now }))];
+  const dayStart = new Date(now); dayStart.setUTCHours(0, 0, 0, 0); const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+  return pulseResponseSchema.parse({ ok: true, snapshot: { projectId, audience: client ? 'client' : 'team', overview: { projectId, cursor: snapshotCursor, observedAt: now, activity: ['all', 'sessions'].includes(request.filter) ? pulseActivity : [], nextBefore: null, authorizedTargets: pulseActivity.map(item => item.target), notifications: pulseActivity, unreadCount: 0, readThrough: '2', tasks: [{ id: '3d9d5121-6049-44f6-8472-a650cc8b3c34', title: 'Review document service contract', status: 'in_progress', visibility: 'client' }], activeShares: [qaShare], memberCount: 5 }, milestones: visibleMilestones, milestoneCount: visibleMilestones.length, progress, summary: { dayStart: dayStart.toISOString(), dayEnd: dayEnd.toISOString(), scope: request.scope, tasksUpdated: request.scope === 'mine' ? 2 : 7, sharedUpdates: visibleOutcomes.length + 1, sharedSource: 'retained_entities', commits: null, comments: null, buildsDeploys: null }, outcomes: visibleOutcomes } });
+});
 const telemetry = new DesktopTelemetry({ auth, bindings }); telemetry.nexusStateChanged(account);
 handle(DESKTOP_IPC.telemetryRequest, value => telemetry.request(telemetryRequestSchema.parse(value)).then(result => telemetryResponseSchema.parse(result)));
 const checks: string[] = [];
 async function waitFor(expression: string) {
-  await window.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const test=()=>{if(${expression}){observer.disconnect();clearTimeout(timer);resolve(true)}};const observer=new MutationObserver(test);const timer=setTimeout(()=>{observer.disconnect();reject(new Error('Workspace UI condition timed out'))},8000);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true});test()})`);
+  await window.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const test=()=>{if(${expression}){observer.disconnect();clearTimeout(timer);resolve(true)}};const observer=new MutationObserver(test);const timer=setTimeout(()=>{observer.disconnect();reject(new Error(${JSON.stringify(`Workspace UI condition timed out: ${expression}`)}))},8000);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true});test()})`);
 }
 async function click(text: string) { await window.webContents.executeJavaScript(`(()=>{const button=[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===${JSON.stringify(text)});if(!button||button.disabled)throw new Error('QA control unavailable');button.click()})()`); }
 async function capture(name: string) {
@@ -193,8 +215,58 @@ try {
   window.webContents.send(DESKTOP_IPC.realtimeStateChanged, { ...realtime, connection: 'offline', snapshot: null, presence: [] });
   await waitFor("!document.querySelector('.overview-event') && !document.querySelector('.overview-notifications .is-unread')");
   checks.push('Realtime outage immediately hides shared overview data');
-  await writeFile(path.join(input.output, 'workspace-report.json'), JSON.stringify({ checks, provider: 'controlled transport, no inference', realtime: 'controlled projection and request transport; see verify:realtime for real HTTP/WS/DB', filesystem: 'real isolated Git files', tests: 'actual Node TAP', osOpens: 'intercepted', personalCredentials: false }, null, 2));
+  window.webContents.send(DESKTOP_IPC.realtimeStateChanged, { ...realtime, cursor: '4', snapshot: { ...realtime.snapshot!, cursor: '4' } });
+  await window.webContents.executeJavaScript(`window.location.hash='/pulse'`);
+  await waitFor("document.querySelector('.pulse-layout[data-pulse-audience=team]') && document.querySelectorAll('.nexus-pulse-scene__node').length===5 && document.querySelectorAll('.pulse-outcomes-list>a').length===4");
+  assert.equal(await window.webContents.executeJavaScript('document.documentElement.scrollWidth <= window.innerWidth'), true);
+  assert.equal(await window.webContents.executeJavaScript('document.documentElement.scrollHeight <= window.innerHeight'), true);
+  await capture('pulse-populated');
+  checks.push('Reference1 Pulse composition renders five scoped milestones, four published outcomes and connected members without document overflow at 1586x992 through validated production preload (controlled QA projection)');
+  await window.webContents.executeJavaScript(`(()=>{const node=document.querySelector('button.nexus-pulse-scene__node');node.focus();if(document.activeElement!==node)throw new Error('Milestone cannot receive keyboard focus');node.click()})()`);
+  await waitFor("document.querySelector('dialog[open]')?.textContent.includes('Core platform review') && document.querySelector('.pulse-roadmap-detail')");
+  assert.equal(await window.webContents.executeJavaScript("document.querySelector('.pulse-roadmap-detail').textContent.includes('4 completed')"), true);
+  await capture('pulse-roadmap');
+  await window.webContents.executeJavaScript(`document.querySelector('button[aria-label="Close dialog"]').click()`);
+  checks.push('Focusable hero milestone opens its real scoped roadmap detail and linked-task counts');
+  await window.webContents.executeJavaScript(`(()=>{const field=document.querySelector('.summary-card select');field.value='mine';field.dispatchEvent(new Event('change',{bubbles:true}))})()`);
+  await waitFor("document.querySelector('.summary-card select')?.value==='mine' && document.querySelectorAll('.summary-metrics strong')[1]?.textContent==='2'");
+  assert.equal(pulseRequests.at(-1)?.scope, 'mine');
+  assert.equal(await window.webContents.executeJavaScript("document.querySelectorAll('.summary-metrics strong')[0].textContent"), '—');
+  checks.push('Summary My Activity scope reaches Pulse IPC and unavailable commit totals remain unknown');
+  await window.webContents.executeJavaScript(`document.querySelector('.pulse-controls input').click()`);
+  await waitFor("document.querySelector('.pulse-layout[data-pulse-audience=client]') && document.querySelectorAll('.nexus-pulse-scene__node').length===3");
+  assert.equal(pulseRequests.at(-1)?.view, 'client');
+  assert.equal(await window.webContents.executeJavaScript("document.querySelector('.pulse-layout').textContent.includes('Internal document workflow') || document.querySelector('.pulse-layout').textContent.includes('Internal assistant review')"), false);
+  assert.equal(await window.webContents.executeJavaScript("document.querySelector('.working-card').textContent.includes('Local work stays on its device') && !document.querySelector('.working-card').textContent.includes('Review the local document service change') && ![...document.querySelectorAll('.pulse-layout button')].some(button=>['Open in Editor','Open Preview','Share Update'].includes(button.textContent.trim()))"), true);
+  assert.equal(await window.webContents.executeJavaScript("document.querySelectorAll('.pulse-outcomes-list>a').length"), 2);
+  await capture('pulse-client-preview');
+  checks.push('Client preview requests client projection, removes internal milestone labels and local work/editor/preview/publication while retaining explicitly published outcomes');
+  await window.webContents.executeJavaScript(`document.querySelector('.pulse-controls input').click()`);
+  await waitFor("document.querySelector('.pulse-layout[data-pulse-audience=team]') && document.querySelectorAll('.nexus-pulse-scene__node').length===5");
+  await window.webContents.executeJavaScript("document.querySelector('.nexus-pulse-scene canvas').style.transform='translateX(5000px)'");
+  await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(resolve,120))))');
+  const offscreenCanvas = await window.webContents.executeJavaScript("document.querySelector('.nexus-pulse-scene canvas').toDataURL()");
+  await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(resolve,120))))');
+  assert.equal(await window.webContents.executeJavaScript("document.querySelector('.nexus-pulse-scene canvas').toDataURL()"), offscreenCanvas);
+  await window.webContents.executeJavaScript("document.querySelector('.nexus-pulse-scene canvas').style.transform=''");
+  await window.webContents.executeJavaScript(`document.querySelector('button[aria-label="Reduce ambient motion"]').click()`);
+  await waitFor("document.documentElement.dataset.reducedMotion==='true'");
+  const staticCanvas = await window.webContents.executeJavaScript("document.querySelector('.nexus-pulse-scene canvas').toDataURL()");
+  await window.webContents.executeJavaScript('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(resolve,120))))');
+  assert.equal(await window.webContents.executeJavaScript("document.querySelector('.nexus-pulse-scene canvas').toDataURL()"), staticCanvas);
+  await capture('pulse-reduced-motion');
+  checks.push('Native offscreen observation pauses the actual canvas; reduced motion preserves and freezes the populated hero');
+  window.setContentSize(960, 992);
+  await waitFor('window.innerWidth===960');
+  await capture('pulse-960');
+  assert.equal(await window.webContents.executeJavaScript('document.documentElement.scrollWidth <= window.innerWidth'), true);
+  checks.push('Pulse 960px responsive layout has no horizontal document overflow');
+  await writeFile(path.join(input.output, 'workspace-report.json'), JSON.stringify({ checks, reference: 'examples/design/1.png; populated, client, roadmap, reduced motion and 960px captures', pulse: 'controlled audience-scoped QA projections only; no production data or fake production metrics', provider: 'controlled transport, no inference', realtime: 'controlled projection and request transport; see verify:realtime for real HTTP/WS/DB', filesystem: 'real isolated Git files', tests: 'actual Node TAP', osOpens: 'intercepted', personalCredentials: false }, null, 2));
   telemetry.dispose(); await codex.dispose(); window.destroy(); app.exit(0);
-} catch (error) { telemetry.dispose(); await codex.dispose(); console.error(error instanceof Error ? error.message : 'Workspace QA failed'); app.exit(1); }
+} catch (error) {
+  await capture('workspace-failure').catch(() => undefined);
+  await writeFile(path.join(input.output, 'workspace-failure.json'), JSON.stringify({ checks, error: error instanceof Error ? error.message : 'Workspace QA failed', body: await window.webContents.executeJavaScript('document.body.innerText').catch(() => '') }, null, 2));
+  telemetry.dispose(); await codex.dispose(); console.error(error instanceof Error ? error.message : 'Workspace QA failed'); app.exit(1);
+}
 }
 void verify().catch(error => { console.error(error instanceof Error ? error.message : 'Workspace QA setup failed'); app.exit(1); });

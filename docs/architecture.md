@@ -26,6 +26,8 @@ flowchart LR
 
 Il server riceve contenuti selezionati per il progetto e applica la visibilità prima di inoltrarli. Non viene promessa cifratura end-to-end: il server deve poter elaborare i dati condivisi. Il filesystem del computer e le credenziali Codex restano locali. Nessuna porta del computer viene pubblicata per la collaborazione; l'eventuale callback di login è solo locale e temporanea.
 
+T10 aggiunge `POST /api/pulse` come proiezione transazionale degli stessi domini, con riuso dell'overview autorizzata e conteggi di tutte le task visibili prima dei limiti. Client preview è un'audience server restrittiva, mentre dettagli Codex/editor/preview locali rimangono sul dispositivo tecnico. Nessuna nuova tabella: scrittura task/milestone, deliverable e feedback resta T11. Fonti e semantica in [pulse.md](pulse.md).
+
 ## Stack proposto
 
 | Area | Scelta | Motivazione |

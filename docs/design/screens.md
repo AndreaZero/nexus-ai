@@ -87,6 +87,8 @@ Il pianeta e le particelle della sidebar sono presenti anche qui. Nel hero la wa
 
 `View Live Work` apre una sessione consentita o l'elenco; se non esiste una sessione attiva lo stato lo dice. `Share Update` apre pubblicazione/invito secondo contesto. `View Roadmap` apre milestone e task collegati. Outcome e deliverable aprono dettaglio/provenienza/versione; feedback non scorre da solo mentre viene letto. La disponibilità è uno stato membro o presenza dichiarata, non inferenza di produttività.
 
+**T10 implementato:** hero232px, wave/particelle e nodi da milestone reali, donut da task visibili, griglia delle tre righe e rail450/380px. Roadmap in lettura e dialoghi di provenienza, summary UTC/project-mine, outcomes da estratti completed, presenza WS reale. Preview client richiede una proiezione server restrittiva e nasconde il lavoro locale. Deliverable/feedback/deploy condivisi hanno stati vuoti fino ai workflow previsti. Nessun dato numerico o avatar personale copiato dalla PNG; focus/reduced motion e960px. [Fonti e prova](../pulse.md).
+
 ## Flussi complementari da realizzare
 
 **T08 implementato:** presenza in header/Team Online, badge Live Sync, Connection panel e Live shared sessions in Session Info della reference2. Share apre scelta estratto/live, selezione senza default, preview congelata e consenso per i futuri delta degli stessi messaggi. I dialog non hanno una PNG dedicata e riusano le primitive della shell. Catture1586×992 in `.nexus/visual/t08/`, limiti e prova in [realtime](../realtime.md); overview completa reference3 resta T09.
