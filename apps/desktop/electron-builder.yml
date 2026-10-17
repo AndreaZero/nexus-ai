@@ -1,0 +1,33 @@
+appId: io.github.andreazero.nexusai
+productName: Nexus AI
+asar: true
+directories:
+  output: ../../release/${os}
+files:
+  - dist/**
+  - package.json
+extraResources:
+  - from: ../web/dist
+    to: renderer
+    filter:
+      - '**/*'
+artifactName: Nexus-AI-${version}-${os}-${arch}.${ext}
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+mac:
+  category: public.app-category.productivity
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+linux:
+  category: Development
+  target:
+    - target: AppImage
+      arch: [x64]
+publish: null

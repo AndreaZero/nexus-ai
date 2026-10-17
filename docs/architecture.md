@@ -2,7 +2,7 @@
 
 ## Struttura del sistema
 
-La proposta è un monorepo TypeScript con un backend modulare e un renderer React condiviso. Il desktop aggiunge il runtime locale; il server conserva e distribuisce il lavoro condiviso. Il browser serve collaborazione e osservazione. Windows, macOS e Linux sono target desktop fin dalla prima configurazione.
+La base T01 è un monorepo TypeScript con backend Fastify e renderer React condiviso. Il desktop Electron aggiunge il confine locale isolato. Nei task successivi il server conserverà e distribuirà il lavoro condiviso e il browser servirà collaborazione e osservazione. Windows, macOS e Linux sono target desktop fin dalla prima configurazione.
 
 ```mermaid
 flowchart LR
@@ -60,7 +60,7 @@ examples/design/
 .agents/skills/nexus-coordination/
 ```
 
-Queste directory applicative verranno create nei rispettivi task; non sono scaffold già funzionanti. Le feature di `apps/web` sono organizzate per progetti, sessioni, task, attività, cliente, repository e impostazioni, con componenti e query del dominio vicini. `packages/ui` non importa il database o il runtime. `packages/contracts` non importa Electron, Fastify o il filesystem. `codex-bridge` può essere importato solo dal contesto Node del desktop, mai dal bundle web.
+Queste directory esistono dalla base T01: entrypoint desktop/web/server e confini per contratti, UI, DB e Codex. I domini applicativi successivi non sono ancora implementati. Le feature di `apps/web` saranno organizzate per progetti, sessioni, task, attività, cliente, repository e impostazioni, con componenti e query del dominio vicini. `packages/ui` non importa il database o il runtime. `packages/contracts` non importa Electron, Fastify o il filesystem. `codex-bridge` e `db` hanno export solo Node e non entrano nel bundle web; il controllo automatico verifica gli import di renderer/UI/contratti.
 
 ## Confini del desktop
 

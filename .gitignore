@@ -8,6 +8,7 @@ release/
 coverage/
 playwright-report/
 test-results/
+.vite/
 *.tsbuildinfo
 
 # Local configuration and credentials

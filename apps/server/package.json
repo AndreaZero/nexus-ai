@@ -1,0 +1,23 @@
+{
+  "name": "@nexus-ai/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/index.js",
+    "test": "node --import tsx --test src/*.test.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "11.3.1",
+    "@nexus-ai/contracts": "workspace:*",
+    "@nexus-ai/db": "workspace:*",
+    "fastify": "5.12.7"
+  },
+  "devDependencies": {
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}

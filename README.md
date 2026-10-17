@@ -6,7 +6,18 @@ App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello svilu
 
 ## Stato del progetto
 
-**Preparazione completata; implementazione da avviare con il maintainer.** Il repository contiene requisiti, architettura, specifiche UI/UX e piano operativo. Non esiste ancora una build dell'app. Nessun comando di installazione o avvio è dichiarato funzionante prima di T01.
+**T01 implementato, in attesa di verifica del maintainer.** La base include monorepo TypeScript/pnpm, desktop Electron isolato, renderer React condiviso e server Fastify. Build, controlli e avvio Windows sono stati verificati; packaging macOS/Linux configurato, prove native ancora da eseguire sui rispettivi sistemi. La shell grafica completa delle reference parte da T02.
+
+Da questa cartella, con Node 22.19+ della serie 22 o Node 24 e pnpm 10.32.1:
+
+```sh
+pnpm install --frozen-lockfile
+pnpm check
+pnpm test
+pnpm package:win
+```
+
+`package:win` va eseguito su Windows e produce l'installer unsigned in `release/win/`. `pnpm dev:desktop` avvia server locale, renderer e app; `pnpm start:desktop` apre la build compilata. Per Mac/Linux usare `pnpm package:mac`/`pnpm package:linux` sul relativo sistema. I dettagli e la verifica dello step sono in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - [Indice documentazione](docs/README.md)
 - [Prodotto e requisiti](docs/product.md)
@@ -17,7 +28,7 @@ App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello svilu
 - [Regole agenti](AGENTS.md)
 - [Skill di coordinamento](.agents/skills/nexus-coordination/SKILL.md)
 - [Contribuire e verificare le build](CONTRIBUTING.md)
-- [Primo task pronto: T01](https://github.com/AndreaZero/nexus-ai/issues/1)
+- [Task T01 e verifica utente](https://github.com/AndreaZero/nexus-ai/issues/1)
 
 ## Metodo
 

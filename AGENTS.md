@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **preparazione**. Il maintainer ha chiesto di essere avvisato quando la base è pronta e avvierà poi il lavoro. Questa richiesta autorizza documentazione, regole, skill e creazione del repository; l'implementazione dell'app parte al suo via. Dopo l'avvio si conclude il task autorizzato senza introdurre conferme per scelte reversibili già comprese nel task.
+La fase corrente è **T01 implementato, in attesa di verifica utente**, autorizzato dal maintainer il 17 ottobre 2026 con richiesta esplicita di usare multiagenti. Base multipiattaforma e comandi Windows sono consegnati; T02 resta separato e segue il feedback del maintainer. Concludere il task autorizzato senza introdurre conferme per scelte reversibili già comprese nel task.
 
 ## Prodotto e architettura
 
@@ -36,6 +36,6 @@ La fase corrente è **preparazione**. Il maintainer ha chiesto di essere avvisat
 
 TypeScript strict, validazione ai confini, moduli per dominio, errori con recupero comprensibile. Evitare astrazioni per provider o piattaforme non richiesti. Introdurre dipendenze solo per un bisogno del task; versioni stabili e lockfile durante T01, non numeri presunti dai documenti.
 
-Test mirati a isolamento progetti, ruoli, replay/idempotenza, approvazioni, segreti e operazioni locali quando queste parti cambiano. Nessun obbligo di snapshot per ogni componente o test che ripete l'implementazione. Non dichiarare build o test passati se non eseguiti. I comandi in `CONTRIBUTING.md` sono pianificati finché T01 non li implementa.
+Test mirati a isolamento progetti, ruoli, replay/idempotenza, approvazioni, segreti e operazioni locali quando queste parti cambiano. Nessun obbligo di snapshot per ogni componente o test che ripete l'implementazione. Non dichiarare build o test passati se non eseguiti. I comandi effettivi sono in `CONTRIBUTING.md`: `pnpm check`, `pnpm test`, `pnpm build`, `pnpm dev:desktop` e packaging sul relativo OS. Per modifiche a main/preload ripetere lo smoke pertinente; la build manuale del maintainer resta distinta dalle verifiche automatiche.
 
 Commit piccoli e coerenti per task; il coordinatore integra e pubblica. Mai forzare push, cancellare modifiche altrui, registrare segreti o dati di clienti nei fixture. Aggiornare i documenti esistenti invece di moltiplicare piani concorrenti. Le migrazioni sono additive e revisionate; nessuna esecuzione su produzione durante un task locale implicito.

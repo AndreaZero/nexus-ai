@@ -1,0 +1,31 @@
+{
+  "name": "nexus-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "packageManager": "pnpm@10.32.1",
+  "engines": { "node": "^22.19.0 || ^24.0.0", "pnpm": "10.32.1" },
+  "scripts": {
+    "dev:desktop": "node scripts/workspace.mjs dev:desktop",
+    "dev:web": "node scripts/workspace.mjs dev:web",
+    "dev:server": "node scripts/workspace.mjs dev:server",
+    "build": "pnpm -r --if-present build",
+    "check": "pnpm -r --filter \"./packages/**\" build && pnpm -r --if-present typecheck && eslint . && node scripts/check-boundaries.mjs",
+    "test": "pnpm -r --filter \"./packages/**\" build && pnpm -r --if-present test && node --test scripts/*.test.mjs",
+    "package:win": "node scripts/workspace.mjs package:win",
+    "package:mac": "node scripts/workspace.mjs package:mac",
+    "package:linux": "node scripts/workspace.mjs package:linux",
+    "start:desktop": "node scripts/workspace.mjs start:desktop",
+    "start:server": "node scripts/workspace.mjs start:server",
+    "smoke:desktop": "pnpm --filter @nexus-ai/desktop smoke"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "globals": "17.13.0",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2"
+  }
+}

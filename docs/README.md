@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. Il codice applicativo non è ancora iniziato.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. La base T01 è implementata e verificata tecnicamente su Windows; i domini successivi restano pianificati. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
 
 | Documento | Uso |
 | --- | --- |

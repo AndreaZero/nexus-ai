@@ -29,13 +29,15 @@ Consegna: documenti di prodotto/architettura/protocollo/design, regole `AGENTS.m
 
 ### T01 — Monorepo e build native
 
-**Stato:** [pronto, non avviato — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1). **Dipendenze:** T00 e via del maintainer. **Owner:** coordinatore/integratore.
+**Stato:** [implementato, in attesa di verifica utente — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1). **Dipendenze:** T00 e via ricevuto il 17 ottobre 2026. **Owner:** coordinatore/integratore, con tre fronti desktop/server/renderer integrati.
 
 Creare `apps/desktop`, `apps/web`, `apps/server`, `packages/contracts`, `packages/ui`, `packages/codex-bridge`, `packages/db`; fissare versioni stabili, workspace e lockfile, TS strict, entrypoint reali e comandi dev/build/check/package. Rendere il renderer comune caricabile in Electron isolato e web. Predisporre packaging Windows/macOS/Linux e app ID stabile. Creare solo i contratti necessari alla struttura e i confini IPC, senza generare pagine dimostrative.
 
 Fronti possibili dopo i contratti: desktop/build; backend/bootstrap; renderer/bootstrap. Il coordinatore resta autore esclusivo di manifest root, lockfile, TS condiviso e contratti.
 
 **Uscita:** installazione riproducibile e compilazione della base sul sistema disponibile; configurazioni native per tutti gli OS; istruzioni esatte per l'utente. Verifica mirata dei confini renderer/main. **Build utente:** Windows qui; macOS differita al Mac; Linux indicata separatamente. Non dichiarare packaging verificato dove non eseguito.
+
+**Evidenza T01:** `pnpm check`, 16 test mirati, `pnpm build`, smoke Electron produzione e Vite, liveness HTTP reale, `pnpm package:win` e smoke dell'eseguibile impacchettato passati su Windows x64. Installer unsigned, nessuna installazione automatica. Le configurazioni macOS/Linux e la CI sono presenti; esiti nativi/accettazione utente restano da registrare. Comandi e prova manuale in `CONTRIBUTING.md`.
 
 ### T02 — Sistema visivo e shell definitiva
 

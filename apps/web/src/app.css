@@ -1,0 +1,29 @@
+.app { min-height: 100vh; }
+.app-header { min-height: 80px; padding: 20px 32px; display: flex; align-items: center; gap: 24px; border-bottom: 1px solid var(--nexus-border-subtle); }
+.app-wordmark { font-size: 1.125rem; font-weight: 650; letter-spacing: 0.12em; text-transform: uppercase; }
+.app-tagline { color: var(--nexus-text-muted); font-size: 0.8rem; }
+.app-main { width: min(100%, 880px); margin: 0 auto; padding: 24px 28px 64px; }
+.configuration { margin-top: 12px; }
+.configuration h2 { margin: 0 0 16px; font-size: 0.9rem; font-weight: 600; color: var(--nexus-text-secondary); }
+.configuration-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.configuration-panel { min-width: 0; padding: 20px; border: 1px solid var(--nexus-border-subtle); border-radius: 9px; background: var(--nexus-bg-surface); }
+.configuration-panel h3 { margin: 0 0 16px; font-size: 0.95rem; font-weight: 600; }
+.details { margin: 20px 0 0; font-size: 0.8rem; }
+.details > div { display: flex; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.details dt, .detail-label { color: var(--nexus-text-muted); }
+.details dd { margin: 0; text-align: right; overflow-wrap: anywhere; color: var(--nexus-text-secondary); }
+.details .detail-endpoint { display: block; }
+.detail-endpoint dd { margin-top: 4px; text-align: left; }
+.configuration-note, .runtime-status p { color: var(--nexus-text-secondary); font-size: 0.8rem; line-height: 1.6; }
+.configuration-note { margin: 16px 0 0; }
+.runtime-status { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--nexus-border-subtle); font-size: 0.8rem; }
+.runtime-status p { margin: 6px 0 0; }
+.retry-button { padding: 8px 12px; margin-top: 20px; background: var(--nexus-bg-raised); border: 1px solid var(--nexus-border-strong); border-radius: 6px; color: var(--nexus-text-primary); font-size: 0.8rem; cursor: pointer; }
+.retry-button:hover:enabled { border-color: var(--nexus-accent-cyan); }
+.retry-button:disabled { opacity: 0.6; cursor: wait; }
+@media (max-width: 640px) {
+  .app-header { padding: 16px 20px; flex-wrap: wrap; gap: 8px 20px; }
+  .app-main { padding: 12px 16px 40px; }
+  .configuration-grid { grid-template-columns: 1fr; }
+  .nexus-empty-state { padding: 36px 8px; }
+}

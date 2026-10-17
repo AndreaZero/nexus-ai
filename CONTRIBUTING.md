@@ -4,24 +4,75 @@ Il maintainer sviluppa con agenti e verifica personalmente le build. I contribut
 
 Leggere [AGENTS.md](AGENTS.md), [piano](docs/plan.md) e [stato](docs/status.md). Un task corrente, un risultato concreto, percorsi assegnati senza sovrapposizioni. Il coordinatore integra cambiamenti e dipendenze condivise. Il task successivo segue la consegna e il feedback del maintainer.
 
-## Setup
+## Setup T01
 
-L'app non è ancora implementata. I comandi seguenti sono l'interfaccia **da realizzare in T01**, non istruzioni già eseguibili:
+Prerequisiti: **Node.js 22.19+ della serie 22 oppure Node 24**, **pnpm 10.32.1** e Git. La versione usata qui è Node 22.19.0 x64 su Windows; `.node-version` permette di riprodurla. Prima di aggiornare versioni major, verificare compatibilità di lint, TypeScript, Vite ed Electron. [Requisiti Vite](https://vite.dev/guide/).
 
-| Comando previsto | Scopo |
+Se pnpm manca: `npm install --global pnpm@10.32.1`. Dalla root del repository eseguire `pnpm install --frozen-lockfile`. La prima installazione/il primo avvio possono scaricare runtime e strumenti ufficiali Electron; nessuna chiave API o database è richiesta in T01. Il warning di pnpm su `electron-winstaller` riguarda un tool Squirrel transitivo non utilizzato: il packaging Windows scelto è NSIS; non abilitare indiscriminatamente script di dipendenze.
+
+| Comando | Scopo |
 | --- | --- |
 | `pnpm install --frozen-lockfile` | Installazione riproducibile dopo il primo lockfile |
-| `pnpm dev:desktop` | Renderer e runtime desktop |
-| `pnpm dev:web` | Renderer web |
-| `pnpm dev:server` | API e realtime locali |
-| `pnpm check` | Typecheck e lint |
-| `pnpm test -- <scope>` | Controlli mirati al dominio modificato, sintassi da fissare in T01 |
+| `pnpm dev:desktop` | Compila librerie, avvia server, Vite e desktop; Ctrl+C arresta i processi del comando |
+| `pnpm dev:web` | Server locale e stesso renderer nel browser su `http://127.0.0.1:5173` |
+| `pnpm dev:server` | Solo server locale in watch |
+| `pnpm check` | Compila librerie, typecheck, lint e confini renderer/Node |
+| `pnpm test` | Test mirati di origine/path/IPC, configurazione, health/CORS e confini import |
 | `pnpm build` | Compilazione workspace |
-| `pnpm package:win` | Packaging nativo Windows |
-| `pnpm package:mac` | Packaging sul Mac |
-| `pnpm package:linux` | Packaging su Linux |
+| `pnpm start:desktop` | Avvia il renderer compilato; richiede `pnpm build` |
+| `pnpm smoke:desktop` | Verifica nascosta del renderer compilato e bridge, senza mostrare finestre; richiede build |
+| `pnpm start:server` | Avvia il server compilato e carica `.env` dalla root |
+| `pnpm package:win` | Compila workspace e produce installer NSIS x64 su Windows |
+| `pnpm package:mac` | Compila e produce DMG arm64/x64 sul Mac |
+| `pnpm package:linux` | Compila e produce AppImage x64 su Linux |
 
-T01 sostituisce questa sezione con comandi, prerequisiti e risultati effettivi. Fissare Node/pnpm e dipendenze stabili verificate, non dipendere dalla versione installata accidentalmente su un solo computer. Il DB e le variabili ambiente vengono documentati quando introdotti; nessuna chiave API è prerequisito del percorso principale Codex.
+Gli script root usano Node e argomenti di processo separati, senza richiedere bash/PowerShell nei manifest. Per test di un solo dominio: `pnpm --filter @nexus-ai/server test` oppure `pnpm --filter @nexus-ai/desktop test`, dopo la build delle librerie. Se si cambiano librerie condivise durante dev, riavviare il comando dev per ricompilarle; Vite/tsx aggiornano renderer e server, main/preload richiedono riavvio desktop.
+
+Il comando di packaging richiede il sistema operativo di destinazione. Firma/notarizzazione e icone finali vengono trattate nei task successivi: T01 produce pacchetti di sviluppo unsigned della stessa app. L'installer non include né avvia il backend condiviso.
+
+## Build e verifica Windows
+
+Da PowerShell nella root del clone:
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm check
+pnpm test
+pnpm package:win
+```
+
+`package:win` include `pnpm build`. Gli artefatti vanno in `release/win/`; l'installer è `Nexus-AI-0.1.0-win-x64.exe`, il programma senza installer è `release/win/win-unpacked/Nexus AI.exe`. Non sono artefatti firmati: l'installazione manuale resta una verifica del maintainer, distinta dalla generazione del pacchetto.
+
+Per provare rapidamente la build compilata: `pnpm start:desktop`. Per usare il ciclo di sviluppo completo: `pnpm dev:desktop`. Non avviare contemporaneamente più comandi dev sulle porte 5173/3001.
+
+Controllare questo step:
+
+1. La finestra Nexus si apre con stato vuoto del workspace, senza dati di progetti inventati.
+2. L'ambiente mostra **Desktop · Windows**, versione **0.1.0**, architettura reale e versione Electron; nessun errore di lettura del bridge.
+3. Codex risulta non collegato e il database non viene presentato come connesso. Login/workspace/runtime arriveranno nei task già pianificati.
+4. In `pnpm dev:desktop` il server locale risulta raggiungibile e compare l'ultima verifica. Se il server viene fermato, **Riprova connessione** deve mostrare il servizio non raggiungibile.
+5. Chiudere, riaprire e ridimensionare la finestra; l'installer deve aprire la stessa app. Questa prova non è ancora l'accettazione grafica delle tre reference, prevista da T02 in avanti.
+
+La build produzione senza configurazione mostra **Server non configurato**. Per verificare la connessione anche nella build/installer, prima della build copiare `.env.example` in `.env` (senza sovrascrivere un file proprio) e lasciare `VITE_NEXUS_SERVER_URL=http://127.0.0.1:3001`; poi ricompilare. Avviare `pnpm start:server` in un secondo terminale. Modificare `.env` dopo il packaging non cambia l'endpoint già incorporato.
+
+```powershell
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+pnpm package:win
+# In un secondo terminale, dalla stessa root:
+pnpm start:server
+```
+
+`Invoke-RestMethod http://127.0.0.1:3001/health` deve restituire `service: nexus-server`, `status: ok`, `database: not_configured` e `codex: local_only`. È liveness HTTP, non una verifica di servizi ancora assenti. URL remoti del renderer richiedono HTTPS; HTTP è ammesso solo per loopback. Nessun segreto deve avere prefisso `VITE_`, perché questi valori sono pubblici nel bundle.
+
+## macOS, Linux e configurazione
+
+Sul relativo sistema: `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, quindi `pnpm package:mac` o `pnpm package:linux`. macOS richiede gli strumenti nativi Apple per packaging ed eventuale firma; il maintainer eseguirà la prova sul proprio Mac. Su Linux il sistema deve offrire una sessione grafica e le librerie runtime Electron; l'esecuzione AppImage può richiedere FUSE 2 o l'opzione standard `--appimage-extract-and-run`. Registrare distribuzione/architettura provate. Non usare `--no-sandbox` per aggirare problemi del sistema.
+
+Output previsti `release/mac/` e `release/linux/`. Le configurazioni sono presenti, ma non costituiscono una prova nativa su macOS/Linux. La CI di base esegue check/test/build sui tre runner; i risultati effettivi vanno letti nelle run GitHub, senza dedurre successo dalla sola presenza del workflow.
+
+Variabili in `.env.example`: host/porta/origini/log del server, URL pubblico renderer e URL PostgreSQL opzionale. `.env` è caricato dagli orchestratori root; Vite lo legge dalla root durante build/dev. Non serve creare `.env` per il percorso default di sviluppo. In T01 un `DATABASE_URL` valido cambia lo stato solo in `not_connected`: nessuna connessione o migrazione è ancora introdotta.
+
+Versioni fissate nel lockfile: pnpm 10.32.1, TypeScript 5.9.3, Electron 44.9.0, electron-builder 26.15.3, React 19.3.1, Vite 8.3.4, Fastify 5.12.7, Zod 4.6.7. TypeScript è mantenuto nella serie supportata dal lint adottato, anziché aggiornato automaticamente alla major più nuova. Usare il lockfile, non aggiornare dipendenze durante una prova del task.
 
 ## Verifica e build del maintainer
 

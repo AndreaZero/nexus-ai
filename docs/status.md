@@ -1,6 +1,6 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. Fase: **preparazione completata**. Task **T00 completato**; prossimo task **T01**, in attesa del via. Implementazione app: **non avviata**.
+Aggiornato: **17 ottobre 2026**. Fase: **T01 implementato, in attesa di verifica utente**. Il maintainer ha autorizzato T01 con multiagenti; i tre fronti sono integrati. T02 non avviato.
 
 ## Risultato della preparazione
 
@@ -14,34 +14,50 @@ Aggiornato: **17 ottobre 2026**. Fase: **preparazione completata**. Task **T00 c
 - Verificati 19 documenti Markdown, 43 collegamenti locali, i tre hash PNG, i due file YAML e il whitespace Git. Nessun errore residuo nei controlli documentali.
 - Aperto il primo task operativo [T01 — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1), pronto senza avviare l'implementazione.
 
+## Risultato T01
+
+- Monorepo a otto progetti (root più sette workspace), versioni esatte e lockfile; TypeScript strict, lint e controllo dei confini degli import.
+- Renderer comune React/Vite e primitive UI minime. Stato iniziale reale, dati desktop via bridge validato, health HTTP con timeout/retry e stati non configurato/offline.
+- Electron main/preload isolati, protocollo `nexus://app`, controllo path/symlink/origini/frame e permessi negati per default. Nessuna API generica di shell/filesystem esposta.
+- Fastify con `/health`, CORS per origini esatte, errori senza echo di input sensibili, configurazione PostgreSQL senza connessioni simulate e shutdown.
+- Comandi dev/build/check/test e packaging nativo per i tre OS. Installer Windows unsigned generato in `release/win/Nexus-AI-0.1.0-win-x64.exe` e programma in `release/win/win-unpacked/Nexus AI.exe`; artefatti esclusi da Git.
+- CI check/test/build per Windows/macOS/Linux aggiunta. La presenza del workflow non dimostra l'esito dei runner: consultare la run effettiva dopo il push.
+
 ## Prossimo passo
 
-**[T01 — Monorepo e build native](https://github.com/AndreaZero/nexus-ai/issues/1)**, dopo il via del maintainer. Primo risultato: base definitiva condivisa web/desktop/server e comandi riproducibili, senza avviare altri task in parallelo. Dentro T01 il coordinatore può assegnare fronti distinti dopo aver fissato i contratti.
-
-All'avvio leggere `AGENTS.md`, `docs/plan.md#t01--monorepo-e-build-native`, `docs/architecture.md`, quindi `.agents/skills/nexus-coordination/SKILL.md`. Lo sviluppo di T01 non è autorizzato dalla sola esistenza del piano.
+Il maintainer esegue la verifica Windows di **[T01 — issue #1](https://github.com/AndreaZero/nexus-ai/issues/1)** con i comandi e i passi in `CONTRIBUTING.md`. Registrare il suo esito; correggere eventuali difetti di T01 prima di passare a **T02 — Sistema visivo e shell definitiva**. Il codice è implementato, ma l'accettazione manuale e le prove native Mac/Linux sono evidenze ancora distinte.
 
 ## Registro task e deleghe
 
 | Task | Stato | Owner | Fronti/file riservati | Esito integrazione |
 | --- | --- | --- | --- | --- |
 | T00 | Completato | Coordinatore | Nessuna ownership di sviluppo attiva | Documentazione e skill verificate, base pubblicata |
-| T01 | Pronto, non avviato | Da assegnare all'avvio | Nessuna delega attiva | In attesa del via |
+| T01 | Implementato; verifica utente pendente | Coordinatore | Ownership di integrazione conclusa | Check/test/build e pacchetto Windows verificati |
+| T01 desktop | Integrato | `/root/desktop` | Ownership rilasciata | Main/preload, sicurezza, build e packaging |
+| T01 server | Integrato | `/root/server` | Ownership rilasciata | Fastify, health/config e confine DB |
+| T01 renderer | Integrato | `/root/renderer` | Ownership rilasciata | Renderer comune e stato iniziale reale |
 
-T02–T16 sono pianificati e non avviati. Non esistono subagenti di sviluppo attivi in questa preparazione.
+T02–T16 sono pianificati e non avviati. Nessuna delega di sviluppo ancora attiva. Dipendenze condivise, contratti e pubblicazione sono stati gestiti dal coordinatore.
 
 ## Evidenze build e prove
 
 | Ambito | Stato | Evidenza |
 | --- | --- | --- |
-| Documenti/link/skill | Verificati | Link locali, hash reference, validatore skill, YAML e `git diff --cached --check` passati; nessun test applicativo necessario |
-| Windows | Non disponibile | Codice applicativo non iniziato |
-| macOS | Non disponibile | Build nativa dal Mac del maintainer più avanti |
-| Linux | Non disponibile | Build/prova da registrare sul relativo sistema |
-| UI contro reference | Specificata, non implementata | PNG ispezionate; nessuna corrispondenza applicativa ancora dimostrata |
+| Toolchain Windows | Verificata | Node 22.19.0 x64, pnpm 10.32.1; dipendenze esatte nel lockfile |
+| `pnpm check` | Passato | Typecheck, lint e confini renderer/UI/contratti, nove file sorgente controllati |
+| `pnpm test` | 16/16 passati | Tre test DB, tre desktop, otto server/config, due confini import; dopo correzione API logging ripetuti solo i controlli server pertinenti |
+| `pnpm build` | Passato | Sette package/app compilati in ordine di dipendenza |
+| Electron Windows | Passato | Smoke produzione e dev Vite: mount renderer, schema bridge, CSP, capability e assenza di Node |
+| Server e dev | Passati | Avvio reale Vite/Fastify, `/health` via HTTP, arresto con porte 3001/5173 libere |
+| Packaging Windows | Passato | `pnpm package:win`, installer NSIS x64 di circa 113 MB, Authenticode `NotSigned`; smoke eseguibile impacchettato exit 0. Installer non installato automaticamente |
+| Prova Windows del maintainer | Pendente | Comandi e checklist in `CONTRIBUTING.md` |
+| macOS | Configurato, non provato qui | DMG arm64/x64; build nativa dal Mac del maintainer più avanti |
+| Linux | Configurato, non provato qui | AppImage x64; build/prova da registrare sul relativo sistema |
+| UI contro reference | T02 e task seguenti | Solo schermata iniziale T01; nessuna corrispondenza completa con le tre PNG ancora dichiarata |
 
 ## Dipendenze future
 
-Nessun blocco di prodotto per iniziare T01 dopo il via. Hosting/email, account integrazione GitHub, eventuale storage esterno e credenziali di firma verranno configurati nei task interessati. Non sono stati creati servizi a pagamento né modificate credenziali locali.
+Nessun blocco tecnico residuo di T01 sulla piattaforma verificata. Hosting/email, account integrazione GitHub, storage esterno e credenziali di firma verranno configurati nei task interessati. Nessun servizio a pagamento creato; nessuna credenziale AI richiesta/usata per T01. Gli asset finali di brand e l'interfaccia delle reference iniziano con T02.
 
 ## Formato degli aggiornamenti successivi
 

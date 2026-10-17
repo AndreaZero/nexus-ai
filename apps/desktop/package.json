@@ -1,0 +1,30 @@
+{
+  "name": "@nexus-ai/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Nexus AI desktop for Windows, macOS and Linux",
+  "author": "Nexus AI contributors",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/main.mjs",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "dev": "electron .",
+    "start": "electron .",
+    "smoke": "electron . --smoke-test",
+    "package:win": "electron-builder --config electron-builder.yml --win nsis --x64 --publish never",
+    "package:mac": "electron-builder --config electron-builder.yml --mac dmg --publish never",
+    "package:linux": "electron-builder --config electron-builder.yml --linux AppImage --x64 --publish never",
+    "package:dir": "electron-builder --config electron-builder.yml --dir --publish never"
+  },
+  "dependencies": {
+    "@nexus-ai/contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "electron": "44.9.0",
+    "electron-builder": "26.15.3",
+    "esbuild": "0.28.2"
+  }
+}

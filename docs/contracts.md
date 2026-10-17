@@ -1,6 +1,6 @@
 # Dati, API ed eventi
 
-Questo è il contratto progettuale iniziale. T01 crea gli schemi eseguibili in `packages/contracts`; le forme definitive vengono versionate lì e mantenute coerenti con questo documento. I nomi di endpoint sottostanti sono proposti, non servizi esistenti.
+Questo è il contratto progettuale iniziale dei domini futuri. T01 implementa in `packages/contracts` solo `desktopInfoSchema`, `DesktopBridge`, `DESKTOP_IPC` e `healthResponseSchema`, necessari alla base. `GET /health` è operativo e descrive esclusivamente liveness HTTP, versione e stato esplicito DB/Codex. Le entità e gli altri endpoint sottostanti restano da implementare nei rispettivi task; non sono servizi già esistenti.
 
 ## Entità e invarianti
 
