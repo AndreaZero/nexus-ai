@@ -1,93 +1,109 @@
-# Identità Nexus — contratto T03
+# Identità Nexus — T03
 
-Stato: **preparazione, 17 ottobre 2026**. Questo documento fissa i confini per implementare T03 dopo che il maintainer ha preparato PostgreSQL. Account, tabelle, migrazioni, invio email e login desktop **non sono ancora implementati**. Il DB resta a carico del maintainer: [preparazione locale](setup/postgresql.md).
+Stato: **implementato, consegnato per verifica Windows del maintainer**, 17 ottobre 2026. Account Nexus distinti dal login Codex. Workspace, progetti, membership e inviti restano T04; nessuna membership viene attribuita dalla sola registrazione.
 
-## Scelte e dipendenze
+## Avvio locale
 
-Nexus usa Better Auth con email/password, PostgreSQL, Drizzle e driver JavaScript `pg`/node-postgres. Il pool appartiene a `packages/db`, viene creato dal server e chiuso con Fastify; non entra nei bundle renderer o desktop. Drizzle documenta questo driver e l'uso di un pool esistente: non serve `pg-native`. [Drizzle PostgreSQL](https://orm.drizzle.team/docs/get-started-postgresql).
+PostgreSQL è stato predisposto dal maintainer: server 18.1, database UTF8 e ruolo `nexus_ai_dev`, schema `public` dello stesso owner. Credenziali esclusivamente nel `.env` locale ignorato da Git. Per un nuovo clone vedere [preparazione PostgreSQL](setup/postgresql.md).
 
-L'adapter Better Auth sarà Drizzle con provider `pg`, schema esplicito e istanza DB condivisa dal server. La generazione dello schema viene revisionata e trasformata in migrazioni Drizzle versionate; niente `push`, `migrate` della CLI Better Auth o migrazioni all'avvio dell'app. Lo schema standard e la generazione per ORM sono documentati ufficialmente. [Adapter Drizzle](https://better-auth.com/docs/adapters/drizzle), [database Better Auth](https://better-auth.com/docs/concepts/database).
+Nella root, una volta configurato `DATABASE_URL`:
 
-Per il desktop scegliamo il plugin ufficiale `@better-auth/electron`, evitando un protocollo auth costruito da Nexus. La documentazione descrive browser di sistema, PKCE/state, codice temporaneo, proxy web e storage sostituibile. Il client auth resta nel main. [Integrazione Electron](https://better-auth.com/docs/integrations/electron).
+```powershell
+pnpm install --frozen-lockfile
+pnpm auth:setup
+pnpm db:migrate
+pnpm mailpit --install
+pnpm package:win
+```
 
-**Da fissare nell'implementazione, prima degli edit paralleli:** versioni esatte di Better Auth, plugin Electron, Drizzle ORM/Kit e `pg`, compatibilità peer e schema della medesima versione. La documentazione Better Auth consultata indica **1.7.10**; non è un pin già installato. La guida Drizzle corrente mostra anche pacchetti `@rc`: Nexus userà release stabili compatibili, senza introdurre una prerelease per seguire un esempio. Se il plugin stabile non mantiene sandbox, verifica mittente e confini sotto descritti, registrare il difetto prima di modificare la scelta, senza introdurre un'autenticazione alternativa silenziosa.
+`auth:setup` conserva i valori esistenti e aggiunge solo quelli mancanti: secret casuale di 32 byte, URL locali ed SMTP Mailpit. Il secret resta stabile nel proprio `.env`, non viene stampato o copiato nel renderer. `mailpit --install` scarica la release ufficiale **1.31.6** nella cartella ignorata `.nexus/tools/`, verifica il digest SHA-256 e non installa un servizio di sistema. Supporto del launcher per Windows/macOS/Linux x64/arm64; esecuzione nativa verificata qui solo Windows x64. [Distribuzione ufficiale Mailpit](https://mailpit.axllent.org/docs/install/).
 
-## PostgreSQL e schema
+Per provare la build compilata, lasciare aperti tre terminali nella root:
 
-La preparazione richiede un database UTF-8 dedicato e un ruolo login dedicato, proprietario del solo DB locale, senza privilegi superuser, creazione ruoli/database o replica. Nessuna estensione è richiesta dallo schema auth base esaminato; non preparare Redis, `pgcrypto`, `uuid-ossp`, tabelle o dati manuali per T03. Versione e comandi operativi sono nella [guida PostgreSQL](setup/postgresql.md).
+```powershell
+# Terminale 1: posta locale
+pnpm mailpit
+```
 
-| Modello libreria | Dati principali | Confine Nexus |
+```powershell
+# Terminale 2: backend e pagine account compilate
+pnpm start:server
+```
+
+```powershell
+# Terminale 3: app compilata, oppure aprire l'app installata
+pnpm start:desktop
+```
+
+Inbox: **http://127.0.0.1:8025**. Pagine account: **http://127.0.0.1:3001/sign-in**. Nell'app: **Settings → Nexus account → Sign in with browser**. Mailpit ascolta solo su `127.0.0.1:1025`/`8025`, conserva i messaggi in `.nexus/mailpit/` e non inoltra posta esterna.
+
+Per sviluppo usare `pnpm dev:desktop` nel secondo terminale al posto di server/app separati: avvia Fastify, Vite e desktop; il flusso browser usa `127.0.0.1:5173`. Non avviarlo insieme a `start:server` sulla stessa porta. Per il ritorno OS più rappresentativo usare l'installer 0.3.0, così il protocollo è registrato dal pacchetto. Ctrl+C arresta i comandi avviati dal maintainer.
+
+## Verifica manuale del task
+
+1. Creare un account nel browser con password 12–128 caratteri. Prima della verifica il login è rifiutato; aprire la mail in Mailpit, seguire il link e accedere.
+2. Dall'accesso iniziato nel desktop completare **Continue in Nexus AI**, consentire al browser l'apertura dell'app e verificare nome/email in Settings. Non usare la password PostgreSQL per l'account Nexus.
+3. Chiudere e riaprire l'app: la sessione salvata deve essere verificata col server e ripristinata. Fare logout e verificare che non torni autenticata alla riapertura.
+4. Richiedere **Forgot password?**, aprire la mail, scegliere una nuova password. Il link è monouso e le sessioni precedenti sono revocate; il vecchio accesso deve cessare di essere valido.
+5. Fermare Mailpit e richiedere un reinvio/reset: errore recuperabile, nessuna consegna dichiarata. Riavviare e riprovare rispettando il cooldown. Codex resta scollegato e i progetti restano vuoti fino ai task successivi.
+
+## Stack e persistenza
+
+Versioni fissate: Better Auth, adapter Drizzle e plugin Electron **1.7.10**; Drizzle ORM **0.45.4**, Kit **0.31.11**, `pg` **8.23.1**, Nodemailer **10.1.2**. Le peer del plugin sono fissate nei manifest. Nessun `pg-native`, Redis, database ombra o estensione PostgreSQL.
+
+Il pool Node-only vive in `packages/db`, viene creato pigramente dal server e chiuso con Fastify; massimo otto connessioni, timeout espliciti. Health esegue un probe reale e distingue `not_configured`, `not_connected`, `connected`, `unavailable`. Non è un'autorizzazione di dominio.
+
+| Tabella | Uso |
+| --- | --- |
+| `user` | Identità, email univoca/verificata, nome e date |
+| `account` | Password e metodo credenziale gestiti dalla libreria; FK utente con cascade |
+| `session` | Token, scadenza e revoca persistiti; FK utente con cascade |
+| `verification` | Materiale temporaneo di reset e protocollo auth |
+| `rate_limit` | Limiti auth persistiti, indipendenti dai riavvii server |
+
+Lo schema Drizzle esplicito corrisponde ai modelli della release installata; nomi SQL in snake case, ID testuali generati dalla libreria. Migrazioni SQL e metadata sono versionati in `packages/db/migrations/`. `pnpm db:migrate` è un comando esplicito, serializzato con advisory lock e limitato al DB locale `nexus_ai_dev`; seconda applicazione verificata senza duplicazioni. L'avvio di app/server non applica migrazioni. Il percorso self-host/produzione verrà esteso esplicitamente in T16. [Adapter ufficiale](https://better-auth.com/docs/adapters/drizzle), [schema libreria](https://better-auth.com/docs/concepts/database).
+
+## Configurazione
+
+| Variabile | Default/requisito locale | Visibilità |
 | --- | --- | --- |
-| `user` | ID, nome, email univoca, verifica email, immagine, date | Identità Nexus; nessuna credenziale Codex |
-| `session` | Utente, token, scadenza, date, metadati del dispositivo | Revocabile; token escluso da DTO, log e renderer |
-| `account` | Metodo credenziale, relazione utente e password gestita dalla libreria | Nessuna duplicazione dell'hash in tabelle Nexus |
-| `verification` | Identificatore, valore, scadenza e date | Materiale temporaneo per verifica/reset e flussi plugin secondo schema generato |
+| `DATABASE_URL` | Connessione al DB dedicato; password come componente URI | Solo server/CLI DB |
+| `BETTER_AUTH_SECRET` | 32 byte casuali base64 generati una sola volta | Solo server |
+| `BETTER_AUTH_URL` | `http://127.0.0.1:3001` | Endpoint pubblico, anche compilato nel main |
+| `NEXUS_WEB_URL` | `http://127.0.0.1:3001`; orchestratore dev usa 5173 | Link account; anche compilato nel main |
+| `VITE_NEXUS_SERVER_URL` | `http://127.0.0.1:3001` | URL pubblico incorporato nel renderer |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | `127.0.0.1` / `1025` / `false` | Server |
+| `NEXUS_EMAIL_FROM` | `Nexus AI <noreply@nexus.local>` | Server |
+| `SMTP_USER` / `SMTP_PASSWORD` | Entrambi assenti per Mailpit; entrambi presenti per SMTP autenticato | Solo server |
 
-Questi sono i quattro modelli base documentati, non SQL da creare. Nomi, indici, relazioni, eventuali campi/plugin aggiuntivi e formato dei valori vengono fissati sullo schema generato dalla configurazione effettiva; non presumere token già hashati o formati UUID. [Schema base ufficiale](https://better-auth.com/docs/concepts/database).
+Non sovrascrivere `.env` con il template e non mettere credenziali in `.env.example` o variabili `VITE_`. I soli URL pubblici sono incorporati dal build script desktop; il pacchetto non legge il `.env` del clone. Cambiare endpoint richiede ricompilazione. In hosting HTTP remoto è rifiutato; TLS DB e trasporto SMTP dipendono dalla configurazione del servizio.
 
-T03 non aggiunge workspace, progetti, ruoli, inviti o dati iniziali: appartengono a T04. Un'identità autenticata non attribuisce alcuna membership. I futuri controlli di dominio restano server-side come richiesto da [contracts.md](contracts.md).
+## HTTP, email e sessioni web
 
-## Configurazione prevista
+Better Auth è montato su `/auth/*`, con URL costruiti dalla configurazione e non dall'header Host. `Set-Cookie` è preservato come header multiplo. `/auth/status` espone solo `{configured,emailConfigured}`; `/auth/me` restituisce solo `{user,expiresAt}`, con profilo validato. Nessun token nei DTO Nexus o in localStorage.
 
-Le variabili seguenti costituiscono il contratto da collegare nel codice T03. Solo `DATABASE_URL` e l'URL renderer figurano già in `.env.example`; le altre saranno aggiunte con l'implementazione. La base T02 non legge ancora configurazione auth o SMTP.
+Cookie HttpOnly, Secure su HTTPS e SameSite Lax, nessun dominio globale. Cache cookie auth disabilitata; le API ricontrollano la sessione persistita. Sessione di sette giorni con aggiornamento dopo un giorno; logout revoca la sessione corrente, reset revoca tutte le precedenti. Verifica email obbligatoria, nessun login automatico prima/dopo la verifica; link verifica un'ora e reset 15 minuti. Risposta di reset neutra per indirizzi inesistenti. [Email/password](https://better-auth.com/docs/authentication/email-password), [sessioni](https://better-auth.com/docs/concepts/session-management).
 
-| Variabile | Valore locale / requisito | Visibilità |
-| --- | --- | --- |
-| `DATABASE_URL` | URL del DB dedicato su `127.0.0.1:5432`; password codificata nell'URL | Solo server e comando migrazioni |
-| `BETTER_AUTH_SECRET` | 32 byte casuali codificati base64, mantenuti stabili fra riavvii | Solo server |
-| `BETTER_AUTH_URL` | `http://127.0.0.1:3001` | Config server; URL pubblico non segreto |
-| `NEXUS_WEB_URL` | `http://127.0.0.1:5173` | Config server per link e redirect esatti |
-| `VITE_NEXUS_SERVER_URL` | `http://127.0.0.1:3001` | Pubblica, già usata dal renderer |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE` | Trasporto SMTP esplicito | Solo server |
-| `SMTP_USER`, `SMTP_PASSWORD` | Credenziali se richieste dal trasporto | Solo server |
-| `NEXUS_EMAIL_FROM` | Mittente consentito dal trasporto | Solo server |
+CORS auth ammette soltanto origini esatte web/server e protocollo desktop configurato; credenziali soltanto su auth. Gli asset pubblici accettano anche la propria origine server, senza credenziali. CSRF e controllo Origin restano attivi. IP per rate limit ricavato dalla connessione, senza fidarsi degli header inviati dal client. Registrazioni, login, reinvio e reset hanno limiti specifici.
 
-Better Auth richiede un secret ad alta entropia lungo almeno 32 caratteri e un URL base esplicito; il requisito Nexus di 32 byte casuali soddisfa quel minimo. Non rigenerarlo a ogni avvio. Non mettere segreti in variabili `VITE_`, repository o messaggi in chat. [Installazione Better Auth](https://better-auth.com/docs/installation).
+SMTP realmente ricevuto da Mailpit nelle prove. Gli hook attendono l'invio; un contesto AsyncLocalStorage per richiesta segnala anche i fallimenti che la libreria intercetta internamente. Errori SMTP sanitizzati e risposta 503 recuperabile, preflight comune per richieste email e durata minima 500 ms come mitigazione dell'enumerazione temporale, non garanzia di tempi identici. Nessun URL/token di verifica/reset o errore grezzo SMTP nei log. Nessuna coda di invio durevole aggiunta in T03.
 
-Usare `127.0.0.1` per web, API e link locali: `localhost` è un host diverso per cookie e origine. La porta DB può essere diversa se già occupata, aggiornando la sola connessione DB. In hosting serviranno URL HTTPS configurati esplicitamente e TLS del DB verificato secondo il provider; HTTP locale non definisce una policy di produzione.
+## Desktop: protocollo e segreti
 
-## HTTP e sessione browser
+Plugin ufficiale `@better-auth/electron`, client ID `nexus-desktop`, protocollo OS **`io.github.andreazero.nexusai`**. Callback effettivo della release: `io.github.andreazero.nexusai://auth/callback#token=…`. È distinto da `nexus://app`, protocollo dei file del renderer. Il browser conserva PKCE/state lungo registrazione/verifica/accesso e richiede esplicitamente il ritorno al desktop. [Integrazione ufficiale](https://better-auth.com/docs/integrations/electron).
 
-Il percorso libreria sarà **`/auth/*`** (basePath esplicito), coerente con i contratti Nexus; il default della libreria è `/api/auth`. Fastify inoltrerà richieste/risposte tramite l'handler ufficiale, preservando separatamente tutti i `Set-Cookie`. L'URL sarà costruito dalla configurazione server, senza fidarsi di `Host`/forwarded headers arbitrari. La guida ufficiale illustra handler, conversione header, CORS e lettura server della sessione. [Fastify Better Auth](https://better-auth.com/docs/integrations/fastify), [base path e client](https://better-auth.com/docs/installation).
+Il main usa `requestAuth`/`authenticate` del plugin; i bridge generici, modifiche CSP, protocol handler e proxy immagini automatici del plugin sono disattivati. Nexus espone solo `getState`, `signIn`, `cancelSignIn`, `signOut` e sottoscrizione DTO; ogni invoke verifica mittente, main frame, URL e numero di argomenti. Parser callback ristretto, tentativo singolo di cinque minuti, stato corrente richiesto, consumo prima dello scambio asincrono, rifiuto replay/callback spontanee. Codice server valido due minuti.
 
-Il browser usa cookie HttpOnly e richieste con credenziali; nessun token in localStorage. Cookie Secure in HTTPS, attributi SameSite appropriati, niente dominio condiviso globale. Web e API locali hanno host uguale e porte diverse. L'hosting dovrà conservarli sullo stesso sito o introdurre un proxy esplicito, verificato prima del deploy. [Cookie Better Auth](https://better-auth.com/docs/concepts/cookies).
+La release 1.7.10 non offre cancellazione pubblica di PKCE e `requestAuth` restituisce void. `auth-attempt.ts` isola la dipendenza dal registro `Symbol.for('better-auth:electron')` della release fissata, per rimuovere il verifier quando si annulla/scade il tentativo. Nessuna generazione PKCE alternativa. **Prima di aggiornare il plugin riesaminare questo contratto di sorgente e i relativi test.**
 
-Origini di fiducia auth: web esatto `http://127.0.0.1:5173` e schema callback desktop indicato sotto. L'allowlist CORS esistente include separatamente `nexus://app`; non equivale a un redirect auth autorizzato. Niente wildcard per host web, disabilitazione del controllo Origin/CSRF o origine `null` consentita globalmente. Il server amplia metodi e credenziali CORS solo dove richiesto dalle rotte auth effettive.
+Credenziali nel solo main, cifrate con `safeStorage` e file sostituito atomicamente sotto `app.getPath('userData')`. La storage API sincrona del plugin è adattata tramite cache privata e barriera di flush; la sessione non viene dichiarata persistita prima della scrittura. Cifratura assente o backend Linux `basic_text` producono un errore, senza fallback in chiaro. Il comando **Sign out on this device** permette di cancellare dati locali corrotti/non leggibili; se il server è offline si dichiara esplicitamente che la revoca remota non è confermata. Firma/macOS Keychain e protocollo OS restano da provare sul Mac. [Electron safeStorage](https://www.electronjs.org/docs/latest/api/safe-storage).
 
-La UI distingue sessione assente, verifica email richiesta, autenticata, scaduta/revocata e server non raggiungibile. Un dato in cache non prova che una sessione sia ancora valida. Per T03 le API protette ricontrollano la sessione persistita e non autorizzano tramite una cache cookie non invalidabile. Logout revoca la sessione corrente; reset riuscito revoca le altre sessioni secondo configurazione esplicita. [Sessioni Better Auth](https://better-auth.com/docs/concepts/session-management).
+## Evidenze e limiti
 
-## Accesso desktop e persistenza locale
+- `pnpm check`, 29 test di dominio, build workspace e pacchetto Windows 0.3.0, smoke dell'eseguibile impacchettato passati.
+- `pnpm verify:accounts` su PostgreSQL/Mailpit reali: origine estranea negata, registrazione, verifica, rifiuto prima della verifica, profilo sanitizzato, risposta neutra di reset, token reset monouso, revoca/reset/logout e scadenza sessione. Fixture rimossa.
+- `pnpm verify:auth-desktop` in Electron con profilo temporaneo isolato: SMTP reale, scambio PKCE ufficiale, callback duplicata ignorata, cifratura OS, ricostruzione del client con sessione ripristinata e revoca server efficace. Fixture rimossa dal coordinatore. Il browser OS è intercettato nel test; l'apertura/rientro tramite installer resta parte della prova umana.
+- Pagine account, link e Settings controllati nel browser reale; corretto il rifiuto CORS degli asset same-origin emerso nella prova. [Login](design/captures/t03-sign-in.jpg) e [registrazione](design/captures/t03-sign-up.jpg) sono catture responsive a 654 × 653, con scroll verticale previsto. Le pagine account non compaiono nelle PNG originali e sono composizioni nuove nello stesso sistema visivo.
+- Prova manuale Windows T03 pendente; macOS/Linux non provati nativamente. Nessun deploy, account esterno/email a pagamento o runtime Codex introdotto.
 
-Identificatori Nexus da usare coerentemente in server, proxy web, main e packaging:
-
-- Scheme OS proposto: **`io.github.andreazero.nexusai`**, distinto da `nexus://app`, che serve soltanto i file del renderer.
-- Callback proposto: **`/auth/callback`**, client ID **`nexus-desktop`**. La documentazione mostra un'origin di fiducia nella forma `scheme:/`; la stringa concreta `io.github.andreazero.nexusai:/` e l'URI di ritorno restano **da validare sulla release fissata**, non sono già stati provati da Nexus. Il parser deve rispettare la forma prodotta dal plugin.
-- Pagina web di accesso: URL costruito da `NEXUS_WEB_URL`; server auth da `BETTER_AUTH_URL`. Gli eventuali parametri PKCE/state vengono conservati nel percorso email/password e nel trasferimento di una sessione browser già valida.
-
-Il percorso avvia l'accesso dal main, apre soltanto l'URL configurato nel browser di sistema, riceve il codice temporaneo e lo scambia tramite il plugin. Il renderer riceve esclusivamente profilo consentito e stato. Il protocollo documentato consente il rientro tramite deep link; l'eventuale inserimento manuale del codice resta esplicito e legato a un tentativo PKCE già avviato. [Plugin Electron ufficiale](https://better-auth.com/docs/integrations/electron).
-
-Requisiti Nexus per l'integrazione: accettare solo il callback atteso per il tentativo attivo; rifiutare state assente/diverso, codice scaduto o riusato, callback non richiesta e destinazioni arbitrarie. Gestire un solo tentativo attivo, annullamento e scadenza visibili. Windows/Linux richiedono la gestione del secondo avvio e macOS dell'evento URL; nessun callback esegue comandi o cambia endpoint server. Non aprire un listener di rete per questo percorso.
-
-Usare storage custom nel main con dati cifrati sotto `app.getPath('userData')` tramite `safeStorage` e sostituzione atomica del file. Nessun salvataggio in chiaro implicito. Verificare disponibilità della cifratura; su Linux il backend `basic_text` non è protezione accettabile. Se il keyring non è disponibile, spiegare il recupero e proporre solo una sessione in memoria esplicitamente scelta. macOS richiede una firma stabile per continuità affidabile del Keychain fra build. [Electron safeStorage](https://www.electronjs.org/docs/latest/api/safe-storage).
-
-Il setup del plugin deve rispettare sandbox, CSP e verifica del mittente IPC di T01. Prima dell'adozione verificare le API della release fissata, senza esporre `authClient`, cookie o chiamate generiche al renderer. Il preload Nexus conserva un insieme ristretto di operazioni validate: richiesta login, annullamento, stato/profilo, logout e sottoscrizione ai cambiamenti. I token non attraversano questi metodi. Eventuali richieste autenticate future dal desktop passano dal main per dominio, senza un proxy HTTP arbitrario.
-
-## Email e pagine account
-
-Registrazione, verifica e reset usano email reali via SMTP configurato. In sviluppo un SMTP sink locale è ammesso: riceve realmente il messaggio e permette al maintainer di aprire il link senza consegnare posta esterna. L'eventuale servizio viene preparato dal maintainer; non servono account email a pagamento per preparare il DB.
-
-T03 richiederà verifica email, reinvio con cooldown, reset monouso con scadenza e risposta neutra quando un indirizzo non esiste. Si usano gli hook ufficiali di invio e reset della libreria, mantenendo le protezioni contro enumerazione. Rate limit esplicito su login, registrazione, reinvio e reset; l'IP deve provenire da proxy configurati, non da header arbitrari. Nessun login automatico prima della verifica e nessuna stampa di token/link di reset nei log. Gli errori SMTP sono recuperabili, senza segnare una mail come consegnata quando non lo è. [Email e password Better Auth](https://better-auth.com/docs/authentication/email-password).
-
-Le PNG approvate non mostrano pagine account. Login, creazione account, verifica, reset e ritorno desktop devono quindi essere nuove composizioni esplicitamente dichiarate, con gli stessi token, font, bordi e focus T02; niente cambiamenti arbitrari alle tre shell approvate. Login Nexus e collegamento Codex restano azioni e credenziali separate.
-
-## Uscita dell'implementazione T03
-
-Una volta pronto il DB, integrare in ordine schema/migrazioni revisionati, servizio auth/email, pagine web e bridge desktop sul contratto fissato. I controlli mirati devono coprire:
-
-1. Registrazione, verifica, sessione persistente dopo riapertura, logout e reset con email ricevuta; rifiuto di email non verificata, link scaduti e token reset riusato; limiti contro tentativi ripetuti.
-2. Origine non consentita, redirect esterno e credenziali mancanti: nessun accesso; revoca/scadenza effettiva anche dopo una sessione in cache.
-3. Callback senza tentativo, state errato, replay, PKCE errato, cancellazione e doppio callback; nessuna credenziale nei DTO IPC, bundle o log.
-4. IPC da mittente/frame non autorizzato, storage non disponibile/corrotto e backend Linux debole; nessun fallback persistente in chiaro.
-5. Migrazione su DB vuoto e secondo avvio senza modifiche automatiche allo schema; errori DB/SMTP mostrati con recupero comprensibile.
-
-Le prove del protocollo OS e del keyring rimangono separate per Windows, macOS e Linux. Non dichiararle superate perché esiste una configurazione di packaging. Le prove account non autorizzano T04 o l'accesso a un progetto.
+Gli harness di integrazione richiedono backend/Mailpit attivi, creano solo account QA locali temporanei e non vanno eseguiti contro servizi remoti. Il test desktop salva soltanto ID/email del fixture nel report ignorato da Git: il coordinatore elimina quelle righe specifiche dopo la prova. I comandi di test non espongono password o link email.

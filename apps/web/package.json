@@ -1,6 +1,6 @@
 {
   "name": "@nexus-ai/web",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,13 @@
     "@nexus-ai/contracts": "workspace:*",
     "@nexus-ai/ui": "workspace:*",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "better-auth": "1.7.10",
+    "@better-auth/electron": "1.7.10",
+    "@better-auth/core": "1.7.10",
+    "@better-auth/utils": "0.5.0",
+    "@better-fetch/fetch": "1.3.2",
+    "better-call": "1.4.2"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

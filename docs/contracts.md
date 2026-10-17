@@ -1,6 +1,6 @@
 # Dati, API ed eventi
 
-Questo è il contratto progettuale iniziale dei domini futuri. T01 implementa in `packages/contracts` solo `desktopInfoSchema`, `DesktopBridge`, `DESKTOP_IPC` e `healthResponseSchema`, necessari alla base. `GET /health` è operativo e descrive esclusivamente liveness HTTP, versione e stato esplicito DB/Codex. Le entità e gli altri endpoint sottostanti restano da implementare nei rispettivi task; non sono servizi già esistenti.
+T01 implementa i contratti della base; T03 aggiunge `nexusUserSchema`, `nexusAuthStateSchema` e `DesktopBridge.auth` ristretto. `GET /health` descrive liveness HTTP e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag di configurazione e `/auth/me` il solo profilo sanitizzato con scadenza. Schema/account e confini effettivi in [auth.md](auth.md). Le altre entità/API sottostanti restano contratti progettuali dei task futuri.
 
 ## Entità e invarianti
 

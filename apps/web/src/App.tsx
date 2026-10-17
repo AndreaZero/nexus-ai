@@ -12,6 +12,9 @@ import { navigate, parseRoute, routes } from './routes.js';
 import { useMotionPreference } from './use-motion-preference.js';
 import './app.css';
 import './integration.css';
+import { AuthProvider } from './auth/AuthProvider.js';
+import { AuthRoot } from './auth/AuthRoot.js';
+import { isAccountPath } from './auth/configuration.js';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -24,6 +27,10 @@ const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
 };
 
 export function App() {
+  return <AuthProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</AuthProvider>;
+}
+
+function ShellApp() {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
   const [dialog, setDialog] = useState<'navigation' | 'notifications' | null>(null);
   const motion = useMotionPreference();

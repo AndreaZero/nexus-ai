@@ -1,10 +1,15 @@
 import { URL } from 'node:url';
+import { Pool } from 'pg';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { authSchema } from './schema.js';
+
+export { authSchema } from './schema.js';
 
 export type DatabaseConfig =
   | { readonly configured: false }
   | { readonly configured: true; readonly connectionString: string };
 
-export type DatabaseStatus = 'not_configured' | 'not_connected';
+export type DatabaseStatus = 'not_configured' | 'not_connected' | 'connected' | 'unavailable';
 
 /** Never includes the supplied connection string, which can contain credentials. */
 export class DatabaseConfigurationError extends Error {
@@ -39,18 +44,45 @@ export function readDatabaseConfig(
 
 export interface DatabaseBoundary {
   readonly status: DatabaseStatus;
+  readonly db: NodePgDatabase<typeof authSchema> | null;
+  readonly pool: Pool | null;
+  check(): Promise<DatabaseStatus>;
   close(): Promise<void>;
 }
 
-/**
- * T01 owns configuration only. A configured URL is never evidence of connectivity.
- * T03 will add the PostgreSQL pool and migrations behind this Node-only boundary.
- */
+/** A pool is lazy; only a successful probe proves connectivity. Never migrates on startup. */
 export function createDatabaseBoundary(config: DatabaseConfig): DatabaseBoundary {
+  let status: DatabaseStatus = config.configured ? 'not_connected' : 'not_configured';
+  let closed = false;
+  const pool = config.configured ? new Pool({
+    connectionString: config.connectionString,
+    max: 8,
+    connectionTimeoutMillis: 3_000,
+    idleTimeoutMillis: 30_000,
+    query_timeout: 5_000,
+    statement_timeout: 5_000,
+    application_name: 'nexus-server',
+  }) : null;
+  pool?.on('error', () => { status = 'unavailable'; });
+  const db = pool ? drizzle(pool, { schema: authSchema }) : null;
   return {
-    status: config.configured ? 'not_connected' : 'not_configured',
+    get status() { return status; },
+    pool,
+    db,
+    async check(): Promise<DatabaseStatus> {
+      if (!pool) return 'not_configured';
+      if (closed) return 'unavailable';
+      try {
+        await pool.query('SELECT 1');
+        status = 'connected';
+      } catch { status = 'unavailable'; }
+      return status;
+    },
     async close(): Promise<void> {
-      // No connection or other handles have been opened at this stage.
+      if (closed) return;
+      closed = true;
+      await pool?.end();
+      status = config.configured ? 'not_connected' : 'not_configured';
     },
   };
 }

@@ -1,6 +1,31 @@
 import { z } from 'zod';
 
-export const DESKTOP_IPC = { getInfo: 'nexus:desktop:get-info' } as const;
+export const DESKTOP_IPC = {
+  getInfo: 'nexus:desktop:get-info',
+  authGetState: 'nexus:auth:get-state',
+  authSignIn: 'nexus:auth:sign-in',
+  authCancelSignIn: 'nexus:auth:cancel-sign-in',
+  authSignOut: 'nexus:auth:sign-out',
+  authStateChanged: 'nexus:auth:state-changed',
+} as const;
+
+export const nexusUserSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  email: z.email(),
+  emailVerified: z.boolean(),
+  image: z.string().nullable(),
+}).strict();
+export type NexusUser = z.infer<typeof nexusUserSchema>;
+
+export const nexusAuthStateSchema = z.object({
+  status: z.enum(['signed_out', 'signing_in', 'signed_in', 'unavailable']),
+  user: nexusUserSchema.nullable(),
+  expiresAt: z.iso.datetime().nullable(),
+  persistent: z.boolean(),
+  message: z.string().nullable(),
+}).strict();
+export type NexusAuthState = z.infer<typeof nexusAuthStateSchema>;
 
 export const desktopInfoSchema = z.object({
   appVersion: z.string().min(1),
@@ -17,6 +42,13 @@ export type DesktopInfo = z.infer<typeof desktopInfoSchema>;
 
 export interface DesktopBridge {
   getInfo(): Promise<DesktopInfo>;
+  readonly auth: {
+    getState(): Promise<NexusAuthState>;
+    signIn(): Promise<NexusAuthState>;
+    cancelSignIn(): Promise<NexusAuthState>;
+    signOut(): Promise<NexusAuthState>;
+    onStateChanged(callback: (state: NexusAuthState) => void): () => void;
+  };
 }
 
 export const healthResponseSchema = z.object({
@@ -24,7 +56,7 @@ export const healthResponseSchema = z.object({
   service: z.literal('nexus-server'),
   version: z.string().min(1),
   status: z.literal('ok'),
-  database: z.enum(['not_configured', 'not_connected']),
+  database: z.enum(['not_configured', 'not_connected', 'connected', 'unavailable']),
   codex: z.literal('local_only'),
   timestamp: z.iso.datetime(),
 }).strict();

@@ -7,8 +7,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D01 | Richiesta utente | Desktop Windows/macOS/Linux; le build macOS saranno provate dal maintainer sul Mac più avanti |
 | D02 | Richiesta utente | Solo Codex; account personale principale, API opzionale; server ospitato e inviti |
 | D03 | Adottata in T01 | Monorepo TypeScript, pnpm, React/Vite per renderer condiviso, Electron per runtime desktop: una lingua e componenti comuni per un singolo maintainer |
-| D04 | Bootstrap Fastify adottato in T01; persistenza/realtime futuri | Fastify, PostgreSQL e Drizzle; REST per snapshot/mutazioni e WebSocket per eventi. Un backend modulare prima di servizi separati |
-| D05 | Proposta operativa | Better Auth per identità Nexus con email/password, verifica email, reset e inviti; sessione desktop tramite flusso browser supportato. L'identità Nexus è distinta dall'autenticazione Codex |
+| D04 | Fastify T01, PostgreSQL/Drizzle T03; realtime futuro | Pool server Node-only, schema Drizzle e migrazioni SQL esplicite, senza migrazioni all'avvio. REST per snapshot/mutazioni e WebSocket futuro per eventi |
+| D05 | Adottata in T03 | Better Auth e plugin Electron 1.7.10 per identità Nexus, email/password verificata e reset; browser di sistema con PKCE, IPC ristretto e storage OS cifrato. Inviti in T04; identità Codex distinta |
 | D06 | Proposta operativa | Codex app-server locale via stdio, login ufficiale gestito da Codex e home dedicata a Nexus. Nessuna lettura dell'auth store di altre applicazioni |
 | D07 | Proposta operativa | Eventi durevoli in PostgreSQL e outbox transazionale; presenza effimera. Nessun Redis obbligatorio all'inizio: la voce Redis nelle PNG appartiene al progetto illustrativo |
 | D08 | Proposta operativa | Accesso web con renderer condiviso e capacità esplicite del dispositivo; nessuna shell nel browser |
@@ -17,13 +17,14 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D11 | Richiesta utente | Una tranche attiva, fronti paralleli disgiunti, integrazione unica, controlli mirati e build manuali del maintainer |
 | D12 | Proposta operativa | Cliente vede solo proiezioni esplicitamente pubblicate; approvazione deliverable separata dall'esecuzione Codex; solo driver locale controlla il proprio runtime |
 | D13 | Preparazione T03 adottata | PostgreSQL locale 18 aggiornato, alternativa 17 aggiornata già installata; database UTF8 e ruolo dedicati `nexus_ai_dev`, host `127.0.0.1:5432`. Il maintainer crea personalmente il DB vuoto; script manuale con password interattiva, nessuna tabella o migrazione all'avvio dell'app |
+| D14 | Adottata in T03 | Mailpit loopback per email locali reali, installazione ufficiale con SHA-256 verificato. Secret generato una sola volta nel proprio `.env`; template pubblico senza credenziali. Plugin senza IPC/CSP automatici; adattamento PKCE 1.7.10 isolato e testato, da riesaminare prima di aggiornamenti |
 
 ## Da concretizzare al momento opportuno
 
 - **T01 implementato:** versioni effettive fissate nel lockfile e riepilogate in `CONTRIBUTING.md`; app ID `io.github.andreazero.nexusai`. Packaging NSIS x64, DMG arm64/x64 e AppImage x64; Windows generato/verificato, altre prove native da registrare.
 - **T05–T07:** versione Codex compatibile, modalità di credenziali disponibili sui tre OS, isolamento configurazione e comportamento delle approvazioni sul runtime installato. Verifica come parte dell'integrazione definitiva, senza un'app dimostrativa separata.
 - **T03/T16:** URL server, servizio email per verifica/reset/inviti e provider PostgreSQL/object storage. Preparare configurazione self-host senza impegnare servizi a pagamento non richiesti.
-- **T03 avviato:** [preparazione PostgreSQL](setup/postgresql.md) e [contratto auth](auth.md). Better Auth + adapter Drizzle/PostgreSQL e integrazione Electron ufficiale sono il percorso selezionato; dipendenze/versioni esatte e API vengono fissate nella successiva implementazione, dopo preparazione DB. Nessun account o pool implementato da questa sola decisione.
+- **T03 implementato:** [account e prove](auth.md), migrazioni e pool operativi su PostgreSQL locale 18.1 predisposto dal maintainer. Prove native Mac/Linux e accettazione Windows del maintainer ancora distinte.
 - **T12/T16:** account GitHub App/OAuth, segreti, domini, firma e notarizzazione delle build richiedono credenziali/configurazioni reali del maintainer quando si arriva al relativo task.
 
 Le dipendenze esterne vengono segnalate per il task interessato senza sospendere il resto dello sviluppo indipendente. T01 è stato avviato al via esplicito del maintainer e consegnato per la sua verifica.

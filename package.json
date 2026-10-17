@@ -1,11 +1,14 @@
 {
   "name": "nexus-ai",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
-  "engines": { "node": "^22.19.0 || ^24.0.0", "pnpm": "10.32.1" },
+  "engines": {
+    "node": "^22.19.0 || ^24.0.0",
+    "pnpm": "10.32.1"
+  },
   "scripts": {
     "dev:desktop": "node scripts/workspace.mjs dev:desktop",
     "dev:web": "node scripts/workspace.mjs dev:web",
@@ -19,7 +22,13 @@
     "start:desktop": "node scripts/workspace.mjs start:desktop",
     "start:server": "node scripts/workspace.mjs start:server",
     "smoke:desktop": "pnpm --filter @nexus-ai/desktop smoke",
-    "verify:shell": "pnpm --filter @nexus-ai/desktop exec electron . --verify-shell"
+    "verify:shell": "pnpm --filter @nexus-ai/desktop exec electron . --verify-shell",
+    "db:migrate": "pnpm --filter @nexus-ai/db migrate",
+    "db:check": "pnpm --filter @nexus-ai/db check:connection",
+    "mailpit": "node scripts/mailpit.mjs",
+    "auth:setup": "node scripts/setup-local-auth.mjs",
+    "verify:accounts": "node scripts/verify-accounts.mjs",
+    "verify:auth-desktop": "pnpm --filter @nexus-ai/desktop exec electron . --verify-auth"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

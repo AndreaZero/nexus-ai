@@ -1,8 +1,16 @@
 import { build } from 'esbuild';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { parseEnv } from 'node:util';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
+try {
+  const values = parseEnv(await readFile(path.resolve(root, '../../.env'), 'utf8'));
+  for (const [key, value] of Object.entries(values)) process.env[key] ??= value;
+} catch (error) {
+  if (error.code !== 'ENOENT') throw new Error('Cannot read the local build configuration.', { cause: error });
+}
 const common = {
   bundle: true,
   platform: 'node',
@@ -10,6 +18,10 @@ const common = {
   external: ['electron'],
   sourcemap: true,
   logLevel: 'info',
+  define: {
+    __NEXUS_AUTH_SERVER_URL__: JSON.stringify(process.env.BETTER_AUTH_URL ?? 'http://127.0.0.1:3001'),
+    __NEXUS_WEB_URL__: JSON.stringify(process.env.NEXUS_WEB_URL ?? 'http://127.0.0.1:3001'),
+  },
 };
 
 await Promise.all([

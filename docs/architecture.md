@@ -34,8 +34,8 @@ Il server riceve contenuti selezionati per il progetto e applica la visibilità 
 | UI | React, Vite, CSS tokens, primitive accessibili | Fedeltà grafica senza un tema preconfezionato che imponga layout diversi |
 | Desktop | Electron, preload ristretto, packaging nativo | Processi Codex/Git locali e UI comune sui tre OS |
 | Backend | Node.js e Fastify | API e WebSocket nello stesso servizio modulare |
-| Persistenza | PostgreSQL, Drizzle e migrazioni SQL | Tenant espliciti, transazioni e replay degli eventi |
-| Identità Nexus | Better Auth | Account, sessioni, email e accesso desktop tramite browser; integrazione ufficiale da fissare in T03 |
+| Persistenza | PostgreSQL, Drizzle e migrazioni SQL; auth operativo da T03 | Pool server Node-only e migrazioni esplicite. Tenant/eventi nei task successivi |
+| Identità Nexus | Better Auth 1.7.10, plugin Electron ufficiale | Account verificati, sessioni/revoca e SMTP; browser desktop con PKCE e storage OS cifrato, implementati in T03 |
 | Realtime | WebSocket autenticato, outbox PostgreSQL | Eventi durevoli e presenza senza un broker obbligatorio |
 | Codice e diff | Monaco caricato su richiesta; output terminale isolato | Confronto dei cambiamenti con linee, tab e output come reference 2 |
 | Grafici ed effetti | SVG per dati piccoli; canvas per particelle ambientali | Controllo di wave, pianeta e glow senza un motore 3D pesante obbligatorio |
@@ -60,7 +60,7 @@ examples/design/
 .agents/skills/nexus-coordination/
 ```
 
-Queste directory esistono dalla base T01: entrypoint desktop/web/server e confini per contratti, UI, DB e Codex. I domini applicativi successivi non sono ancora implementati. Le feature di `apps/web` saranno organizzate per progetti, sessioni, task, attività, cliente, repository e impostazioni, con componenti e query del dominio vicini. `packages/ui` non importa il database o il runtime. `packages/contracts` non importa Electron, Fastify o il filesystem. `codex-bridge` e `db` hanno export solo Node e non entrano nel bundle web; il controllo automatico verifica gli import di renderer/UI/contratti.
+Queste directory esistono dalla base T01: entrypoint desktop/web/server e confini per contratti, UI, DB e Codex. Da T03 sono operativi identità Nexus, persistenza auth e accesso browser/desktop; i domini di progetto successivi restano pianificati. Le feature di `apps/web` saranno organizzate per progetti, sessioni, task, attività, cliente, repository e impostazioni, con componenti e query del dominio vicini. `packages/ui` non importa il database o il runtime. `packages/contracts` non importa Electron, Fastify o il filesystem. `codex-bridge` e `db` hanno export solo Node e non entrano nel bundle web; il controllo automatico verifica gli import di renderer/UI/contratti.
 
 ## Confini del desktop
 

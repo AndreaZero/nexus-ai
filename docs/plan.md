@@ -51,13 +51,15 @@ Trasferire token CSS, font e licenze; costruire logo, sidebar con pianeta/orbite
 
 ### T03 — Identità Nexus e accesso
 
-**Stato:** [avviato — issue #3](https://github.com/AndreaZero/nexus-ai/issues/3), prima consegna di preparazione PostgreSQL richiesta dal maintainer, prima di introdurre account/persistenza. **Dipendenze:** T01–T02 accettati. **Ownership:** preparazione DB e contratto auth su fronti separati; coordinatore per configurazione e integrazione. In implementazione: backend auth/dati, renderer onboarding, desktop integrazione browser; schema auth con un autore.
+**Stato:** [implementato e consegnato per verifica Windows — issue #3](https://github.com/AndreaZero/nexus-ai/issues/3). **Dipendenze:** T01–T02 accettati, PostgreSQL e `.env` predisposti dal maintainer, Mailpit locale scelto. **Ownership:** backend, desktop e web integrati; coordinatore per DB/schema/contratti, dipendenze e prove. Ownership rilasciate.
 
 Prima dell'implementazione della persistenza avvisare il maintainer: creerà personalmente PostgreSQL locale. Comunicare versione supportata, database/utente dedicati e variabili richieste dopo aver definito schema e libreria auth; non richiedere credenziali in chat.
 
 Implementare account Nexus, email verificata, sessioni, logout/revoca e reset tramite libreria mantenuta; flusso desktop nel browser di sistema e ritorno validato. Distinguere chiaramente login Nexus e collegamento Codex. Configurazione email reale/self-host e errori recuperabili; nessun segreto nel renderer.
 
 **Uscita:** registrazione/login/logout, reset e sessione persistente funzionanti; rifiuto sessioni scadute e callback invalide. Test mirati auth e confini IPC. **Build utente:** accedere, riaprire e uscire; prerequisiti email documentati.
+
+**Evidenze T03:** migrazione reale e seconda applicazione senza duplicazioni su DB locale; `pnpm check`, 29 test, build/pacchetto Windows 0.3.0 e smoke impacchettato passati. Prove integrate PostgreSQL/SMTP su registrazione, verifica obbligatoria, reset monouso, revoca/logout/scadenza e origini; in Electron scambio PKCE ufficiale, storage OS cifrato, ripristino e revoca. Pagine account controllate nel browser reale e difetto CORS asset corretto. Account QA rimossi. Apertura/ritorno OS dell'installer e prova umana pendenti; Mac/Linux non provati nativamente. [Setup e passi manuali](auth.md). Nessun T04 avviato.
 
 ### T04 — Workspace, progetti, membri e inviti
 

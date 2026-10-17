@@ -1,6 +1,10 @@
 appId: io.github.andreazero.nexusai
 productName: Nexus AI
 asar: true
+protocols:
+  - name: Nexus AI account sign-in
+    schemes:
+      - io.github.andreazero.nexusai
 directories:
   output: ../../release/${os}
 files:

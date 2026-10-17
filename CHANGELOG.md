@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### 2026-10-17 — T03: account e persistenza
+
+- Implementati pool PostgreSQL/Drizzle, cinque tabelle auth e migrazioni SQL esplicite/idempotenti, senza creazione automatica di account iniziali.
+- Integrati Better Auth 1.7.10, email verificata obbligatoria, SMTP reale, reset monouso e revoca sessioni; CORS/CSRF, rate limit persistiti ed errori sanitizzati.
+- Aggiunte pagine account e impostazioni, login desktop nel browser con PKCE, bridge ristretto, storage OS cifrato e ripristino validato col server.
+- Predisposti setup locale senza segreti nei log, Mailpit ufficiale verificato SHA-256 e comandi di verifica su DB/SMTP reali. Ripulita la copia accidentale di una credenziale nel template pubblico prima del commit; `.env` privato conservato.
+- Passati check, 29 test, prove account/browser/desktop e pacchetto Windows 0.3.0 unsigned con smoke. Corretto il rifiuto CORS degli asset same-origin trovato nel browser. Rimossi gli account QA; accettazione del maintainer e prove Mac/Linux pendenti.
+
 ### 2026-10-17 — T03: ripresa preparazione PostgreSQL
 
 - Aggiunto completamento manuale dei permessi dopo password amministrativa errata alla riconnessione finale: connessione diretta al DB, verifiche preventive e transazione, senza ricreare oggetti o modificare password.

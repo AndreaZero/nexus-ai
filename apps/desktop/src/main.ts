@@ -1,21 +1,60 @@
 import { app, BrowserWindow, dialog, ipcMain, protocol, session } from 'electron';
-import { readFile, realpath } from 'node:fs/promises';
+import { readFile, realpath, rm } from 'node:fs/promises';
+import { mkdtempSync } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DESKTOP_IPC, desktopInfoSchema } from '@nexus-ai/contracts';
+import { DESKTOP_IPC, desktopInfoSchema, nexusAuthStateSchema } from '@nexus-ai/contracts';
 import { APP_URL, developmentUrl, isTrustedIpcSender, isWithinDirectory, rendererAssetPath } from './security.js';
 import { verifyShell } from './shell-verification.js';
+import { DesktopAuth } from './auth.js';
+import { AUTH_SCHEME } from './auth-config.js';
+import { verifyDesktopAuth } from './auth-verification.js';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
+  { scheme: AUTH_SCHEME, privileges: { standard: false, secure: true } },
 ]);
 
 const bundleDirectory = path.dirname(fileURLToPath(import.meta.url));
 const smokeTest = process.argv.includes('--smoke-test');
 const shellVerification = process.argv.includes('--verify-shell') && !app.isPackaged;
-const hiddenVerification = smokeTest || shellVerification;
+const authVerification = process.argv.includes('--verify-auth') && !app.isPackaged;
+const hiddenVerification = smokeTest || shellVerification || authVerification;
+const authVerificationDirectory = authVerification ? mkdtempSync(path.join(os.tmpdir(), 'nexus-desktop-auth-')) : undefined;
+if (authVerificationDirectory) app.setPath('userData', authVerificationDirectory);
 if (shellVerification) app.commandLine.appendSwitch('force-device-scale-factor', '1');
 let mainWindow: BrowserWindow | undefined;
+let desktopAuth: DesktopAuth | undefined;
+
+function receiveAccountCallback(value: string) {
+  // Never log OS callback URLs: their fragment contains a temporary credential.
+  if (!value.startsWith(`${AUTH_SCHEME}://`)) return;
+  void desktopAuth?.handleCallback(value);
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  }
+}
+
+const primaryInstance = hiddenVerification || app.requestSingleInstanceLock();
+if (!primaryInstance) app.quit();
+if (primaryInstance && !hiddenVerification) {
+  app.on('second-instance', (_event, commandLine) => {
+    const callback = commandLine.find((argument) => argument.startsWith(`${AUTH_SCHEME}://`));
+    if (callback) receiveAccountCallback(callback);
+    else mainWindow?.focus();
+  });
+  app.on('open-url', (event, url) => {
+    event.preventDefault();
+    receiveAccountCallback(url);
+  });
+  const registered = process.defaultApp && process.argv[1]
+    ? app.setAsDefaultProtocolClient(AUTH_SCHEME, process.execPath, [path.resolve(process.argv[1])])
+    : app.setAsDefaultProtocolClient(AUTH_SCHEME);
+  if (!registered) console.warn('Nexus account callback registration is unavailable. Install the native application and retry browser sign-in.');
+}
 
 function desktopInfo() {
   return desktopInfoSchema.parse({
@@ -43,6 +82,18 @@ const mimeTypes: Record<string, string> = {
 };
 
 async function initialize() {
+  if (authVerification) {
+    try {
+      await verifyDesktopAuth(path.resolve(app.getAppPath(), '../../.nexus/visual/t03'));
+    } finally {
+      const directory = authVerificationDirectory;
+      if (directory && path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), 'nexus-desktop-auth-'))) {
+        await rm(directory, { recursive: true, force: true });
+      }
+    }
+    app.exit(0);
+    return;
+  }
   const devUrl = developmentUrl(process.env['NEXUS_RENDERER_URL'], app.isPackaged);
   const rendererPath = app.isPackaged
     ? path.join(process.resourcesPath, 'renderer')
@@ -80,7 +131,7 @@ async function initialize() {
     }
   });
 
-  ipcMain.handle(DESKTOP_IPC.getInfo, (event, ...args: unknown[]) => {
+  function requireTrustedCaller(event: Electron.IpcMainInvokeEvent, args: unknown[]) {
     const frame = event.senderFrame;
     if (!mainWindow || !frame || args.length !== 0 || !isTrustedIpcSender({
       senderId: event.sender.id,
@@ -89,8 +140,32 @@ async function initialize() {
     }, mainWindow.webContents.id, devUrl)) {
       throw new Error('Desktop request denied.');
     }
+  }
+
+  desktopAuth = new DesktopAuth((state) => {
+    const window = mainWindow;
+    if (window && !window.isDestroyed() && isTrustedIpcSender({
+      senderId: window.webContents.id,
+      mainFrame: true,
+      url: window.webContents.getURL(),
+    }, window.webContents.id, devUrl)) window.webContents.send(DESKTOP_IPC.authStateChanged, state);
+  }, smokeTest || shellVerification);
+
+  ipcMain.handle(DESKTOP_IPC.getInfo, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args);
     return desktopInfo();
   });
+  for (const [channel, operation] of [
+    [DESKTOP_IPC.authGetState, () => desktopAuth!.getState()],
+    [DESKTOP_IPC.authSignIn, () => desktopAuth!.signIn()],
+    [DESKTOP_IPC.authCancelSignIn, () => desktopAuth!.cancelSignIn()],
+    [DESKTOP_IPC.authSignOut, () => desktopAuth!.signOut()],
+  ] as const) {
+    ipcMain.handle(channel, (event, ...args: unknown[]) => {
+      requireTrustedCaller(event, args);
+      return operation();
+    });
+  }
 
   async function createWindow() {
     const window = new BrowserWindow({
@@ -150,6 +225,8 @@ async function initialize() {
         return {
         info: await window.nexusDesktop.getInfo(),
         bridgeKeys: Object.keys(window.nexusDesktop),
+        authKeys: Object.keys(window.nexusDesktop.auth),
+        authState: await window.nexusDesktop.auth.getState(),
         requireType: typeof window.require,
         processType: typeof window.process,
         mounted,
@@ -158,8 +235,10 @@ async function initialize() {
       if (typeof result !== 'object' || result === null) throw new Error('Smoke test returned no result.');
       const check = result as Record<string, unknown>;
       const info = desktopInfoSchema.parse(check['info']);
+      nexusAuthStateSchema.parse(check['authState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","auth"]' ||
+          JSON.stringify(check['authKeys']) !== '["getState","signIn","cancelSignIn","signOut","onStateChanged"]' ||
           info.capabilities.canRunLocalSession || info.capabilities.canOpenLocalEditor) {
         throw new Error('Renderer isolation, CSP, capability or mount check failed.');
       }
@@ -169,6 +248,7 @@ async function initialize() {
   }
 
   await createWindow();
+  if (!hiddenVerification) void desktopAuth.getState();
   app.on('activate', () => {
     if (!mainWindow) void createWindow().catch(fail);
   });
@@ -181,11 +261,12 @@ function fail(error: unknown) {
 }
 
 if (hiddenVerification) {
-  setTimeout(() => fail(new Error('Desktop verification timed out.')), shellVerification ? 60_000 : 20_000).unref();
+  setTimeout(() => fail(new Error('Desktop verification timed out.')), shellVerification || authVerification ? 60_000 : 20_000).unref();
 }
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
+app.on('before-quit', () => desktopAuth?.dispose());
 
-void app.whenReady().then(initialize).catch(fail);
+if (primaryInstance) void app.whenReady().then(initialize).catch(fail);

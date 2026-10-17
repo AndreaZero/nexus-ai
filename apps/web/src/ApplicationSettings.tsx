@@ -2,6 +2,7 @@ import { Badge, Button, Card, Icon, StatusIndicator } from '@nexus-ai/ui';
 import { useDesktopInfo } from './use-desktop-info.js';
 import { useServerHealth } from './use-server-health.js';
 import type { useMotionPreference } from './use-motion-preference.js';
+import { AccountCard } from './auth/AccountCard.js';
 
 interface ApplicationSettingsProps {
   motion: ReturnType<typeof useMotionPreference>;
@@ -21,7 +22,7 @@ export function ApplicationSettings({ motion }: ApplicationSettingsProps) {
     </Card>
     <Card title="Connection" icon={<Icon name="server" />}>
       <div role="status" data-testid="server-state"><StatusIndicator tone={serverTone}>{serverLabel}</StatusIndicator></div>
-      <dl className="settings-details"><div><dt>Server endpoint</dt><dd>{server.endpoint ?? 'Not configured'}</dd></div><div><dt>Realtime</dt><dd>Not connected</dd></div><div><dt>Database</dt><dd>{server.state.status === 'healthy' && server.state.response.database === 'not_connected' ? 'Not connected' : 'Not configured'}</dd></div>{server.state.status === 'healthy' && <div><dt>Last HTTP check</dt><dd>{server.state.checkedAt.toLocaleTimeString()}</dd></div>}</dl>
+      <dl className="settings-details"><div><dt>Server endpoint</dt><dd>{server.endpoint ?? 'Not configured'}</dd></div><div><dt>Realtime</dt><dd>Not connected</dd></div><div><dt>Database</dt><dd>{server.state.status === 'healthy' ? server.state.response.database === 'connected' ? 'Connected' : server.state.response.database === 'unavailable' ? 'Unavailable' : server.state.response.database === 'not_connected' ? 'Not connected' : 'Not configured' : 'Unknown'}</dd></div>{server.state.status === 'healthy' && <div><dt>Last HTTP check</dt><dd>{server.state.checkedAt.toLocaleTimeString()}</dd></div>}</dl>
       {server.endpoint && <Button size="sm" disabled={server.state.status === 'checking'} onClick={server.retry}><Icon name="refresh" size={14} />Retry connection</Button>}
     </Card>
     <Card title="Appearance" icon={<Icon name="pulse" />}>
@@ -29,10 +30,11 @@ export function ApplicationSettings({ motion }: ApplicationSettingsProps) {
       <label className="settings-note"><input type="checkbox" checked={motion.reduceRequested || motion.systemReduced} disabled={motion.systemReduced} onChange={motion.toggle} /> Reduce motion</label>
       <p className="settings-note">{motion.systemReduced ? 'Your operating system requests reduced motion. Animations remain paused.' : 'Pause the planet, particles and ambient transitions. This preference is saved on this device.'}</p>
     </Card>
-    <Card title="Account & Runtime" icon={<Icon name="shield" />}>
+    <AccountCard />
+    <Card title="Codex runtime" icon={<Icon name="code" />}>
       <Badge tone="neutral">Codex not connected</Badge>
-      <p className="settings-note">No account or workspace is connected to this installation.</p>
-      <Button size="sm" disabled title="An account and a workspace connection are required.">Connect account</Button>
+      <p className="settings-note">Connect your personal Codex account when local runtime integration is available.</p>
+      <Button size="sm" disabled title="Codex runtime integration is scheduled for T05.">Connect Codex</Button>
     </Card>
   </div>;
 }

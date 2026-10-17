@@ -1,6 +1,6 @@
 {
   "name": "@nexus-ai/db",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -11,14 +11,26 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "migrations"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test src/*.test.ts"
+    "test": "node --import tsx --test src/*.test.ts",
+    "migrate": "tsx src/migrate.ts",
+    "check:connection": "tsx src/check.ts",
+    "generate": "drizzle-kit generate"
   },
   "devDependencies": {
     "tsx": "4.23.15",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "drizzle-kit": "0.31.11",
+    "@types/pg": "8.23.1"
+  },
+  "dependencies": {
+    "drizzle-orm": "0.45.4",
+    "pg": "8.23.1"
   }
 }

@@ -10,6 +10,22 @@ export interface ServerConfig {
   readonly allowedOrigins: readonly string[];
   readonly logLevel: LogLevel;
   readonly database: DatabaseConfig;
+  readonly auth: AuthConfig;
+}
+
+export interface MailConfig {
+  readonly host: string;
+  readonly port: number;
+  readonly secure: boolean;
+  readonly from: string;
+  readonly credentials: { readonly user: string; readonly pass: string } | null;
+}
+
+export interface AuthConfig {
+  readonly baseURL: string;
+  readonly webURL: string;
+  readonly secret: string | null;
+  readonly mail: MailConfig | null;
 }
 
 export class ServerConfigurationError extends Error {
@@ -32,6 +48,48 @@ function validateOrigin(origin: string): boolean {
   } catch {
     return false;
   }
+}
+
+function readHTTPOrigin(value: string, variable: string): string {
+  if (!validateOrigin(value) || value === 'nexus://app') {
+    throw new ServerConfigurationError(`${variable} richiede un'origine HTTP/HTTPS esatta, senza credenziali o percorso.`);
+  }
+  const url = new URL(value);
+  if (url.protocol === 'http:' && !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) {
+    throw new ServerConfigurationError(`${variable} richiede HTTPS fuori dal loopback locale.`);
+  }
+  return value;
+}
+
+function readAuthConfig(env: Readonly<Record<string, string | undefined>>): AuthConfig {
+  const baseURL = readHTTPOrigin(env['BETTER_AUTH_URL'] ?? 'http://127.0.0.1:3001', 'BETTER_AUTH_URL');
+  const webURL = readHTTPOrigin(env['NEXUS_WEB_URL'] ?? baseURL, 'NEXUS_WEB_URL');
+  const secret = env['BETTER_AUTH_SECRET']?.trim() || null;
+  if (secret && (!/^[A-Za-z0-9+/_=-]{43,}$/.test(secret) || Buffer.from(secret, 'base64').length < 32 || new Set(secret).size < 16)) {
+    throw new ServerConfigurationError('BETTER_AUTH_SECRET deve contenere almeno 32 byte casuali codificati base64/base64url, stabili fra gli avvii.');
+  }
+  const host = env['SMTP_HOST']?.trim();
+  let mail: MailConfig | null = null;
+  if (host) {
+    const portValue = env['SMTP_PORT'] ?? '1025';
+    const secureValue = env['SMTP_SECURE'] ?? 'false';
+    const from = env['NEXUS_EMAIL_FROM']?.trim();
+    const user = env['SMTP_USER']?.trim();
+    const pass = env['SMTP_PASSWORD'];
+    if (!/^\d+$/.test(portValue) || Number(portValue) < 1 || Number(portValue) > 65535 || !['true', 'false'].includes(secureValue)) {
+      throw new ServerConfigurationError('SMTP_PORT deve essere una porta valida e SMTP_SECURE deve essere true o false.');
+    }
+    if (!from || /[\r\n]/.test(from) || !/@/.test(from) || /[\r\n\s]/.test(host)) {
+      throw new ServerConfigurationError('SMTP_HOST e NEXUS_EMAIL_FROM devono essere configurati con valori validi.');
+    }
+    if (Boolean(user) !== Boolean(pass)) {
+      throw new ServerConfigurationError('SMTP_USER e SMTP_PASSWORD devono essere entrambi impostati o entrambi assenti.');
+    }
+    mail = { host, port: Number(portValue), secure: secureValue === 'true', from, credentials: user && pass ? { user, pass } : null };
+  } else if (env['SMTP_USER'] || env['SMTP_PASSWORD'] || env['NEXUS_EMAIL_FROM']) {
+    throw new ServerConfigurationError('Impostare SMTP_HOST prima delle altre variabili email.');
+  }
+  return { baseURL, webURL, secret, mail };
 }
 
 export function readServerConfig(
@@ -73,5 +131,6 @@ export function readServerConfig(
     allowedOrigins: [...new Set(allowedOrigins)],
     logLevel: logLevel as LogLevel,
     database: readDatabaseConfig(env),
+    auth: readAuthConfig(env),
   };
 }

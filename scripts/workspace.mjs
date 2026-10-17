@@ -28,9 +28,9 @@ function launch(args, extraEnv = {}) {
   return child;
 }
 
-function run(args) {
+function run(args, extraEnv = {}) {
   return new Promise((resolveRun, reject) => {
-    const child = launch(args);
+    const child = launch(args, extraEnv);
     child.once('error', reject);
     child.once('exit', (code, signal) => {
       if (code === 0) resolveRun();
@@ -120,12 +120,14 @@ try {
     if (command !== 'dev:server') await assertPortAvailable(5173, '127.0.0.1');
     if (command === 'dev:server') supervise(['--filter', '@nexus-ai/server', 'dev']);
     else {
-      supervise(['--filter', '@nexus-ai/server', 'dev']);
+      const webDevelopment = { NEXUS_WEB_URL: 'http://127.0.0.1:5173' };
+      supervise(['--filter', '@nexus-ai/server', 'dev'], webDevelopment);
       supervise(['--filter', '@nexus-ai/web', 'dev']);
       if (command === 'dev:desktop') {
-        await run(['--filter', '@nexus-ai/desktop', 'build']);
+        await run(['--filter', '@nexus-ai/desktop', 'build'], webDevelopment);
         await waitForRenderer();
         if (!stopping) supervise(['--filter', '@nexus-ai/desktop', 'dev'], {
+          ...webDevelopment,
           NEXUS_RENDERER_URL: 'http://127.0.0.1:5173',
         });
       }
