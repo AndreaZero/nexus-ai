@@ -62,6 +62,9 @@ export function createNexusAuth(config: AuthConfig, database: DatabaseBoundary, 
       window: 60,
       max: 100,
       customRules: {
+        // Session reads use the bounded fixed-window gate in app.ts. The pinned
+        // database limiter resets after inactivity, so continuous reads accumulate.
+        '/get-session': false,
         '/sign-in/email': { window: 60, max: 5 },
         '/sign-up/email': { window: 60, max: 3 },
         '/send-verification-email': { window: 60, max: 1 },

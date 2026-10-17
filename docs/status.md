@@ -1,6 +1,18 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T09 consegnato, in attesa di verifica utente** dopo conferma build Windows T08 e via del maintainer. Il feedback non certifica tutti i percorsi personali o le altre piattaforme. [Issue T08 chiusa](https://github.com/AndreaZero/nexus-ai/issues/8), [T09 aperta](https://github.com/AndreaZero/nexus-ai/issues/9). T10 non avviato.
+Aggiornato: **17 ottobre 2026**. **T09 0.9.1 consegnato, in attesa di verifica utente**: correzione429 su `/auth/get-session` dopo 1–2 minuti segnalato dal maintainer. Il feedback non certifica tutti i percorsi personali o le altre piattaforme. [Issue T08 chiusa](https://github.com/AndreaZero/nexus-ai/issues/8), [T09 aperta](https://github.com/AndreaZero/nexus-ai/issues/9). T10 non avviato.
+
+## Correzione T09 0.9.1 — controlli account
+
+Log utente: GET `/auth/get-session` 429/rate_limited dopo 1–2 minuti. Ispezionata l'implementazione installata Better Auth 1.7.10: il contatore DB aggiorna lastRequest a ogni richiesta e si azzera dopo 60 s di inattività; polling ogni 2–30 s mantieneva la finestra aperta. La telemetria aggiungeva anche un HTTP account ridondante ogni 2 s quando abilitata. La riga utente dimostra il429; frequenza e implementazione sono state verificate nel codice, senza leggere credenziali o attribuire il problema a PostgreSQL indisponibile.
+
+Solo `/auth/get-session` usa ora il gate applicativo bounded 100 richieste/IP per finestra fissa di60s, Retry-After e alias canonici coperti. Login/reset/email conservano i limiti della libreria; sessioni e permessi continuano a essere verificati sul DB. `DesktopTelemetry` legge un'identità locale staccata, poi riautorizza sul server la richiesta di dominio: nessuna cache di permessi. Nessuna nuova migrazione, dipendenza o modifica `.env`.
+
+**Verifiche:** `pnpm check`, **186/186 test** (server52; gli altri domini invariati), `pnpm build`, smoke desktop passati. `pnpm verify:session-rate` passato: **4 scenari** con HTTP/PG/SMTP reali, 180 letture a intervalli di2s su6minuti virtuali senza pausa, burst100/min ancora limitato e recupero non esteso dai rifiuti, revoca efficace e **10 controlli auth Electron reali** con PKCE/cifratura OS, inclusi1.000 snapshot locali senza HTTP. Nessun minuto reale di attesa artificiale e nessuna inferenza personale. Rapporti `.nexus/visual/t09-fix/`; package/pulizia sotto.
+
+Installazione frozen passata. Pacchetto Windows x64 **0.9.1**, `release/win/Nexus-AI-0.9.1-win-x64.exe`, **220029372 byte**, unsigned, generato senza installazione automatica; smoke dell'eseguibile impacchettato passato. Scan **1538 file** sorgenti/build senza valori privati `.env`; **0 account QA rate/native** residui, **1 account reale** conservato e5migrazioni invariate. Email/account propri rimossi, servizi del maintainer non arrestati. Mac/Linux non provati nativamente; UI T09 invariata.
+
+Versioni app/root/desktop/web/server **0.9.1**, contratti/DB0.9.0 e Codex0.159.2 invariati. Per provare chiudere **sia app sia backend vecchi**, `pnpm package:win`, poi riavviare `pnpm start:server` e `pnpm start:desktop` separatamente. Nessuna nuova configurazione PostgreSQL o cancellazione login; il vecchio backend mantiene la vecchia regola finché non viene riavviato. Verificare Overview/telemetria e sessione oltre2minuti. T10 non avviato.
 
 ## Ownership T09 integrate/rilasciate e contratto
 

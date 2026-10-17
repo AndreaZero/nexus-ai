@@ -1,6 +1,6 @@
 {
   "name": "nexus-ai",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -36,7 +36,8 @@
     "verify:workspace": "node scripts/verify-workspace.mjs",
     "verify:realtime": "node scripts/verify-realtime.mjs",
     "codex:schema": "node scripts/generate-codex-schema.mjs",
-    "verify:overview": "node scripts/verify-overview.mjs"
+    "verify:overview": "node scripts/verify-overview.mjs",
+    "verify:session-rate": "node scripts/verify-session-rate.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

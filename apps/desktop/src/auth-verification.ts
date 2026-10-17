@@ -10,7 +10,9 @@ import { AUTH_CLIENT_ID, AUTH_SCHEME } from './auth-config.js';
 export async function verifyDesktopAuth(output: string): Promise<void> {
   if (app.isPackaged) throw new Error('Account integration verification is only available in development.');
   const { server, web } = desktopAccountEndpoints();
-  assert.equal(server, 'http://127.0.0.1:3001', 'Desktop auth QA only targets the dedicated local server.');
+  assert.equal(new URL(server).hostname, '127.0.0.1', 'Desktop auth QA only targets a local fixture server.');
+  assert.equal(new URL(server).protocol, 'http:');
+  assert.equal(web, server, 'Desktop auth QA requires one exact local fixture origin.');
   const email = `nexus-desktop-qa-${randomUUID()}@nexus.local`;
   const password = randomBytes(32).toString('base64url');
   const signal = AbortSignal.timeout(55_000);
@@ -145,10 +147,19 @@ export async function verifyDesktopAuth(output: string): Promise<void> {
     assert.equal(accountTransitions, beforeTransitions, 'Unchanged validation emitted redundant account transitions.');
     checks.push('overlapping account checks coalesced without redundant transitions');
 
+    const beforeSnapshots = sessionChecks;
+    for (let read = 0; read < 1000; read++) assert.equal(restored.currentState().status, 'signed_in');
+    const detached = restored.currentState();
+    detached.user!.name = 'Changed only in the QA copy';
+    assert.notEqual(restored.currentState().user?.name, detached.user!.name);
+    assert.equal(sessionChecks, beforeSnapshots, 'Local identity snapshots must not poll the session endpoint.');
+    checks.push('local identity snapshots are detached and perform no session HTTP requests');
+
     for (const failure of ['network', 'rate_limit', 'invalid_expiry'] as const) {
       fault = failure;
       const interrupted = await restored.getState();
       assert.equal(interrupted.status, 'unavailable', 'A failed check must deny authenticated local actions.');
+      assert.equal(restored.currentState().status, 'unavailable');
       if (failure === 'rate_limit') assert.match(interrupted.message ?? '', /rate limited/);
       const recovered = await restored.getState();
       assert.equal(recovered.status, 'signed_in', 'The next check did not recover the saved session.');

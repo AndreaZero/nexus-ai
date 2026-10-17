@@ -1,5 +1,11 @@
 # Changelog
 
+### 2026-10-17 — T09 0.9.1: limite delle verifiche account
+
+- Corretto429 su `/auth/get-session` dopo polling continuo: nella libreria installata il contatore DB si azzera dopo inattività, accumulando letture anche attraverso più minuti. La sola lettura sessione usa ora il gate applicativo bounded a finestre fisse di60s/100 richieste per IP, con Retry-After e recupero non prolungato dai tentativi respinti. Limiti login/reset/verifica email invariati.
+- La telemetria legge una copia locale dell'identità, mantenendo la verifica server corrente di sessione/ruolo a ogni richiesta di dominio. Eliminato il controllo HTTP `/auth/get-session` ridondante ogni2s; nessun permesso memorizzato o controllo di revoca disabilitato.
+- App/server0.9.1, nessuna nuova migrazione/dipendenza, account e configurazione conservati. Check,186test, build/smoke e regressione con180letture autenticate su6minuti virtuali, burst/recupero/revoca e10controlli auth Electron reali passati. Evidenze e package in `docs/status.md`.
+
 ### 2026-10-17 — T09: overview operativa e attività reali
 
 - Overview reference3 collegata a presenza, sessione locale/condivisa, feed filtrabile/paginato con link al dettaglio autorizzato, task in lettura, diff/report/preview locali e notifiche reali. Nuovi eventi applicati esplicitamente mentre si legge; target revocati rimossi subito.

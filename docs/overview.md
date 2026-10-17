@@ -54,7 +54,7 @@ pnpm db:migrate
 pnpm package:win
 ```
 
-Installer x64 `release/win/Nexus-AI-0.9.0-win-x64.exe`. Tenere Mailpit attivo se serve registrare/invitare, poi avviare `pnpm start:server` e `pnpm start:desktop` in terminali separati, oppure aprire l'app aggiornata. Backend/PostgreSQL/Mailpit rimangono servizi separati dal pacchetto.
+Installer x64 `release/win/Nexus-AI-0.9.1-win-x64.exe`. La patch0.9.1 corregge il429 dei controlli account, senza nuova migrazione: riavviare anche il backend. Tenere Mailpit attivo se serve registrare/invitare, poi avviare `pnpm start:server` e `pnpm start:desktop` in terminali separati, oppure aprire l'app aggiornata. Backend/PostgreSQL/Mailpit rimangono servizi separati dal pacchetto.
 
 1. Aprire Overview sullo stesso progetto da desktop owner/developer e browser con un secondo account invitato. Il browser può usare un profilo/incognito distinto su `http://127.0.0.1:3001/`. Presenza e conteggio membri devono essere coerenti.
 2. Pubblicare un estratto o una share live da AI Session con preview e audience client se necessario. Nel secondo account il feed e le notifiche mostrano solo i contenuti consentiti; il link apre proprio il testo scelto in Session Info.

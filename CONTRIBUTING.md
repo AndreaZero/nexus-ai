@@ -34,6 +34,7 @@ pnpm package:win
 | `pnpm verify:shell` | Catture shell, ricerca e preferenza movimento; richiede build |
 | `pnpm verify:accounts` | Prova esplicita account PostgreSQL/SMTP reali con fixture locale temporanea |
 | `pnpm verify:auth-desktop` | Scambio PKCE, cifratura OS, ripristino/revoca in Electron isolato |
+| `pnpm verify:session-rate` | Regressione429, finestre reali del limiter con tempo QA virtuale e controlli auth Electron su backend proprio |
 | `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
 | `pnpm verify:sessions` | Tre account temporanei: estratti/audience, versioni/concorrenza, idempotenza, task visibili e revoca su HTTP/PostgreSQL/SMTP |
 | `pnpm verify:workspace` | Electron/IPC/UI reale con Git e TAP Node isolati, trasporto provider controllato e OS opens intercettati; nessuna credenziale o inferenza personale |
@@ -42,13 +43,13 @@ pnpm package:win
 | `pnpm verify:codex` | Handshake, account anonimo isolato, catalogo e shutdown del binario reale; richiede build, non esegue inferenza |
 | `pnpm package:win` / `pnpm package:mac` / `pnpm package:linux` | Build e NSIS / DMG / AppImage sul relativo OS |
 
-Gli harness account richiedono backend e Mailpit attivi. Quello HTTP elimina il proprio fixture; quello Electron scrive ID/email in `.nexus/visual/t03/desktop-auth-report.json` e il coordinatore rimuove solo tali righe dopo la prova. Non eseguirli su servizi remoti o usare dati di persone reali. I test SMTP aprono una porta loopback temporanea; il sandbox dell'agente può richiedere esecuzione esterna, senza cambiare la sandbox del renderer.
+Gli harness account richiedono PostgreSQL locale e Mailpit attivi. `verify:accounts`/`verify:auth-desktop` usano un backend locale già avviato; il secondo scrive ID/email in `.nexus/visual/t09-fix/auth/desktop-auth-report.json` e il coordinatore rimuove solo tali righe. `verify:session-rate` avvia invece il proprio backend su porta effimera e coordina anche la pulizia dei due account QA. Non eseguirli su servizi remoti o usare dati di persone reali. I test SMTP aprono una porta loopback temporanea; il sandbox dell'agente può richiedere esecuzione esterna, senza cambiare la sandbox del renderer.
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
 ## Build e prova Windows T09
 
-Versione T09: **0.9.0**. Eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.9.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. La migrazione additiva0004 è già applicata sul DB locale; il comando è idempotente. Nessun cambio credenziali o nuovo DB. Codex nativo0.159.2 incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app/backend precedenti prima della build e riavviarli dopo.
+Versione T09: **0.9.1**, correzione429 dei controlli account. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.9.1-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Nessuna nuova migrazione rispetto a0.9.0; 0004 resta quella già applicata sul DB locale. Nessun cambio credenziali o nuovo DB. Codex nativo0.159.2 incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app e backend precedenti prima della build e riavviarli entrambi dopo: il vecchio processo server mantiene il limiter precedente finché non viene riavviato.
 
 Dopo la build tenere aperti:
 

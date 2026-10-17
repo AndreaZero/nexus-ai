@@ -50,6 +50,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const realtime = createRealtimeService(database, error => app.log.error({ event: 'realtime.failure', ...errorDiagnostic(error) }));
   const realtimeOrigins = [config.auth.webURL, new URL(config.auth.baseURL).origin, DESKTOP_AUTH_ORIGIN];
   const realtimeBudget = createRealtimeBudget();
+  const sessionReadBudget = createRealtimeBudget();
   const overviewBudget = createRealtimeBudget();
   const overview = createOverviewService(database, error => app.log.error({ event: 'overview.failure', ...errorDiagnostic(error) }));
   const realtimeSocket = installRealtimeSocket(app, {
@@ -284,6 +285,16 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
       const emailRequest = request.method === 'POST' && ['/auth/sign-up/email', '/auth/send-verification-email', '/auth/request-password-reset'].includes(requestPath);
       reply.header('Cache-Control', 'no-store');
       reply.header('Referrer-Policy', 'no-referrer');
+      let canonicalPath: string;
+      try { canonicalPath = decodeURIComponent(new URL(request.url, config.auth.baseURL).pathname).replace(/\/+/g, '/').replace(/\/+$/, ''); }
+      catch { return reply.code(400).send({ message: 'Invalid account request.' }); }
+      if (canonicalPath === '/auth/get-session') {
+        const budget = sessionReadBudget.consume(`session:${request.ip}`, 100);
+        if (!budget.allowed) {
+          reply.header('Retry-After', String(budget.retryAfterSeconds));
+          return reply.code(429).send({ message: 'Too many account checks. Retry after the indicated delay.' });
+        }
+      }
       if (!auth || !mail) return reply.code(503).send(unavailable);
       try {
         // Fixed configured baseURL: Host and forwarded headers cannot construct email links.

@@ -99,7 +99,7 @@ const mimeTypes: Record<string, string> = {
 async function initialize() {
   if (authVerification) {
     try {
-      await verifyDesktopAuth(path.resolve(app.getAppPath(), '../../.nexus/visual/t03'));
+      await verifyDesktopAuth(path.resolve(app.getAppPath(), '../../.nexus/visual/t09-fix/auth'));
     } finally {
       const directory = authVerificationDirectory;
       if (directory && path.resolve(directory).startsWith(path.join(path.resolve(os.tmpdir()), 'nexus-desktop-auth-'))) {
@@ -230,7 +230,7 @@ async function initialize() {
   });
 
   desktopTelemetry = new DesktopTelemetry({ auth: {
-    getState: () => desktopAuth!.getState(),
+    getState: () => Promise.resolve(desktopAuth!.currentState()),
     authorizeRepository: (projectId, repositoryId) => desktopAuth!.authorizeRealtimeRepository(projectId, repositoryId),
   }, bindings: bindingStorage });
   ipcMain.handle(DESKTOP_IPC.overviewRequest, (event, ...args: unknown[]) => {

@@ -230,6 +230,14 @@ export class DesktopAuth {
     return result;
   }
 
+  /** Identity snapshot only, never a substitute for a server-authorized domain request. */
+  currentState(): NexusAuthState {
+    if (this.state.status === 'signed_in' && (!this.state.expiresAt || Date.parse(this.state.expiresAt) <= Date.now())) {
+      return { ...signedOut(), status: 'unavailable', message: 'Revalidate your Nexus account before continuing.' };
+    }
+    return structuredClone(this.state);
+  }
+
   /** Main-process capability only; cookie is never part of DesktopBridge or renderer DTOs. */
   async realtimeSession(): Promise<{ userId: string; cookie: string; server: string } | null> {
     // Supplying the current cookie is not authorization: every domain request and
