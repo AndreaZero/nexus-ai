@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Badge, Button, Card, Donut, EmptyPanel, Icon, ProgressBar } from '@nexus-ai/ui';
-import { PresenceMap } from '@nexus-ai/ui/effects';
+import { ProjectTeamStrip } from '../collaboration/ProjectTeamStrip.js';
 import { viewCopy as copy } from './copy.js';
 import type { WorkspaceViewProps } from './types.js';
 
@@ -11,7 +11,7 @@ export function OverviewView({ onNavigate, reducedMotion }: WorkspaceViewProps) 
   const [activityFilter, setActivityFilter] = useState('All');
   return <div className="overview-layout">
     <div className="overview-center">
-      <section className="team-strip" aria-labelledby="team-strip-title"><div className="team-strip-count"><span className="unknown-dot" /><div><h2 id="team-strip-title">Team Online</h2><span>0 / 0</span></div></div><div className="team-strip-members"><span>{copy.noMembers}</span><button type="button" className="invite-circle" disabled title={copy.unavailable} aria-label="Invite a member"><Icon name="plus" size={19} /></button></div><div className="team-strip-map"><PresenceMap reducedMotion={reducedMotion} /><span><strong>0</strong> active sessions</span></div></section>
+      <ProjectTeamStrip reducedMotion={reducedMotion} onTeam={() => onNavigate('team')} />
       <Card title="Active AI Session" icon={<Icon name="sparkles" size={17} />} active className="active-session-card" bodyClassName="active-session-body" action={<button type="button" className="icon-control" disabled title="There is no active session to stop." aria-label="Close session"><Icon name="x" size={15} /></button>}>
         <div className="active-session-top"><div className="codex-identity"><Badge tone="neutral">OFFLINE</Badge><span className="codex-symbol"><Icon name="sparkles" size={29} /></span><strong>Codex</strong><span>Not connected</span></div><div className="session-machine"><Icon name="laptop" size={22} /><div><small>Machine</small><span>No local session</span></div></div><div className="session-card-actions"><Button size="sm" disabled title={copy.unavailable}><Icon name="code" size={13} />Open in Editor</Button><Button size="sm" variant="danger" disabled title="There is no active session to stop."><Icon name="x" size={12} />Stop Session</Button></div></div>
         <div className="active-session-task"><div className="current-task"><span className="task-symbol"><Icon name="tasks" size={24} /></span><div><small>Current Task</small><strong>{copy.noSession}</strong><span>{copy.noSessionDetail}</span></div><div className="session-progress"><span>Progress</span><ProgressBar value={null} /><span>—</span></div></div><dl className="session-metrics"><div><dt>Tokens</dt><dd>— <small>/ —</small></dd><span className="token-segments" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <i key={i} />)}</span></div><div><dt>Context</dt><dd>0 files</dd></div><div><dt>Duration</dt><dd>—</dd></div><div><dt>Status</dt><dd><Badge tone="neutral">Not started</Badge></dd></div></dl></div>

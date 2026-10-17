@@ -51,6 +51,14 @@ export async function verifyShell(window: BrowserWindow, output: string): Promis
     await capture(route);
   }
 
+  // T04 routes are captured without an account, preserving the real access
+  // gates rather than populating the renderer with invented project fixtures.
+  for (const route of ['projects', 'team', 'repos', 'invitations']) {
+    await visit(route);
+    await capture(`${route}-signed-out`);
+  }
+  await visit('session');
+
   await window.webContents.executeJavaScript(`window.dispatchEvent(new KeyboardEvent('keydown', {key:'k',ctrlKey:true,bubbles:true}))`);
   await window.webContents.executeJavaScript(`new Promise((resolve, reject) => {
     const check = () => {
@@ -84,5 +92,5 @@ export async function verifyShell(window: BrowserWindow, output: string): Promis
     })()`);
   }
   await writeFile(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
-  console.log(`Shell verification passed: 3 reference layouts, keyboard navigation, reduced motion and 960px layout. Captures: ${output}`);
+  console.log(`Shell verification passed: 3 reference layouts, 4 collaboration access gates, keyboard navigation, reduced motion and 960px layout. Captures: ${output}`);
 }

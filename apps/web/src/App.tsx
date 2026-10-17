@@ -15,6 +15,13 @@ import './integration.css';
 import { AuthProvider } from './auth/AuthProvider.js';
 import { AuthRoot } from './auth/AuthRoot.js';
 import { isAccountPath } from './auth/configuration.js';
+import { CollaborationProvider } from './collaboration/CollaborationProvider.js';
+import { ProjectsPage } from './collaboration/ProjectsPage.js';
+import { TeamPage } from './collaboration/TeamPage.js';
+import { RepositoryPage } from './collaboration/RepositoryPage.js';
+import { InvitationPage } from './collaboration/InvitationPage.js';
+import { captureInvitation } from './collaboration/invitation.js';
+import './collaboration/collaboration.css';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -27,17 +34,19 @@ const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
 };
 
 export function App() {
-  return <AuthProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</AuthProvider>;
+  captureInvitation();
+  return <AuthProvider><CollaborationProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</CollaborationProvider></AuthProvider>;
 }
 
 function ShellApp() {
   const [route, setRoute] = useState(() => parseRoute(window.location.hash));
+  const [navigationVersion, setNavigationVersion] = useState(0);
   const [dialog, setDialog] = useState<'navigation' | 'notifications' | null>(null);
   const motion = useMotionPreference();
 
   useEffect(() => {
     if (!window.location.hash) window.history.replaceState(null, '', '#/overview');
-    const update = () => { setRoute(parseRoute(window.location.hash)); setDialog(null); };
+    const update = () => { captureInvitation(); setRoute(parseRoute(window.location.hash)); setNavigationVersion(version => version + 1); setDialog(null); };
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
@@ -55,14 +64,18 @@ function ShellApp() {
   const viewProps = { onNavigate: navigate, reducedMotion: motion.reducedMotion };
   const section = routes.find((entry) => entry.id === route);
   const content = route === 'overview' ? <OverviewView {...viewProps} />
+    : route === 'projects' ? <ProjectsPage />
+    : route === 'team' ? <TeamPage />
+    : route === 'repos' || route === 'code' ? <RepositoryPage />
+    : route === 'invitations' ? <InvitationPage />
     : route === 'pulse' || route === 'portal' ? <PulseView {...viewProps} />
     : route === 'session' ? <SessionView {...viewProps} />
     : route === 'settings' ? <ApplicationSettings motion={motion} />
-    : <div className="route-empty-layout"><Card title={section?.label ?? 'Workspace'} icon={<Icon name={route === 'team' ? 'team' : route === 'tasks' ? 'tasks' : route === 'repos' ? 'repos' : route === 'docs' ? 'book' : route === 'deployments' ? 'upload' : route === 'code' ? 'code' : 'projects'} />}><EmptyPanel title={`No ${route === 'code' ? 'files' : section?.label.toLowerCase() ?? 'items'} yet`} description={sectionDescriptions[route] ?? 'No content has been shared in this workspace.'} /></Card></div>;
+    : <div className="route-empty-layout"><Card title={section?.label ?? 'Workspace'} icon={<Icon name={route === 'tasks' ? 'tasks' : route === 'docs' ? 'book' : 'upload'} />}><EmptyPanel title={`No ${section?.label.toLowerCase() ?? 'items'} yet`} description={sectionDescriptions[route] ?? 'No content has been shared in this workspace.'} /></Card></div>;
 
   return <>
     <AppShell route={route} onNavigate={navigate} onSearch={() => setDialog('navigation')} onNotifications={() => setDialog('notifications')} reducedMotion={motion.reducedMotion} onToggleMotion={motion.systemReduced ? () => navigate('settings') : motion.toggle}>
-      <div data-shell-route={route} className="route-content" key={route}>{content}</div>
+      <div data-shell-route={route} className="route-content" key={`${route}:${navigationVersion}`}>{content}</div>
     </AppShell>
     {dialog === 'navigation' && <NavigationDialog onNavigate={navigate} onClose={() => setDialog(null)} />}
     {dialog === 'notifications' && <NotificationsDialog onClose={() => setDialog(null)} />}

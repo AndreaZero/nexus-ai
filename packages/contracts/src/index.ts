@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import type { CollaborationRequest, CollaborationResponse, LocalBindingRequest, LocalBindingResponse } from './collaboration.js';
+export * from './collaboration.js';
 
 export const DESKTOP_IPC = {
   getInfo: 'nexus:desktop:get-info',
@@ -7,6 +9,8 @@ export const DESKTOP_IPC = {
   authCancelSignIn: 'nexus:auth:cancel-sign-in',
   authSignOut: 'nexus:auth:sign-out',
   authStateChanged: 'nexus:auth:state-changed',
+  collaborationRequest: 'nexus:collaboration:request',
+  localBindingRequest: 'nexus:repository:local-binding',
 } as const;
 
 export const nexusUserSchema = z.object({
@@ -42,6 +46,8 @@ export type DesktopInfo = z.infer<typeof desktopInfoSchema>;
 
 export interface DesktopBridge {
   getInfo(): Promise<DesktopInfo>;
+  readonly collaboration: { request(request: CollaborationRequest): Promise<CollaborationResponse> };
+  readonly localBinding: { request(request: LocalBindingRequest): Promise<LocalBindingResponse> };
   readonly auth: {
     getState(): Promise<NexusAuthState>;
     signIn(): Promise<NexusAuthState>;

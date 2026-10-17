@@ -6,7 +6,7 @@ App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello svilu
 
 ## Stato del progetto
 
-**T03 implementato, in attesa di verifica Windows del maintainer.** T01/T02 sono accettati. Sono operativi account Nexus, verifica email/reset via SMTP, sessioni PostgreSQL e accesso desktop tramite browser con storage cifrato. Setup e prova in [Account T03](docs/auth.md); le shell approvate restano preservate. Workspace/progetti arrivano in T04, Codex in T05. Packaging macOS/Linux configurato, prove native ancora da eseguire sui rispettivi sistemi.
+**T04 implementato e consegnato per verifica Windows del maintainer.** T01–T03 accettati; login e ritorno browser → app funzionanti. Workspace/progetti, membri/ruoli, inviti email monouso e repository sono persistiti in PostgreSQL; la cartella locale resta distinta per account e dispositivo. Passati 42 test, 12 scenari reali collaborazione e pacchetto Windows 0.4.0 con smoke. [Regole e prova T04](docs/collaboration.md), [account T03](docs/auth.md). Shell T02 preservate; Codex arriva in T05. Packaging macOS/Linux configurato, prove native ancora da eseguire sui rispettivi sistemi.
 
 Da questa cartella, con Node 22.19+ della serie 22 o Node 24 e pnpm 10.32.1:
 
@@ -19,7 +19,7 @@ pnpm mailpit --install
 pnpm package:win
 ```
 
-`package:win` va eseguito su Windows e produce l'installer unsigned 0.3.0 in `release/win/`. Per provarlo, tenere `pnpm mailpit` e `pnpm start:server` in due terminali, poi aprire l'app o eseguire `pnpm start:desktop`. Inbox locale: `http://127.0.0.1:8025`. Le migrazioni non partono automaticamente. Per Mac/Linux usare `pnpm package:mac`/`pnpm package:linux` sul relativo sistema. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
+`package:win` va eseguito su Windows e produce l'installer unsigned 0.4.0 in `release/win/`. Arrestare app/server precedenti prima della build e riavviarli dopo. Tenere `pnpm mailpit` e `pnpm start:server` in due terminali, poi aprire l'app o eseguire `pnpm start:desktop`. Inbox locale: `http://127.0.0.1:8025`. Le migrazioni non partono automaticamente. Per Mac/Linux usare `pnpm package:mac`/`pnpm package:linux` sul relativo sistema. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - [Indice documentazione](docs/README.md)
 - [Prodotto e requisiti](docs/product.md)
@@ -30,7 +30,7 @@ pnpm package:win
 - [Regole agenti](AGENTS.md)
 - [Skill di coordinamento](.agents/skills/nexus-coordination/SKILL.md)
 - [Contribuire e verificare le build](CONTRIBUTING.md)
-- [Task T03 — identità e persistenza](https://github.com/AndreaZero/nexus-ai/issues/3)
+- [Task T04 — workspace e collaborazione](https://github.com/AndreaZero/nexus-ai/issues/4)
 
 ## Metodo
 

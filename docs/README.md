@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01/T02 sono accettati su Windows; T03 è implementato e consegnato per prova manuale, con PostgreSQL e Mailpit locali verificati. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01–T03 sono accettati su Windows; T04 workspace/progetti/membri/inviti è implementato e consegnato per verifica manuale. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
 
 | Documento | Uso |
 | --- | --- |
@@ -20,5 +20,6 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [Confronto T02](design/t02-review.md) | Catture reali della shell, geometria verificata e differenze residue |
 | [PostgreSQL locale](setup/postgresql.md) | Database/ruolo dedicati, script manuale, configurazione e verifica prima della persistenza |
 | [Account T03](auth.md) | Setup, migrazioni, Mailpit, accesso web/desktop, confini e prove eseguite |
+| [Collaborazione T04](collaboration.md) | Workspace/progetti, ruoli, inviti, repository, cartella locale e verifica manuale |
 
 Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.

@@ -1,6 +1,6 @@
 /** Shell copy stays together so a later locale does not change component structure. */
 export const shellCopy = {
-  overview: 'Overview', pulse: 'Client & Team Pulse', session: 'AI Sessions', projects: 'Projects', team: 'Team', tasks: 'Tasks', repos: 'Repos', portal: 'Client Portal', settings: 'Settings', code: 'Code', deployments: 'Deployments', docs: 'Docs',
+  overview: 'Overview', pulse: 'Client & Team Pulse', session: 'AI Sessions', projects: 'Projects', team: 'Team', tasks: 'Tasks', repos: 'Repos', portal: 'Client Portal', settings: 'Settings', code: 'Code', deployments: 'Deployments', docs: 'Docs', invitations: 'Invitation',
   project: 'Project workspace', noProject: 'No project selected', sessionTitle: 'AI Session', sessionDescription: 'A focused space for your conversations, context and code.',
   search: 'Search anything...', notifications: 'Notifications', notConnected: 'Not connected', syncDescription: 'Shared workspace sync',
   liveSessions: 'Live Sessions', workspace: 'Workspace', selectWorkspace: 'No workspace selected', workspaceUnavailable: 'Workspace selection requires a connected Nexus account.',

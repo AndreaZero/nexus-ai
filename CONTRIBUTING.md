@@ -21,7 +21,7 @@ pnpm package:win
 | Comando | Scopo |
 | --- | --- |
 | `pnpm check` | Build librerie, typecheck, lint e confini renderer/Node |
-| `pnpm test` | 29 test di dominio, sicurezza, SMTP locale e storage |
+| `pnpm test` | Test di dominio, autorizzazioni, sicurezza, SMTP locale e storage |
 | `pnpm build` | Compilazione workspace |
 | `pnpm db:check` | Probe DB reale senza stampare credenziali |
 | `pnpm db:migrate` | Migrazioni versionate sul DB locale dedicato |
@@ -34,15 +34,16 @@ pnpm package:win
 | `pnpm verify:shell` | Catture shell, ricerca e preferenza movimento; richiede build |
 | `pnpm verify:accounts` | Prova esplicita account PostgreSQL/SMTP reali con fixture locale temporanea |
 | `pnpm verify:auth-desktop` | Scambio PKCE, cifratura OS, ripristino/revoca in Electron isolato |
+| `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
 | `pnpm package:win` / `pnpm package:mac` / `pnpm package:linux` | Build e NSIS / DMG / AppImage sul relativo OS |
 
 Gli harness account richiedono backend e Mailpit attivi. Quello HTTP elimina il proprio fixture; quello Electron scrive ID/email in `.nexus/visual/t03/desktop-auth-report.json` e il coordinatore rimuove solo tali righe dopo la prova. Non eseguirli su servizi remoti o usare dati di persone reali. I test SMTP aprono una porta loopback temporanea; il sandbox dell'agente può richiedere esecuzione esterna, senza cambiare la sandbox del renderer.
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T03
+## Build e prova Windows T04
 
-Installer generato: `release/win/Nexus-AI-0.3.0-win-x64.exe`. Programma senza installer: `release/win/win-unpacked/Nexus AI.exe`. Pacchetto unsigned; nessuna installazione automatica. Per verificare il protocollo OS usare preferibilmente l'installer aggiornato.
+Versione T04: **0.4.0**. Con `pnpm package:win` l'installer viene scritto in `release/win/Nexus-AI-0.4.0-win-x64.exe`; programma senza installer in `release/win/win-unpacked/Nexus AI.exe`. Pacchetto unsigned; nessuna installazione automatica. Arrestare app/server precedenti prima della build e riavviarli dopo: il backend registra i nuovi asset compilati all'avvio.
 
 Dopo la build tenere aperti:
 
@@ -62,6 +63,10 @@ pnpm start:desktop
 ```
 
 In Settings avviare **Sign in with browser**, registrarsi, aprire la verifica su **http://127.0.0.1:8025**, accedere e scegliere **Continue in Nexus AI**. Verificare riapertura, logout e reset con revoca delle vecchie sessioni. I cinque passi completi e gli errori recuperabili sono in [Account T03](docs/auth.md).
+
+Per T04 aprire **Projects**, creare workspace/progetto e selezionarlo. In **Team**, scegliere ambito Project e invitare un secondo indirizzo; aprire l'email in Mailpit e accettare dal browser con l'account verificato corrispondente. Controllare il solo progetto assegnato, ridurre il ruolo e rimuovere l'accesso. In **Repos** salvare URL HTTPS/default branch e scegliere una cartella locale dal desktop; riaprendo l'app il binding rimane distinto per account e dispositivo. [Regole e prova completa T04](docs/collaboration.md).
+
+`pnpm verify:collaboration` richiede il DB locale migrato e Mailpit loopback; crea una propria istanza HTTP temporanea e non arresta il server del maintainer. Elimina soltanto workspace/account/email QA della propria esecuzione. La verifica non deve essere usata con SMTP remoto o credenziali di produzione.
 
 Il backend serve le pagine compilate su `http://127.0.0.1:3001/sign-in`; le email non escono dal PC. In sviluppo si può usare `pnpm dev:desktop` al posto dei comandi server/app, lasciando Mailpit nell'altro terminale. Per fermare usare Ctrl+C. Il pacchetto non incorpora né avvia backend, PostgreSQL o Mailpit.
 

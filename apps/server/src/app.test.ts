@@ -102,3 +102,30 @@ test('unknown routes never echo requested paths or query strings', async (contex
   assert.deepEqual(response.json(), { error: 'not_found', message: 'Risorsa non disponibile.' });
   assert.equal(response.body.includes('secret'), false);
 });
+
+test('collaboration requires exact credentialed origin, JSON and a validated request before account access', async (context) => {
+  const app = await buildServer(readServerConfig({ NEXUS_LOG_LEVEL: 'silent', NEXUS_WEB_URL: 'http://127.0.0.1:5173' }));
+  context.after(() => app.close());
+  for (const origin of ['http://127.0.0.1:5173', 'http://127.0.0.1:3001', 'io.github.andreazero.nexusai:/']) {
+    const preflight = await app.inject({ method: 'OPTIONS', url: '/api/collaboration', headers: {
+      origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type',
+    } });
+    assert.equal(preflight.statusCode, 204);
+    assert.equal(preflight.headers['access-control-allow-credentials'], 'true');
+    const unavailable = await app.inject({ method: 'POST', url: '/api/collaboration', headers: { origin }, payload: { operation: 'listWorkspaces' } });
+    assert.equal(unavailable.statusCode, 503);
+    assert.equal(unavailable.json().code, 'unavailable');
+    assert.equal(unavailable.headers['cache-control'], 'no-store');
+  }
+  for (const origin of [undefined, 'nexus://app', 'null', 'https://evil.example']) {
+    const response = await app.inject({ method: 'POST', url: '/api/collaboration', headers: origin ? { origin } : {}, payload: { operation: 'listWorkspaces' } });
+    assert.equal(response.statusCode, 403);
+    assert.equal(response.json().code, 'forbidden');
+  }
+  const malformed = await app.inject({ method: 'POST', url: '/api/collaboration', headers: { origin: 'http://127.0.0.1:5173' }, payload: { operation: 'listWorkspaces', sql: 'untrusted' } });
+  assert.equal(malformed.statusCode, 400);
+  assert.equal(malformed.json().code, 'invalid_request');
+  const form = await app.inject({ method: 'POST', url: '/api/collaboration', headers: { origin: 'http://127.0.0.1:5173', 'content-type': 'text/plain' }, payload: 'listWorkspaces' });
+  assert.equal(form.statusCode, 400);
+  assert.equal(form.json().code, 'invalid_request');
+});

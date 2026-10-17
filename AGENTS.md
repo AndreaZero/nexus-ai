@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T03 implementato e consegnato per verifica Windows del maintainer**. PostgreSQL e migrazioni locali sono pronti; Mailpit scelto e configurato, prove account/SMTP/PKCE/storage passate. T01/T02 accettati Windows; preservare le shell approvate. Registrare feedback T03 e correggere eventuali difetti prima di T04. Non stampare `.env` o credenziali; `.env.example` deve restare privo di valori privati. Nessuna migrazione all'avvio, nessuna creazione cluster/ruoli/DB o operazione di produzione implicita.
+La fase corrente è **T04 implementato e consegnato per verifica Windows del maintainer**, dopo conferma del login e ritorno browser → app T03. Migrazione T04 applicata/idempotente, 42 test e 12 scenari reali collaborazione passati; account reale conservato. T05 non avviato. Preservare shell T02 approvate e contratti/ownership in `docs/collaboration.md` e `docs/status.md`. Non stampare `.env` o credenziali; `.env.example` deve restare privo di valori privati. Nessuna migrazione all'avvio, nessuna creazione cluster/ruoli/DB o operazione di produzione implicita.
 
 ## Prodotto e architettura
 

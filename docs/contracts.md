@@ -1,13 +1,15 @@
 # Dati, API ed eventi
 
-T01 implementa i contratti della base; T03 aggiunge `nexusUserSchema`, `nexusAuthStateSchema` e `DesktopBridge.auth` ristretto. `GET /health` descrive liveness HTTP e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag di configurazione e `/auth/me` il solo profilo sanitizzato con scadenza. Schema/account e confini effettivi in [auth.md](auth.md). Le altre entità/API sottostanti restano contratti progettuali dei task futuri.
+T01 implementa la base; T03 aggiunge identità e `DesktopBridge.auth` ristretto. T04 implementa workspace/progetti/membership/inviti/repository con `POST /api/collaboration`, union validata di operazioni di dominio; `DesktopBridge.collaboration.request` mantiene il cookie nel main. `DesktopBridge.localBinding.request` accetta soltanto get/select/remove e ID progetto/repository, con autorizzazione server e selettore cartella nativo. Schemi autorevoli in `packages/contracts/src/collaboration.ts`, policy/trasporto in [collaboration.md](collaboration.md). Non esiste fetch/exec/file API generica nel bridge.
+
+`GET /health` descrive liveness e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag e `/auth/me` solo profilo sanitizzato e scadenza. Schema/account in [auth.md](auth.md). Le rotte REST per task, allegati, runtime e realtime elencate sotto restano progettuali; in T04 non sono esposte e rispondono 404. Nessun download disponibile per un estraneo o per un membro.
 
 ## Entità e invarianti
 
 | Entità | Campi/relazioni essenziali | Invariante |
 | --- | --- | --- |
 | User / auth session | ID Nexus, email verificata, nome, avatar, sessioni revocabili | Credenziali gestite dalla libreria auth, nessun token Codex nel profilo |
-| Workspace / membership | owner, membri, ruolo | Un owner residuo; owner esplicito per operazioni amministrative |
+| Workspace / membership | owner/member amministrativi | Un owner residuo; membership ordinaria non apre progetti |
 | Project / membership | workspace, nome, slug, descrizione, membri/ruoli e policy | Ogni query include il perimetro progetto autorizzato |
 | Invitation | workspace/progetto, email destinataria, ruolo, token hash, scadenza | Monouso, revocabile, destinatario verificato e ruolo assegnabile dal mittente |
 | Repository | progetto, URL remoto, default branch | Il path locale vive in un binding per dispositivo, mai nel record condiviso |

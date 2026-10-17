@@ -1,57 +1,50 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T03 implementato e consegnato per verifica Windows del maintainer** ([issue #3](https://github.com/AndreaZero/nexus-ai/issues/3)). T01 e T02 già accettati su Windows. T04 non avviato.
+Aggiornato: **17 ottobre 2026**. **T04 implementato e consegnato per verifica Windows del maintainer** ([issue #4](https://github.com/AndreaZero/nexus-ai/issues/4)). T01–T03 accettati su Windows; il maintainer conferma login e ritorno browser → app dopo `5fa5846`. T05 non avviato.
 
-## Correzione dal feedback Windows
+## Risultato T04
 
-Il maintainer segnala desktop fermo su “Complete sign-in” anche dopo **Continue in Nexus AI**. Individuato un conflitto nel browser: `transferUser` riceveva un `callbackURL` web, quindi il redirect plugin predefinito di Better Auth ricaricava `/desktop-auth` prima che il timer Electron potesse aprire il protocollo OS. La richiesta ora omette quel redirect e lascia consumare il cookie al proxy ufficiale. Nessuna modifica a credenziali, account o confini IPC.
-
-Test di regressione con i client/plugin ufficiali 1.7.10: nessuna navigazione HTTP durante il trasferimento, invocazione del callback OS e consumo del cookie temporaneo. Test, lint e build web passati. La pagina corretta richiede il riavvio del backend compilato, che registra gli asset statici all'avvio, e una nuova richiesta desktop; rientro OS manuale ancora da confermare. Correzione del coordinatore limitata al browser, nessun fronte parallelo necessario.
-
-## Risultato T03
-
-- PostgreSQL locale predisposto dal maintainer: server **18.1**, DB/ruolo `nexus_ai_dev`, UTF8 e ownership `public` corretta; login reale verificato senza mostrare credenziali.
-- Pool Node-only, schema Drizzle e cinque tabelle auth; migrazione esplicita applicata e seconda applicazione senza duplicazioni. Nessun account iniziale o progetto fittizio.
-- Better Auth 1.7.10: registrazione, email verificata obbligatoria, login, sessioni persistenti, logout, reset monouso e revoca delle sessioni precedenti. CORS/CSRF, rate limit DB, DTO sanitizzati e errori SMTP recuperabili.
-- SMTP Mailpit **1.31.6** locale scelto dal maintainer, archivio ufficiale SHA-256 verificato. Helper loopback senza inoltro esterno; secret auth aggiunto una sola volta al `.env` privato, conservando DATABASE_URL. Ripulita la credenziale accidentalmente copiata nel template pubblico prima della pubblicazione.
-- Pagine account browser e card Nexus nelle impostazioni; runtime Codex separato e non collegato. Shell T02 preservate, workspace/membership in T04.
-- Desktop: browser di sistema, plugin ufficiale PKCE/state, callback e IPC ristretti, storage OS cifrato/atomico e ripristino verificato col server. Nessun token/cookie nel renderer Electron.
-- Versione desktop/web/server/contratti/DB **0.3.0**; UI resta 0.2.0 e bridge Codex 0.1.0. Installer Windows unsigned generato, non installato automaticamente.
+- Workspace e progetti PostgreSQL reali, creazione/modifica, selezione per account, header e contatori reali nella shell T02 approvata. Nessun contenuto iniziale fittizio.
+- Workspace owner/member amministrativi; ruoli owner/developer/client/viewer per progetto. Membership ordinaria workspace senza accesso implicito ai progetti. Repository riservato ai ruoli tecnici e email roster oscurate quando previsto.
+- Inviti SMTP Mailpit: token SHA-256 nel DB, 72 ore, destinatario verificato, anteprima/accettazione, revoca/replay e issuer attuale. Ultimo owner esplicito protetto anche con mutazioni concorrenti e rimozione dal workspace.
+- Renderer Projects/Team/Repos, impostazioni e inviti con sessionStorage per attraversare il login. Account browser sbagliato recuperabile con Use another account; nuovo hash invito rimonta la pagina.
+- Bridge di dominio collaborazione validato in preload/main/server, cookie solo nel main. Cartella locale scelta con dialogo nativo e binding atomico per account/progetto/repository/device, nuova autorizzazione dopo dialogo e cancellazione senza scritture.
+- Migrazione additiva `0001_collaboration.sql` applicata sul DB dedicato esistente, 15 tabelle totali. Audit nella transazione mutativa; task/milestone/sessioni hanno basi vuote, senza API o runtime anticipati. Nessun allegato scaricabile in T04.
+- Versione root/desktop/web/server/contratti/DB **0.4.0**; UI 0.2.0 e Codex bridge 0.1.0. Nessuna nuova dipendenza. App/server precedenti vanno chiusi prima della build e riavviati dopo per API/asset nuovi.
 
 ## Ownership concluse
 
 | Fronte | Agente | Percorsi integrati |
 | --- | --- | --- |
-| Backend T03 | `/root/t03_server` | `apps/server/src/**`: configurazione, auth/SMTP, HTTP/statico e test; correzione CORS asset verificata |
-| Desktop T03 | `/root/t03_desktop` | `apps/desktop/src/**`, `test/**`, build script e config protocollo: auth, storage, IPC e harness |
-| Web T03 | `/root/t03_web` | `apps/web/src/auth/**`, App e Settings: pagine account e stato profilo |
-| DB/contratti/integratore | Coordinatore | Schema/migrazioni, contratti, manifest/lockfile, setup/Mailpit, prove reali, documenti e pubblicazione |
+| API/autorizzazioni | `/root/t04_server` | `apps/server/src/**`: membership, inviti, eventi, SMTP, route e test |
+| Renderer | `/root/t04_web` | `apps/web/src/**`: provider/client, pagine, dialoghi, shell e roster |
+| Desktop | `/root/t04_desktop` | `apps/desktop/**`: trasporto, binding, main/preload e test |
+| DB/contratti/integrazione | Coordinatore | `packages/db/**`, `packages/contracts/**`, manifest/lockfile, script QA, documenti, shell aggiuntive, build/pacchetto e pubblicazione |
 
-Tutti i fronti integrati e ownership rilasciate. Skill usata `.agents/skills/nexus-coordination/SKILL.md`; nessuna nuova chat utente creata e nessun task T04–T16 avviato.
+Skill `.agents/skills/nexus-coordination/SKILL.md` applicata; agenti integrati e ownership rilasciate. Nessuna nuova chat utente o T05 avviato.
 
-## Evidenze
+## Evidenze T04
 
 | Ambito | Esito |
 | --- | --- |
-| `pnpm check` | Passato: TypeScript, lint e confini renderer (34 sorgenti); controlli mirati ripetuti dopo correzione CORS/web |
-| `pnpm test` | **29/29**: DB 3, desktop 11, server 13, confini 2. SMTP e scritture atomiche eseguiti fuori sandbox; renderer sempre sandboxed |
-| Build e packaging Windows | Passati; installer `release/win/Nexus-AI-0.3.0-win-x64.exe`, **115559968 byte**, Authenticode NotSigned |
-| Smoke pacchetto Windows | Exit 0: renderer montato, IPC validato, CSP presente e Node non disponibile |
-| PostgreSQL / migrazioni | Connessione reale, schema applicato e seconda applicazione senza duplicazioni; nessuna creazione cluster/ruoli/DB da parte degli agenti |
-| `pnpm verify:accounts` | Passato su PostgreSQL/Mailpit: origin negata, verifica obbligatoria, login, profilo sanitizzato, reset neutro/monouso, revoca e scadenza |
-| `pnpm verify:auth-desktop` | Exit 0: SMTP reale, PKCE, replay ignorato, cifratura Windows, ricostruzione del client con sessione ripristinata e revoca server |
-| Browser reale | Login/registrazione/recupero/link/Settings controllati; corretto rifiuto CORS dei moduli/CSS same-origin. Catture in `docs/design/captures/t03-*.jpg` |
-| Pulizia QA | Account temporanei e messaggi SMTP specifici eliminati; verifica finale: **0 utenti applicativi**, nessun account demo lasciato |
-| Prova umana Windows T03 | Pendente: installazione, apertura/rientro OS dal browser, riapertura, logout e reset secondo `docs/auth.md` |
-| macOS/Linux | Configurazioni presenti, prove native di packaging/protocollo/keyring non eseguite qui |
-| CI T03 | Consultare la run del commit pubblicato; non dedurre esito dalla sola configurazione. CI T02 passata sui tre OS |
+| Statici | Typecheck completo, ESLint e confini renderer **45 file** passati. Check eseguiti in sequenza con arresto su errore; corretti confronti TS di rotte già gestite ed escape lint, poi completati controlli pertinenti |
+| `pnpm test` | **42/42**: DB 3, desktop 16, server 20, web 1, confini 2. Fuori sandbox per SMTP/rename Windows; renderer sandboxed |
+| `pnpm build` | Passato, web 292 moduli; manifest/lockfile coerenti senza nuove dipendenze |
+| Migrazioni | Applicata e ripetuta senza duplicazioni. Corretto ordine dell'indice composto prima della FK; precedenti tentativi annullati integralmente da PostgreSQL |
+| `pnpm verify:collaboration` | **12 scenari reali** HTTP/PG/Mailpit con tre account verificati: recipient/hash/replay, isolamento, proiezioni/ruoli/revoca, owner concorrenti, issuer revocato e rimozione workspace che lascerebbe progetto senza owner |
+| Pulizia QA | Verifica finale: **0 account QA, 0 workspace QA**, unico account reale preesistente conservato. Rimossi solo messaggi Mailpit della prova |
+| Shell Electron | Tre layout reference a 1586 × 992, quattro gate collaborazione senza account, tastiera/reduced motion e sessione a 960 px passati. Catture locali `.nexus/visual/t02/` dal comando storico |
+| Pacchetto Windows | NSIS **0.4.0**, `release/win/Nexus-AI-0.4.0-win-x64.exe`, **115581755 byte**, NotSigned; nessuna installazione automatica |
+| Smoke pacchetto | Exit 0: renderer montato, nuovi bridge/IPC validati e Node assente |
+| Prova umana Windows T04 | Pendente: form autenticati, due account via invito, persistenza selezione e dialogo cartella nativo secondo `collaboration.md` |
+| macOS/Linux | Configurazioni presenti; packaging, protocollo e keyring nativi non provati qui |
 
-Il primo harness desktop aveva completato i controlli ma falliva nella cancellazione del profilo di test per un file Electron ancora aperto. Corretto inizializzando la verifica prima della partizione persistente; riesecuzione mirata exit 0. Gli utenti di entrambe le prove sono stati rimossi. Il ritorno OS reale non viene dedotto dall'intercettazione controllata del browser nel test.
+L'apertura/ritorno OS Windows T03 è stata confermata dal maintainer; i test automatici restano separati dalle prove manuali. I gate fotografati non sostituiscono la verifica visiva dei form autenticati e non contengono progetti inventati. Il test cartella sostituisce soltanto il selettore nei test e non legge file del repository.
 
 ## Prossimo passo
 
-Il maintainer segue [Account T03](auth.md) e [CONTRIBUTING.md](../CONTRIBUTING.md), ricompila o usa l'installer 0.3.0 e prova registrazione/verifica/login desktop/riapertura/logout/reset. Setup privato e migrazioni su questa macchina sono già eseguiti; i relativi comandi sono ripetibili senza sostituire i valori esistenti.
+Il maintainer segue [T04 collaborazione](collaboration.md) e [CONTRIBUTING.md](../CONTRIBUTING.md): chiude app/backend precedenti, esegue `pnpm package:win`, riavvia `pnpm start:server` e app aggiornata o `pnpm start:desktop`. Mailpit una sola istanza, inbox `http://127.0.0.1:8025`; DB già migrato su questa macchina, nessun nuovo setup/password richiesto.
 
-Backend e Mailpit sono servizi locali separati: avviarli con `pnpm start:server` e `pnpm mailpit`, poi aprire l'app. Inbox su `http://127.0.0.1:8025`. Nessun PostgreSQL reinstallato e nessuna password richiesta in chat. Registrare feedback e correggere eventuali difetti di T03 prima di T04.
+Creare workspace e due progetti, invitare un secondo account al primo, accettare con email verificata corrispondente e verificare l'isolamento dal secondo. Cambiare ruolo/rimuovere membro e ricaricare; collegare repository HTTPS e cartella locale, riaprire per controllare persistenza. Registrare feedback/correzioni prima di T05.
 
-Limiti: adattamento della cancellazione PKCE vincolato al sorgente plugin 1.7.10, da riesaminare prima di un upgrade; firma/keyring/protocollo Mac/Linux da provare sui relativi OS. Hosting/email esterna, runtime Codex, membership e storage allegati restano nei task successivi. Nessun deploy o servizio a pagamento creato.
+Limiti: presenza e sincronizzazione realtime T08, Git/runtime Codex T05/T12, API operative task/sessioni e allegati nei rispettivi task. Firma/notarizzazione e hosting T16; nessun deploy o servizio a pagamento creato. Rimane l'adattamento PKCE fissato al plugin 1.7.10, da rivedere prima degli upgrade.

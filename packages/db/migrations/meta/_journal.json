@@ -8,6 +8,13 @@
       "when": 1792241222713,
       "tag": "0000_solid_hedge_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792246329855,
+      "tag": "0001_collaboration",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### 2026-10-17 — T04: workspace, progetti, membri e inviti
+
+- Ricevuta conferma Windows T03 (login e ritorno browser → app); avviato e integrato T04 con tre agenti e contratti condivisi.
+- Implementati workspace/progetti persistenti, selezione per account, impostazioni e roster reali nella shell approvata. Ruoli operativi owner/developer/client/viewer con amministrazione workspace distinta; solo owner workspace crea progetti, nessun progetto aperto dalla sola membership ordinaria.
+- Inviti SMTP con token solo hash, durata 72 ore, recipient verificato, revoca/replay, accettazione atomica e controllo dell'issuer attuale. Ultimo owner protetto anche con richieste concorrenti e rimozione dal workspace.
+- Repository HTTPS condiviso distinto dalla cartella locale account/dispositivo. Nuovi bridge IPC di dominio validati, cookie solo nel main, selettore nativo e nuova autorizzazione dopo il dialogo; nessuna lettura/upload di file o esecuzione Git/Codex.
+- Migrazione additiva applicata/idempotente, audit transazionale e basi vuote task/milestone/sessioni. Verificati 42 test, 12 scenari PostgreSQL/SMTP/HTTP, build e shell Electron; fixture rimossi e account reale conservato. Versione 0.4.0; prova manuale Windows T04 e native Mac/Linux distinte.
+
 ### 2026-10-17 — T03: ritorno browser → desktop
 
 - Corretto il reload di `/desktop-auth` dopo **Continue in Nexus AI**: il redirect web interrompeva il timer del callback desktop, lasciando l'app in attesa. Il trasferimento resta ora sulla pagina e usa il proxy ufficiale per aprire Nexus.

@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { healthResponseSchema, nexusUserSchema } from '@nexus-ai/contracts';
+import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema } from '@nexus-ai/contracts';
 import { createDatabaseBoundary } from '@nexus-ai/db';
 import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { fromNodeHeaders } from 'better-auth/node';
@@ -12,6 +12,7 @@ import { APIError } from 'better-auth/api';
 import { AUTH_CLIENT_IP_HEADER, DESKTOP_AUTH_ORIGIN, createNexusAuth } from './auth.js';
 import { createEmailSender, EmailDeliveryError } from './email.js';
 import type { ServerConfig } from './config.js';
+import { createCollaborationService } from './collaboration.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -36,29 +37,35 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
   const database = createDatabaseBoundary(config.database);
   const mail = config.auth.mail ? createEmailSender(config.auth.mail) : null;
   const auth = createNexusAuth(config.auth, database, mail);
+  const collaboration = createCollaborationService(database, mail, config.auth.webURL);
   app.addHook('onClose', async () => {
     mail?.close();
     await database.close();
   });
 
   app.setErrorHandler((error, request, reply) => {
+    const isCollaboration = request.url.split('?')[0] === '/api/collaboration';
     if (error instanceof OriginNotAllowedError) {
+      if (isCollaboration) return reply.code(403).send({ ok: false, code: 'forbidden', message: 'Origine della richiesta non consentita.' });
       return reply.code(403).send({ error: 'origin_not_allowed', message: 'Origin non consentita.' });
     }
     if (typeof error === 'object' && error !== null && 'statusCode' in error) {
       const statusCode = error.statusCode;
       if (typeof statusCode === 'number' && statusCode >= 400 && statusCode < 500) {
+        if (isCollaboration) return reply.code(statusCode).send({ ok: false, code: 'invalid_request', message: 'Richiesta collaborazione non valida.' });
         return reply.code(statusCode).send({ error: 'invalid_request', message: 'Richiesta non valida.' });
       }
     }
     app.log.error({ requestId: request.id }, 'Errore interno durante la richiesta.');
+    if (isCollaboration) return reply.code(503).send({ ok: false, code: 'unavailable', message: 'Servizio collaborazione temporaneamente non disponibile.' });
     return reply.code(500).send({ error: 'internal_error', message: 'Errore interno del server.' });
   });
 
-  // Only auth accepts credentialed writes. Health retains the T01 read-only contract.
+  // Auth and collaboration are the only credentialed domains. Health remains read-only.
   await app.register(cors, {
     delegator(request, callback) {
-      const isAuth = request.url.split('?')[0]?.startsWith('/auth/') ?? false;
+      const requestPath = request.url.split('?')[0];
+      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration';
       const origin = request.headers.origin;
       const allowed = isAuth
         ? origin === config.auth.webURL || origin === new URL(config.auth.baseURL).origin || origin === DESKTOP_AUTH_ORIGIN
@@ -75,12 +82,47 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
     },
   });
 
+  app.post('/api/collaboration', { bodyLimit: 16 * 1024 }, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store');
+    reply.header('Referrer-Policy', 'no-referrer');
+    const fail = (status: number, code: 'invalid_request' | 'forbidden' | 'auth_required' | 'unavailable', message: string) =>
+      reply.code(status).send(collaborationResponseSchema.parse({ ok: false, code, message }));
+    const origin = request.headers.origin;
+    if (!origin || ![config.auth.webURL, new URL(config.auth.baseURL).origin, DESKTOP_AUTH_ORIGIN].includes(origin)) {
+      return fail(403, 'forbidden', 'Origine della richiesta non consentita.');
+    }
+    if (request.headers['content-type']?.split(';')[0]?.trim().toLowerCase() !== 'application/json') {
+      return fail(400, 'invalid_request', 'È richiesta una richiesta JSON.');
+    }
+    const input = collaborationRequestSchema.safeParse(request.body);
+    if (!input.success) return fail(400, 'invalid_request', 'Richiesta collaborazione non valida.');
+    if (!auth) return fail(503, 'unavailable', 'Servizio account non disponibile.');
+    try {
+      const headers = fromNodeHeaders(request.headers);
+      headers.set(AUTH_CLIENT_IP_HEADER, request.ip);
+      headers.delete('x-forwarded-for');
+      headers.delete('x-real-ip');
+      headers.delete('forwarded');
+      const result = await auth.api.getSession({ headers, query: { disableCookieCache: true }, returnHeaders: true });
+      const cookies = result.headers.getSetCookie();
+      if (cookies.length) reply.header('Set-Cookie', cookies);
+      const session = result.response;
+      if (!session || !session.user.emailVerified || session.session.expiresAt.getTime() <= Date.now()) {
+        return fail(401, 'auth_required', 'Accedi con un account verificato per continuare.');
+      }
+      const resultDTO = await collaboration.execute({ id: session.user.id, email: session.user.email }, input.data);
+      return reply.send(resultDTO);
+    } catch {
+      return fail(503, 'unavailable', 'Servizio collaborazione temporaneamente non disponibile.');
+    }
+  });
+
   app.get('/health', async (_request, reply) => {
     reply.header('Cache-Control', 'no-store');
     return healthResponseSchema.parse({
       schemaVersion: 1,
       service: 'nexus-server',
-      version: '0.3.0',
+      version: '0.4.0',
       status: 'ok',
       database: await database.check(),
       codex: 'local_only',

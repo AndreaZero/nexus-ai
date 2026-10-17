@@ -40,13 +40,15 @@ export function createEmailSender(config: MailConfig) {
         throw new EmailDeliveryError();
       }
     },
-    async send(to: string, kind: 'verification' | 'reset', url: string): Promise<void> {
+    async send(to: string, kind: 'verification' | 'reset' | 'invitation', url: string): Promise<void> {
       try {
         const result = await transport.sendMail({
           from: config.from,
           to,
-          subject: kind === 'verification' ? 'Nexus AI — Verify your email' : 'Nexus AI — Reset your password',
-          text: kind === 'verification'
+          subject: kind === 'invitation' ? 'Nexus AI — Workspace invitation' : kind === 'verification' ? 'Nexus AI — Verify your email' : 'Nexus AI — Reset your password',
+          text: kind === 'invitation'
+            ? `You have been invited to collaborate in Nexus AI. Sign in with this email address to review and accept the invitation:\n\n${url}\n\nThe link expires in 72 hours and can be used once. If you did not expect this invitation, ignore this email.`
+            : kind === 'verification'
             ? `Confirm your Nexus AI email address by opening this link:\n\n${url}\n\nThe link expires in one hour. If you did not create this account, ignore this email.`
             : `Reset your Nexus AI password by opening this link:\n\n${url}\n\nThe link expires in 15 minutes and can be used once. If you did not request this change, ignore this email.`,
         });

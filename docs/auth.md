@@ -1,6 +1,6 @@
 # Identità Nexus — T03
 
-Stato: **implementato, consegnato per verifica Windows del maintainer**, 17 ottobre 2026. Account Nexus distinti dal login Codex. Workspace, progetti, membership e inviti restano T04; nessuna membership viene attribuita dalla sola registrazione.
+Stato T03: **accettato dal maintainer su Windows**, 17 ottobre 2026: login e ritorno browser → app confermati dopo la correzione `5fa5846`. Le altre prove automatiche sono registrate sotto; nessuna prova nativa Mac/Linux dedotta. Account Nexus distinti da Codex; workspace/progetti/inviti in [T04](collaboration.md), nessuna membership attribuita dalla sola registrazione.
 
 ## Avvio locale
 
@@ -107,6 +107,6 @@ Credenziali nel solo main, cifrate con `safeStorage` e file sostituito atomicame
 - `pnpm verify:auth-desktop` in Electron con profilo temporaneo isolato: SMTP reale, scambio PKCE ufficiale, callback duplicata ignorata, cifratura OS, ricostruzione del client con sessione ripristinata e revoca server efficace. Fixture rimossa dal coordinatore. Il browser OS è intercettato nel test; l'apertura/rientro tramite installer resta parte della prova umana.
 - Pagine account, link e Settings controllati nel browser reale; corretto il rifiuto CORS degli asset same-origin emerso nella prova. [Login](design/captures/t03-sign-in.jpg) e [registrazione](design/captures/t03-sign-up.jpg) sono catture responsive a 654 × 653, con scroll verticale previsto. Le pagine account non compaiono nelle PNG originali e sono composizioni nuove nello stesso sistema visivo.
 - Regressione del trasferimento browser verificata con il vero redirect plugin di Better Auth e il proxy Electron: nessun reload HTTP, callback OS prodotto e cookie temporaneo consumato. Il test intercetta la navigazione, quindi non dimostra l'apertura nativa sul sistema del maintainer.
-- Prova manuale Windows T03 pendente; macOS/Linux non provati nativamente. Nessun deploy, account esterno/email a pagamento o runtime Codex introdotto.
+- Il maintainer conferma login e ritorno browser → app su Windows dopo `5fa5846` e autorizza T04. Logout/reset/ripristino hanno le prove automatiche sopra; macOS/Linux non provati nativamente. Nessun deploy, account esterno/email a pagamento o runtime Codex introdotto.
 
 Gli harness di integrazione richiedono backend/Mailpit attivi, creano solo account QA locali temporanei e non vanno eseguiti contro servizi remoti. Il test desktop salva soltanto ID/email del fixture nel report ignorato da Git: il coordinatore elimina quelle righe specifiche dopo la prova. I comandi di test non espongono password o link email.

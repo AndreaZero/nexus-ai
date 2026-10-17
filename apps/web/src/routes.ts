@@ -13,10 +13,11 @@ export const routes: readonly { id: ShellRoute; label: string; description: stri
   { id: 'code', label: 'Code', description: 'Repository files and changes' },
   { id: 'deployments', label: 'Deployments', description: 'Project environments and builds' },
   { id: 'docs', label: 'Docs', description: 'Project documentation and knowledge' },
+  { id: 'invitations', label: 'Invitation', description: 'Accept a workspace or project invitation' },
 ];
 
 export function parseRoute(hash: string): ShellRoute {
-  const candidate = hash.replace(/^#\/?/, '');
+  const candidate = hash.replace(/^#\/?/, '').split('?')[0];
   return routes.find((route) => route.id === candidate)?.id ?? 'overview';
 }
 

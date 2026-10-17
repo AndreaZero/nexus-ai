@@ -18,13 +18,15 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D12 | Proposta operativa | Cliente vede solo proiezioni esplicitamente pubblicate; approvazione deliverable separata dall'esecuzione Codex; solo driver locale controlla il proprio runtime |
 | D13 | Preparazione T03 adottata | PostgreSQL locale 18 aggiornato, alternativa 17 aggiornata già installata; database UTF8 e ruolo dedicati `nexus_ai_dev`, host `127.0.0.1:5432`. Il maintainer crea personalmente il DB vuoto; script manuale con password interattiva, nessuna tabella o migrazione all'avvio dell'app |
 | D14 | Adottata in T03 | Mailpit loopback per email locali reali, installazione ufficiale con SHA-256 verificato. Secret generato una sola volta nel proprio `.env`; template pubblico senza credenziali. Plugin senza IPC/CSP automatici; adattamento PKCE 1.7.10 isolato e testato, da riesaminare prima di aggiornamenti |
+| D15 | Adottata in T04 | Workspace owner/member amministrativi, creazione progetti riservata agli owner workspace; ruoli operativi owner/developer/client/viewer per progetto. Appartenenza ordinaria workspace senza accesso implicito ai progetti. Ultimo owner esplicito protetto con lock transazionali e issuer invito riaccertato all'accettazione |
+| D16 | Adottata in T04 | Un endpoint collaborazione con union di operazioni validate e bridge desktop corrispondente, senza URL/header/credenziali arbitrari dal renderer. Binding cartella solo userData per account/progetto/repository/device; repository remoto separato. Invito in fragment/sessionStorage, hash SHA-256 nel DB e SMTP locale esistente |
 
 ## Da concretizzare al momento opportuno
 
 - **T01 implementato:** versioni effettive fissate nel lockfile e riepilogate in `CONTRIBUTING.md`; app ID `io.github.andreazero.nexusai`. Packaging NSIS x64, DMG arm64/x64 e AppImage x64; Windows generato/verificato, altre prove native da registrare.
 - **T05–T07:** versione Codex compatibile, modalità di credenziali disponibili sui tre OS, isolamento configurazione e comportamento delle approvazioni sul runtime installato. Verifica come parte dell'integrazione definitiva, senza un'app dimostrativa separata.
 - **T03/T16:** URL server, servizio email per verifica/reset/inviti e provider PostgreSQL/object storage. Preparare configurazione self-host senza impegnare servizi a pagamento non richiesti.
-- **T03 implementato:** [account e prove](auth.md), migrazioni e pool operativi su PostgreSQL locale 18.1 predisposto dal maintainer. Prove native Mac/Linux e accettazione Windows del maintainer ancora distinte.
+- **T03 accettato su Windows:** [account e prove](auth.md), login/rientro OS confermati dal maintainer. T04 aggiunge [collaborazione](collaboration.md) sullo stesso DB; prove native Mac/Linux restano distinte.
 - **T12/T16:** account GitHub App/OAuth, segreti, domini, firma e notarizzazione delle build richiedono credenziali/configurazioni reali del maintainer quando si arriva al relativo task.
 
 Le dipendenze esterne vengono segnalate per il task interessato senza sospendere il resto dello sviluppo indipendente. T01 è stato avviato al via esplicito del maintainer e consegnato per la sua verifica.

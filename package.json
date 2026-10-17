@@ -1,6 +1,6 @@
 {
   "name": "nexus-ai",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -28,7 +28,8 @@
     "mailpit": "node scripts/mailpit.mjs",
     "auth:setup": "node scripts/setup-local-auth.mjs",
     "verify:accounts": "node scripts/verify-accounts.mjs",
-    "verify:auth-desktop": "pnpm --filter @nexus-ai/desktop exec electron . --verify-auth"
+    "verify:auth-desktop": "pnpm --filter @nexus-ai/desktop exec electron . --verify-auth",
+    "verify:collaboration": "node scripts/verify-collaboration.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

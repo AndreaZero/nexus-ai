@@ -2,10 +2,11 @@ import { app, safeStorage } from 'electron';
 import { createAuthClient, type BetterAuthClientPlugin } from 'better-auth/client';
 import { electronClient } from '@better-auth/electron/client';
 import path from 'node:path';
-import { nexusAuthStateSchema, nexusUserSchema, type NexusAuthState } from '@nexus-ai/contracts';
+import { nexusAuthStateSchema, nexusUserSchema, type CollaborationRequest, type CollaborationResponse, type NexusAuthState } from '@nexus-ai/contracts';
 import { AuthAttempt } from './auth-attempt.js';
 import { AUTH_CALLBACK_PATH, AUTH_CLIENT_ID, AUTH_SCHEME, publicServiceUrl } from './auth-config.js';
 import { AuthStorageError, EncryptedAuthStorage } from './auth-storage.js';
+import { requestCollaboration } from './collaboration-transport.js';
 
 declare const __NEXUS_AUTH_SERVER_URL__: string;
 declare const __NEXUS_WEB_URL__: string;
@@ -174,6 +175,39 @@ export class DesktopAuth {
   getState(): Promise<NexusAuthState> {
     if (this.verificationOnly) return Promise.resolve({ ...signedOut(), status: 'unavailable', message: 'Account checks are disabled during isolated desktop verification.' });
     return this.run(() => this.state.status === 'signing_in' ? Promise.resolve(this.state) : this.refresh());
+  }
+
+  /** This method stays in main; only the validated domain DTO crosses preload. */
+  collaborationRequest(request: CollaborationRequest): Promise<CollaborationResponse> {
+    return this.withSession(async () => requestCollaboration(desktopAccountEndpoints().server, this.client.getCookie(), request));
+  }
+
+  authorizeRepository(projectId: string, repositoryId: string): Promise<{ userId: string } | Exclude<CollaborationResponse, { ok: true }>> {
+    return this.withSession(async (userId) => {
+      const response = await requestCollaboration(desktopAccountEndpoints().server, this.client.getCookie(), { operation: 'getProject', projectId });
+      if (!response.ok) return response;
+      if (response.kind !== 'project' || response.item.id !== projectId || response.item.repository?.id !== repositoryId ||
+          !response.item.capabilities.viewRepository || !['owner', 'developer'].includes(response.item.role)) {
+        return { ok: false, code: 'forbidden', message: 'Your current project role cannot access this repository.' } as const;
+      }
+      return { userId };
+    });
+  }
+
+  private withSession<T>(operation: (userId: string) => Promise<T>): Promise<T | Exclude<CollaborationResponse, { ok: true }>> {
+    const pending = this.operations.then(async () => {
+      if (this.verificationOnly || this.state.status === 'signing_in') {
+        return { ok: false, code: 'auth_required', message: 'Sign in to Nexus AI to continue.' } as const;
+      }
+      const state = await this.refresh();
+      if (state.status !== 'signed_in' || !state.user) return { ok: false, code: 'auth_required', message: 'Sign in to Nexus AI to continue.' } as const;
+      return operation(state.user.id);
+    }).catch((error: unknown) => {
+      this.unavailable(error);
+      return { ok: false, code: 'unavailable', message: 'Your account session could not be checked. Retry when the server is available.' } as const;
+    });
+    this.operations = pending;
+    return pending;
   }
 
   signIn(): Promise<NexusAuthState> {

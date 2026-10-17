@@ -1,9 +1,9 @@
 import { URL } from 'node:url';
 import { Pool } from 'pg';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { authSchema } from './schema.js';
+import { databaseSchema } from './schema.js';
 
-export { authSchema } from './schema.js';
+export { authSchema, collaborationSchema, databaseSchema } from './schema.js';
 
 export type DatabaseConfig =
   | { readonly configured: false }
@@ -44,7 +44,7 @@ export function readDatabaseConfig(
 
 export interface DatabaseBoundary {
   readonly status: DatabaseStatus;
-  readonly db: NodePgDatabase<typeof authSchema> | null;
+  readonly db: NodePgDatabase<typeof databaseSchema> | null;
   readonly pool: Pool | null;
   check(): Promise<DatabaseStatus>;
   close(): Promise<void>;
@@ -64,7 +64,7 @@ export function createDatabaseBoundary(config: DatabaseConfig): DatabaseBoundary
     application_name: 'nexus-server',
   }) : null;
   pool?.on('error', () => { status = 'unavailable'; });
-  const db = pool ? drizzle(pool, { schema: authSchema }) : null;
+  const db = pool ? drizzle(pool, { schema: databaseSchema }) : null;
   return {
     get status() { return status; },
     pool,

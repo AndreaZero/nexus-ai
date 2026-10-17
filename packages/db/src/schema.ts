@@ -1,4 +1,5 @@
-import { bigint, boolean, index, integer, pgTable, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { bigint, boolean, check, foreignKey, index, integer, jsonb, pgTable, primaryKey, text, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
 
 // Better Auth 1.7.10 model keys; physical column names remain explicit SQL identifiers.
 export const user = pgTable('user', {
@@ -58,3 +59,93 @@ export const rateLimit = pgTable('rate_limit', {
 });
 
 export const authSchema = { user, session, account, verification, rateLimit };
+
+export const workspace = pgTable('workspace', {
+  id: text('id').primaryKey(), name: text('name').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+export const workspaceMember = pgTable('workspace_member', {
+  workspaceId: text('workspace_id').notNull().references(() => workspace.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['owner', 'member'] }).notNull(),
+  joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.workspaceId, table.userId] }), index('workspace_member_user_idx').on(table.userId),
+  check('workspace_member_role_check', sql`${table.role} IN ('owner', 'member')`),
+]);
+export const project = pgTable('project', {
+  id: text('id').primaryKey(), workspaceId: text('workspace_id').notNull().references(() => workspace.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(), description: text('description').notNull().default(''),
+  defaultVisibility: text('default_visibility', { enum: ['private', 'team', 'client'] }).notNull().default('team'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index('project_workspace_idx').on(table.workspaceId), uniqueIndex('project_workspace_identity_idx').on(table.id, table.workspaceId),
+  check('project_visibility_check', sql`${table.defaultVisibility} IN ('private', 'team', 'client')`),
+]);
+export const projectMember = pgTable('project_member', {
+  projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  role: text('role', { enum: ['owner', 'developer', 'client', 'viewer'] }).notNull(),
+  joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  primaryKey({ columns: [table.projectId, table.userId] }), index('project_member_user_idx').on(table.userId),
+  check('project_member_role_check', sql`${table.role} IN ('owner', 'developer', 'client', 'viewer')`),
+]);
+export const repository = pgTable('repository', {
+  id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }).unique(),
+  remoteUrl: text('remote_url').notNull(), defaultBranch: text('default_branch').notNull(),
+});
+export const invitation = pgTable('invitation', {
+  id: text('id').primaryKey(), workspaceId: text('workspace_id').notNull().references(() => workspace.id, { onDelete: 'cascade' }),
+  projectId: text('project_id'), email: text('email').notNull(),
+  role: text('role', { enum: ['owner', 'member', 'developer', 'client', 'viewer'] }).notNull(),
+  tokenHash: text('token_hash').notNull().unique(), createdBy: text('created_by').notNull().references(() => user.id),
+  status: text('status', { enum: ['pending', 'accepted', 'revoked'] }).notNull().default('pending'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+}, (table) => [
+  foreignKey({ columns: [table.projectId, table.workspaceId], foreignColumns: [project.id, project.workspaceId], name: 'invitation_project_workspace_fk' }).onDelete('cascade'),
+  index('invitation_scope_idx').on(table.workspaceId, table.projectId), index('invitation_expiry_idx').on(table.expiresAt),
+  check('invitation_status_check', sql`${table.status} IN ('pending', 'accepted', 'revoked')`),
+  check('invitation_scope_role_check', sql`(${table.projectId} IS NULL AND ${table.role} IN ('owner', 'member')) OR (${table.projectId} IS NOT NULL AND ${table.role} IN ('owner', 'developer', 'client', 'viewer'))`),
+]);
+export const collaborationEvent = pgTable('collaboration_event', {
+  id: text('id').primaryKey(), workspaceId: text('workspace_id').notNull().references(() => workspace.id, { onDelete: 'cascade' }),
+  projectId: text('project_id').references(() => project.id, { onDelete: 'cascade' }),
+  actorId: text('actor_id').notNull().references(() => user.id), eventType: text('event_type').notNull(),
+  payload: jsonb('payload').notNull(), createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('collaboration_event_scope_idx').on(table.workspaceId, table.createdAt)]);
+
+// Empty domain foundations. Operational task/session APIs arrive in their tasks;
+// private content stays on the device and cannot be inserted in these shared tables.
+export const milestone = pgTable('milestone', {
+  id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(), createdBy: text('created_by').notNull().references(() => user.id),
+  visibility: text('visibility', { enum: ['team', 'client'] }).notNull().default('team'),
+  dueAt: timestamp('due_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('milestone_project_idx').on(table.projectId), check('milestone_visibility_check', sql`${table.visibility} IN ('team', 'client')`)]);
+export const task = pgTable('task', {
+  id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
+  milestoneId: text('milestone_id').references(() => milestone.id), title: text('title').notNull(),
+  createdBy: text('created_by').notNull().references(() => user.id), assigneeId: text('assignee_id').references(() => user.id),
+  status: text('status', { enum: ['todo', 'in_progress', 'review', 'done'] }).notNull().default('todo'),
+  visibility: text('visibility', { enum: ['team', 'client'] }).notNull().default('team'), version: integer('version').notNull().default(1),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('task_project_idx').on(table.projectId), check('task_status_check', sql`${table.status} IN ('todo', 'in_progress', 'review', 'done')`), check('task_visibility_check', sql`${table.visibility} IN ('team', 'client')`)]);
+export const aiSession = pgTable('ai_session', {
+  id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }),
+  createdBy: text('created_by').notNull().references(() => user.id), driverUserId: text('driver_user_id').notNull().references(() => user.id),
+  deviceId: text('device_id').notNull(), title: text('title').notNull(),
+  status: text('status', { enum: ['created', 'running', 'completed', 'interrupted', 'failed'] }).notNull().default('created'),
+  visibility: text('visibility', { enum: ['team', 'client'] }).notNull().default('team'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index('ai_session_project_idx').on(table.projectId), check('ai_session_visibility_check', sql`${table.visibility} IN ('team', 'client')`), check('ai_session_status_check', sql`${table.status} IN ('created', 'running', 'completed', 'interrupted', 'failed')`)]);
+
+export const collaborationSchema = { workspace, workspaceMember, project, projectMember, repository, invitation, collaborationEvent, milestone, task, aiSession };
+export const databaseSchema = { ...authSchema, ...collaborationSchema };

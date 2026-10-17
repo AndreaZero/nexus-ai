@@ -4,12 +4,13 @@ import { mkdtempSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DESKTOP_IPC, desktopInfoSchema, nexusAuthStateSchema } from '@nexus-ai/contracts';
+import { DESKTOP_IPC, collaborationRequestSchema, collaborationResponseSchema, desktopInfoSchema, localBindingRequestSchema, localBindingResponseSchema, nexusAuthStateSchema } from '@nexus-ai/contracts';
 import { APP_URL, developmentUrl, isTrustedIpcSender, isWithinDirectory, rendererAssetPath } from './security.js';
 import { verifyShell } from './shell-verification.js';
 import { DesktopAuth } from './auth.js';
 import { AUTH_SCHEME } from './auth-config.js';
 import { verifyDesktopAuth } from './auth-verification.js';
+import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -131,9 +132,9 @@ async function initialize() {
     }
   });
 
-  function requireTrustedCaller(event: Electron.IpcMainInvokeEvent, args: unknown[]) {
+  function requireTrustedCaller(event: Electron.IpcMainInvokeEvent, args: unknown[], argumentCount = 0) {
     const frame = event.senderFrame;
-    if (!mainWindow || !frame || args.length !== 0 || !isTrustedIpcSender({
+    if (!mainWindow || !frame || args.length !== argumentCount || !isTrustedIpcSender({
       senderId: event.sender.id,
       mainFrame: frame === event.sender.mainFrame,
       url: frame.url,
@@ -150,6 +151,28 @@ async function initialize() {
       url: window.webContents.getURL(),
     }, window.webContents.id, devUrl)) window.webContents.send(DESKTOP_IPC.authStateChanged, state);
   }, smokeTest || shellVerification);
+
+  const localBindings = new LocalBindingService(
+    new LocalBindingStorage(path.join(app.getPath('userData'), 'repository-bindings.json')),
+    (projectId, repositoryId) => desktopAuth!.authorizeRepository(projectId, repositoryId),
+    async () => {
+      const window = mainWindow;
+      if (!window || window.isDestroyed()) throw new Error('No local folder dialog is available.');
+      const selection = await dialog.showOpenDialog(window, {
+        title: 'Choose the local project folder', buttonLabel: 'Use this folder', properties: ['openDirectory'],
+      });
+      return selection.canceled ? null : selection.filePaths[0] ?? null;
+    },
+  );
+
+  ipcMain.handle(DESKTOP_IPC.collaborationRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopAuth!.collaborationRequest(collaborationRequestSchema.parse(args[0])).then(result => collaborationResponseSchema.parse(result));
+  });
+  ipcMain.handle(DESKTOP_IPC.localBindingRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return localBindings.request(localBindingRequestSchema.parse(args[0])).then(result => localBindingResponseSchema.parse(result));
+  });
 
   ipcMain.handle(DESKTOP_IPC.getInfo, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args);
@@ -227,6 +250,14 @@ async function initialize() {
         bridgeKeys: Object.keys(window.nexusDesktop),
         authKeys: Object.keys(window.nexusDesktop.auth),
         authState: await window.nexusDesktop.auth.getState(),
+        collaborationKeys: Object.keys(window.nexusDesktop.collaboration),
+        localBindingKeys: Object.keys(window.nexusDesktop.localBinding),
+        collaborationState: await window.nexusDesktop.collaboration.request({operation:'listWorkspaces'}),
+        localBindingState: await window.nexusDesktop.localBinding.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
+        invalidRequestsDenied: await Promise.all([
+          window.nexusDesktop.collaboration.request({operation:'listWorkspaces',url:'https://invalid.example'}),
+          window.nexusDesktop.localBinding.request({operation:'select',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',rootPath:'/arbitrary'}),
+        ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
         mounted,
@@ -236,8 +267,13 @@ async function initialize() {
       const check = result as Record<string, unknown>;
       const info = desktopInfoSchema.parse(check['info']);
       nexusAuthStateSchema.parse(check['authState']);
+      const collaborationState = collaborationResponseSchema.parse(check['collaborationState']);
+      const localBindingState = localBindingResponseSchema.parse(check['localBindingState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","auth"]' ||
+          JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          localBindingState.ok || localBindingState.code !== 'auth_required' ||
           JSON.stringify(check['authKeys']) !== '["getState","signIn","cancelSignIn","signOut","onStateChanged"]' ||
           info.capabilities.canRunLocalSession || info.capabilities.canOpenLocalEditor) {
         throw new Error('Renderer isolation, CSP, capability or mount check failed.');

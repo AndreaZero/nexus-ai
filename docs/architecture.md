@@ -60,7 +60,7 @@ examples/design/
 .agents/skills/nexus-coordination/
 ```
 
-Queste directory esistono dalla base T01: entrypoint desktop/web/server e confini per contratti, UI, DB e Codex. Da T03 sono operativi identità Nexus, persistenza auth e accesso browser/desktop; i domini di progetto successivi restano pianificati. Le feature di `apps/web` saranno organizzate per progetti, sessioni, task, attività, cliente, repository e impostazioni, con componenti e query del dominio vicini. `packages/ui` non importa il database o il runtime. `packages/contracts` non importa Electron, Fastify o il filesystem. `codex-bridge` e `db` hanno export solo Node e non entrano nel bundle web; il controllo automatico verifica gli import di renderer/UI/contratti.
+Queste directory esistono dalla base T01. Da T03 sono operativi identità Nexus, persistenza auth e accesso browser/desktop; T04 aggiunge il dominio collaborazione (workspace/progetti/membership/inviti/repository), client renderer in `apps/web/src/collaboration` e binding cartella account/dispositivo solo nel main. Le entità condivise sono in PostgreSQL e le mutazioni registrano un evento non segreto nella stessa transazione; broadcast/replay resta T08. Task/milestone/sessioni hanno solo tabelle vuote di base, nessun runtime o endpoint anticipato. `packages/ui` non importa DB/runtime; `packages/contracts` non importa Electron, Fastify o filesystem. `codex-bridge` e `db` restano Node-only; il controllo automatico verifica gli import renderer/UI/contratti.
 
 ## Confini del desktop
 

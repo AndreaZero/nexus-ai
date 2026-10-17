@@ -51,7 +51,7 @@ Trasferire token CSS, font e licenze; costruire logo, sidebar con pianeta/orbite
 
 ### T03 — Identità Nexus e accesso
 
-**Stato:** [implementato e consegnato per verifica Windows — issue #3](https://github.com/AndreaZero/nexus-ai/issues/3). **Dipendenze:** T01–T02 accettati, PostgreSQL e `.env` predisposti dal maintainer, Mailpit locale scelto. **Ownership:** backend, desktop e web integrati; coordinatore per DB/schema/contratti, dipendenze e prove. Ownership rilasciate.
+**Stato:** [accettato dal maintainer su Windows — issue #3](https://github.com/AndreaZero/nexus-ai/issues/3), login e ritorno browser → app confermati dopo correzione `5fa5846`; via a T04 ricevuto. **Dipendenze:** T01–T02 accettati, PostgreSQL e `.env` predisposti dal maintainer, Mailpit locale scelto. **Ownership:** fronti T03 integrati e rilasciati.
 
 Prima dell'implementazione della persistenza avvisare il maintainer: creerà personalmente PostgreSQL locale. Comunicare versione supportata, database/utente dedicati e variabili richieste dopo aver definito schema e libreria auth; non richiedere credenziali in chat.
 
@@ -59,15 +59,17 @@ Implementare account Nexus, email verificata, sessioni, logout/revoca e reset tr
 
 **Uscita:** registrazione/login/logout, reset e sessione persistente funzionanti; rifiuto sessioni scadute e callback invalide. Test mirati auth e confini IPC. **Build utente:** accedere, riaprire e uscire; prerequisiti email documentati.
 
-**Evidenze T03:** migrazione reale e seconda applicazione senza duplicazioni su DB locale; `pnpm check`, 29 test, build/pacchetto Windows 0.3.0 e smoke impacchettato passati. Prove integrate PostgreSQL/SMTP su registrazione, verifica obbligatoria, reset monouso, revoca/logout/scadenza e origini; in Electron scambio PKCE ufficiale, storage OS cifrato, ripristino e revoca. Pagine account controllate nel browser reale e difetto CORS asset corretto. Account QA rimossi. Apertura/ritorno OS dell'installer e prova umana pendenti; Mac/Linux non provati nativamente. [Setup e passi manuali](auth.md). Nessun T04 avviato.
+**Evidenze T03:** migrazione reale/idempotente, check, 29 test iniziali, prove PostgreSQL/SMTP/PKCE/storage/revoca e pacchetto Windows 0.3.0 con smoke. Corretti CORS asset e reload prematuro del trasferimento browser; relativo test di regressione passato. Il maintainer conferma login e ricezione dell'accesso dal browser nell'app Windows e autorizza T04. Mac/Linux non provati nativamente. [Setup e passi manuali](auth.md).
 
 ### T04 — Workspace, progetti, membri e inviti
 
-**Dipendenze:** T03. **Ownership:** backend membership/schema; renderer progetti/team; coordinatore contratti/migrazioni.
+**Stato:** [implementato e consegnato per verifica Windows — issue #4](https://github.com/AndreaZero/nexus-ai/issues/4). **Dipendenze:** T03 accettato e via del maintainer con multiagenti. **Ownership:** backend, renderer e desktop integrati, coordinatore DB/contratti/prove; ownership rilasciate. Specifica effettiva in [collaboration.md](collaboration.md).
 
 Creare workspace/progetto, associare repository/binding locale come record distinto, selezione progetto, ruoli owner/developer/client/viewer e policy private/team/client. Inviti monouso con scadenza, accettazione e revoca. Creare basi dati per task/milestone e sessioni senza inventare contenuti.
 
 **Uscita:** due account invitati vedono solo progetti consentiti; terzo estraneo negato su API e allegati; riduzione ruolo efficace. **Build utente:** creare progetto, invitare e accettare con secondo account.
+
+**Evidenze T04:** migrazione additiva/idempotente, 42 test, 12 scenari reali PostgreSQL/SMTP/HTTP con tre account temporanei (isolamento, inviti, riduzione/revoca, owner concorrenti e issuer revocato), statici/build, shell e pacchetto Windows 0.4.0 con smoke passati. Fixture rimossi, account reale conservato. Le API allegati non sono ancora disponibili (404); nessun contenuto scaricabile esposto. Form autenticati/due account/dialogo nativo da prova manuale del maintainer; macOS/Linux da provare nativamente. T05 attende feedback.
 
 ### T05 — Runtime locale Codex e account personale
 

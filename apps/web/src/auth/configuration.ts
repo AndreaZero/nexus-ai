@@ -1,4 +1,5 @@
 import { getServerUrl } from '../server-url.js';
+import { pendingInvitation } from '../collaboration/invitation.js';
 
 export function accountServerUrl(): URL | null {
   try {
@@ -30,5 +31,5 @@ export function isDesktopJourney(): boolean {
 }
 
 export function completedAccountUrl(): string {
-  return isDesktopJourney() ? accountUrl('/desktop-auth') : `${window.location.origin}/#/settings`;
+  return isDesktopJourney() ? accountUrl('/desktop-auth') : `${window.location.origin}/#/${pendingInvitation() ? 'invitations' : 'settings'}`;
 }
