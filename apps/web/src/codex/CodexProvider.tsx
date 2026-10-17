@@ -6,6 +6,7 @@ import { useAccount } from '../auth/AuthProvider.js';
 import { useCollaboration } from '../collaboration/CollaborationProvider.js';
 import { errorMessage, localBindingRequest } from '../collaboration/client.js';
 import { codexRequest } from './client.js';
+import { CodexStartup } from './startup.js';
 
 const emptyState: CodexState = { runtime: 'stopped', version: null, expectedVersion: '0.159.2', runtimePath: null, account: null, login: null, models: [], session: null, policy: 'readOnly', notice: null };
 interface CodexContextValue {
@@ -22,12 +23,13 @@ export function CodexProvider({ children }: { children: ReactNode }) {
   const collaboration = useCollaboration();
   const accountId = account.state.status === 'signed_in' && account.state.user?.emailVerified ? account.state.user.id : null;
   const project = collaboration.project;
+  const startup = useRef(new CodexStartup()).current;
   // Remount the whole domain before a different account/project can render old local data.
   const key = `${accountId ?? 'none'}:${project?.id ?? 'none'}:${project?.repository?.id ?? 'none'}:${project?.role ?? 'none'}`;
-  return <CodexScope key={key} accountId={accountId}>{children}</CodexScope>;
+  return <CodexScope key={key} accountId={accountId} startup={startup}>{children}</CodexScope>;
 }
 
-function CodexScope({ children, accountId }: { children: ReactNode; accountId: string | null }) {
+function CodexScope({ children, accountId, startup }: { children: ReactNode; accountId: string | null; startup: CodexStartup }) {
   const { project } = useCollaboration();
   const projectId = project?.id;
   const repositoryId = project?.repository?.id;
@@ -59,7 +61,7 @@ function CodexScope({ children, accountId }: { children: ReactNode; accountId: s
     if (!enabled) return Promise.resolve(false);
     // StrictMode and focus can request the same read/resume; attach to one operation.
     // API keys are deliberately excluded from lookup keys and persistent state.
-    const deduplicate = input.operation === 'getState' || input.operation === 'openSession';
+    const deduplicate = input.operation === 'getState' || input.operation === 'connect' || input.operation === 'openSession';
     const key = deduplicate ? JSON.stringify(input) : '';
     const existing = key ? inFlight.current.get(key) : undefined;
     if (existing) return existing;
@@ -85,17 +87,20 @@ function CodexScope({ children, accountId }: { children: ReactNode; accountId: s
 
   useEffect(() => {
     live.current = true;
+    const operation = startup.operation(accountId);
     if (!enabled) return () => { live.current = false; };
     const unsubscribe = window.nexusDesktop?.codex.onStateChanged(value => {
       if (!live.current) return;
       const parsed = codexStateSchema.safeParse(value);
       if (parsed.success) { ++revision.current; apply(parsed.data); }
     });
-    void refresh();
+    // Restore Nexus-owned credentials without opening a browser or starting a turn.
+    // The parent gate survives project/role remounts and preserves Disconnect.
+    void request({ operation });
     const onFocus = () => { void refresh(); };
     window.addEventListener('focus', onFocus);
     return () => { live.current = false; unsubscribe?.(); window.removeEventListener('focus', onFocus); };
-  }, [enabled, refresh, apply]);
+  }, [enabled, refresh, apply, request, startup, accountId]);
 
   useEffect(() => {
     if (!enabled || !projectId || !repositoryId || (project?.role !== 'owner' && project?.role !== 'developer')) return;

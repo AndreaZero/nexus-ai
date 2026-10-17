@@ -1,5 +1,13 @@
 # Changelog
 
+### 2026-10-17 — T05 0.5.1: ripristino account e log server
+
+- Ricevuta conferma del login Codex; segnalati refresh manuali a ogni avvio e account Nexus indisponibile dopo una chat, con backend ancora attivo. T06 rimane fermo.
+- Corretti ordine di sottoscrizione/recupero Nexus e risultati obsoleti dopo login/logout. Refresh simultanei accorpati, transizioni duplicate eliminate, scadenza invalida rifiutata e HTTP 429 distinto senza cancellare credenziali.
+- Codex si ricollega una volta per account Nexus verificato all'avvio, riusando il proprio keyring; nessun login browser/inferenza automatici, Disconnect rispettato durante navigazione e focus.
+- Aggiunto Chalk 6.0.1 al backend: log richieste/esiti/durata/ID/operazioni, categorie errori e codici stabili, startup/shutdown, timeout e connessioni interrotte. Campi ammessi, nessun body/query/cookie/token/SQL o chat nei log.
+- Passati check, 73 test, build, smoke Electron e 9 verifiche reali account/PKCE/storage OS, inclusi primo ripristino, 20 controlli concorrenti e recupero da outage/429/scadenza invalida. Account QA rimosso, account reale conservato. Causa specifica del blocco dopo chat ancora da confermare con i nuovi log e prova del maintainer.
+
 ### 2026-10-17 — T05: Codex personale e sessioni locali
 
 - Integrati tre fronti multiagente: supervisore Codex typed stdio, servizio desktop isolato e renderer account/sessione nella shell approvata.

@@ -1,9 +1,10 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { nexusAuthStateSchema, nexusUserSchema } from '@nexus-ai/contracts';
 import type { NexusAuthState } from '@nexus-ai/contracts';
 import { accountServerUrl } from './configuration.js';
 import { getAuthClient } from './client.js';
+import { AccountStateCoordinator, type AccountSnapshot } from './account-state.js';
 
 const signedOut: NexusAuthState = { status: 'signed_out', user: null, expiresAt: null, persistent: false, message: null };
 const unavailable: NexusAuthState = { ...signedOut, status: 'unavailable', message: 'The account service is unavailable. Check your connection and retry.' };
@@ -40,68 +41,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [configured, setConfigured] = useState(false);
   const [emailConfigured, setEmailConfigured] = useState(false);
   const desktop = Boolean(window.nexusDesktop);
+  const updates = useRef<AccountStateCoordinator | null>(null);
+  if (!updates.current) updates.current = new AccountStateCoordinator(snapshot => {
+    setState(snapshot.state); setConfigured(snapshot.configured); setEmailConfigured(snapshot.emailConfigured);
+  }, setLoading, () => setState(unavailable));
+  const coordinator = updates.current;
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (window.nexusDesktop) {
-        setState(nexusAuthStateSchema.parse(await window.nexusDesktop.auth.getState()));
-        setConfigured(true);
-      } else {
-        const server = accountServerUrl();
-        if (!server) throw new Error('configuration');
-        const options = { credentials: 'include' as const, cache: 'no-store' as const, redirect: 'error' as const, signal: AbortSignal.timeout(8_000), headers: { Accept: 'application/json' } };
-        const statusResponse = await fetch(new URL('auth/status', server), options);
-        if (!statusResponse.ok) throw new Error('status');
-        const status = readConfiguration(await statusResponse.json());
-        setConfigured(status.configured);
-        setEmailConfigured(status.emailConfigured);
-        if (!status.configured) {
-          setState({ ...unavailable, message: 'Accounts are not configured on this server. Complete the database and account-service setup.' });
-          return;
-        }
-        const response = await fetch(new URL('auth/me', server), options);
-        if (!response.ok) throw new Error('session');
-        const account = readAccount(await response.json());
-        setState(account.user ? { status: 'signed_in', user: account.user, expiresAt: account.expiresAt, persistent: true, message: null } : signedOut);
+  const refresh = useCallback(() => coordinator.refresh(async (): Promise<AccountSnapshot> => {
+    if (window.nexusDesktop) {
+      return { state: nexusAuthStateSchema.parse(await window.nexusDesktop.auth.getState()), configured: true, emailConfigured: false };
+    } else {
+      const server = accountServerUrl();
+      if (!server) throw new Error('configuration');
+      const options = { credentials: 'include' as const, cache: 'no-store' as const, redirect: 'error' as const, signal: AbortSignal.timeout(8_000), headers: { Accept: 'application/json' } };
+      const statusResponse = await fetch(new URL('auth/status', server), options);
+      if (!statusResponse.ok) throw new Error('status');
+      const status = readConfiguration(await statusResponse.json());
+      if (!status.configured) {
+        return { ...status, state: { ...unavailable, message: 'Accounts are not configured on this server. Complete the database and account-service setup.' } };
       }
-    } catch {
-      setState(unavailable);
-    } finally {
-      setLoading(false);
+      const response = await fetch(new URL('auth/me', server), options);
+      if (!response.ok) throw new Error('session');
+      const account = readAccount(await response.json());
+      return { ...status, state: account.user ? { status: 'signed_in', user: account.user, expiresAt: account.expiresAt, persistent: true, message: null } : signedOut };
     }
-  }, []);
+  }), [coordinator]);
 
   useEffect(() => {
-    void refresh();
+    coordinator.activate();
     const unsubscribe = window.nexusDesktop?.auth.onStateChanged((next) => {
       const result = nexusAuthStateSchema.safeParse(next);
-      if (result.success) { setState(result.data); setLoading(false); }
+      if (result.success) coordinator.accept({ state: result.data, configured: true, emailConfigured: false });
     });
+    // Subscribe before hydration: main can restore the account while getState is pending.
+    void refresh();
     const onFocus = () => { void refresh(); };
     window.addEventListener('focus', onFocus);
-    return () => { unsubscribe?.(); window.removeEventListener('focus', onFocus); };
-  }, [refresh]);
+    return () => { coordinator.deactivate(); unsubscribe?.(); window.removeEventListener('focus', onFocus); };
+  }, [refresh, coordinator]);
 
   async function desktopAction(action: 'signIn' | 'cancelSignIn' | 'signOut') {
     if (!window.nexusDesktop) return;
-    setLoading(true);
-    try { setState(nexusAuthStateSchema.parse(await window.nexusDesktop.auth[action]())); }
-    catch { setState(unavailable); }
-    finally { setLoading(false); }
+    const auth = window.nexusDesktop.auth;
+    await coordinator.perform(async () => ({ state: nexusAuthStateSchema.parse(await auth[action]()), configured: true, emailConfigured: false }));
   }
 
   async function signOut() {
     if (desktop) return desktopAction('signOut');
-    setLoading(true);
-    try {
-      const response = await getAuthClient().signOut();
-      if (response.error) throw new Error('sign-out');
-      setState(signedOut);
-    } catch {
-      // Do not report a successful logout when the server could not revoke it.
-      setState((current) => ({ ...current, message: 'Sign out could not be confirmed. Reconnect and try again.' }));
-    } finally { setLoading(false); }
+    await coordinator.perform(async () => {
+      try {
+        const response = await getAuthClient().signOut();
+        if (response.error) throw new Error('sign-out');
+        return { state: signedOut, configured, emailConfigured };
+      } catch {
+        // Do not report a successful logout when the server could not revoke it.
+        return { state: { ...state, message: 'Sign out could not be confirmed. Reconnect and try again.' }, configured, emailConfigured };
+      }
+    });
   }
 
   return <AccountContext.Provider value={{ state, loading, configured, emailConfigured, desktop, refresh, signInDesktop: () => desktopAction('signIn'), cancelDesktop: () => desktopAction('cancelSignIn'), signOut }}>{children}</AccountContext.Provider>;

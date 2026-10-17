@@ -46,7 +46,7 @@ Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev
 
 ## Build e prova Windows T05
 
-Versione T05: **0.5.0**. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.5.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Codex nativo 0.159.2 è incluso, senza CLI globale o WSL richiesti; il pacchetto è più grande perché contiene il runtime ufficiale. Pacchetto unsigned; nessuna installazione automatica. Arrestare app/server precedenti prima della build e riavviarli dopo. Da T04 non occorrono nuove migrazioni o modifiche al DB/`.env`.
+Versione T05 corretta: **0.5.1**. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.5.1-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Codex nativo 0.159.2 è incluso, senza CLI globale o WSL richiesti; il pacchetto è più grande perché contiene il runtime ufficiale. Pacchetto unsigned; nessuna installazione automatica. Arrestare app/server precedenti prima della build e riavviarli dopo. Da T04 non occorrono nuove migrazioni o modifiche al DB/`.env`.
 
 Dopo la build tenere aperti:
 
@@ -72,6 +72,16 @@ Per T04 aprire **Projects**, creare workspace/progetto e selezionarlo. In **Team
 Per T05, dopo l'accesso Nexus, aprire **Settings → Codex**, collegare il runtime e scegliere l'accesso personale ChatGPT nel browser. È un login distinto da quello Nexus: l'email Codex non passa da Mailpit. Il ritorno viene gestito dal runtime locale; attendere lo stato account connesso. Il device code è un'alternativa esplicita se il browser non completa il flusso. Su Windows usare il setup sandbox mostrato nelle impostazioni se richiesto. In **Repos** collegare una cartella a un repository del progetto, con ruolo owner/developer, poi aprire **AI Session**, scegliere modello/effort dal catalogo e inviare una domanda sui file chiedendo sola lettura. Controllare streaming, interruzione, nuovo messaggio e riapertura sullo stesso thread. [Passi e limiti completi](docs/codex.md#prova-manuale-t05).
 
 L'accesso personale usa lo storage sicuro OS nella home Codex di Nexus, distinta dalle altre app. Nessuna importazione automatica delle loro sessioni; API key solo se scelta esplicitamente e con relativo consumo API. Il catalogo da solo non prova diritti/quota di inferenza. Scritture e approvazioni interattive arrivano in T07; output e cronologia T05 restano locali, condivisione in T08.
+
+Da 0.5.1 il renderer ascolta gli eventi Nexus prima del recupero iniziale, ignora letture obsolete e accorpa refresh simultanei. Dopo il ripristino Nexus collega automaticamente Codex una volta per account verificato, leggendo solo il proprio keyring: non apre un nuovo login o una richiesta AI. Disconnect resta rispettato durante navigazione/cambio progetto/focus; al riavvio l'app tenta nuovamente il collegamento. Se il backend parte dopo l'app, **Refresh Nexus** o il ritorno in primo piano recuperano la credenziale conservata; non esistono retry infiniti. Logout/revoca e permessi rimangono autorevoli sul server.
+
+### Log server e diagnosi
+
+`pnpm start:server` mostra log Chalk con ora UTC, livello, ID richiesta, metodo, endpoint, esito HTTP e durata. Le operazioni workspace validate aggiungono `operation`; errori catturati aggiungono categoria e codice stabile quando disponibile, ad esempio `database_authentication`/`28P01`, `unavailable`/`ECONNREFUSED`, `rate_limited`/HTTP 429. Ogni risposta espone anche `X-Request-ID` per correlazione. Il colore è automatico nel terminale e disattivabile con `NO_COLOR=1`; nei file resta testo leggibile.
+
+`NEXUS_LOG_LEVEL=info` registra ogni completamento, `debug` anche l'inizio richiesta, `warn`/`error` riducono il rumore e `silent` disattiva i log ordinari. Query/fragment, body, cookie, header, indirizzi email, messaggi/stack SQL e contenuto chat sono esclusi tramite campi ammessi. URL sconosciute e asset usano etichette di percorso generiche. Nessun invio a servizi esterni. Il logger riguarda il backend: il processo Codex resta locale e non inoltra i prompt al server Nexus.
+
+Per il problema dopo l'avvio chat, riprovare con app e backend 0.5.1 e conservare le righe WARN/ERROR o i completamenti `/auth/get-session` e `/api/collaboration` vicini all'errore. HTTP 429 è distinto da indisponibilità e la sessione salvata è conservata per un nuovo controllo. Non è stato dimostrato che un limite di frequenza abbia causato il feedback iniziale; i log servono a identificarne la risposta effettiva.
 
 `pnpm verify:collaboration` richiede il DB locale migrato e Mailpit loopback; crea una propria istanza HTTP temporanea e non arresta il server del maintainer. Elimina soltanto workspace/account/email QA della propria esecuzione. La verifica non deve essere usata con SMTP remoto o credenziali di produzione.
 

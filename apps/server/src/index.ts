@@ -1,6 +1,6 @@
-import { DatabaseConfigurationError } from '@nexus-ai/db';
 import { buildServer } from './app.js';
-import { readServerConfig, ServerConfigurationError } from './config.js';
+import { readServerConfig } from './config.js';
+import { startupFailure } from './logging.js';
 
 async function start(): Promise<void> {
   const config = readServerConfig(process.env);
@@ -10,9 +10,9 @@ async function start(): Promise<void> {
   const shutdown = (): void => {
     if (closing) return;
     closing = true;
-    app.log.info('Arresto del server Nexus.');
+    app.log.info({ event: 'server.stopping' });
     void app.close().catch(() => {
-      console.error('Arresto del server Nexus non completato.');
+      app.log.error({ event: 'server.stopping', category: 'internal' });
       process.exitCode = 1;
     });
   };
@@ -22,22 +22,19 @@ async function start(): Promise<void> {
   app.addHook('onClose', async () => {
     process.removeListener('SIGINT', shutdown);
     process.removeListener('SIGTERM', shutdown);
+    app.log.info({ event: 'server.stopped' });
   });
 
   try {
     await app.listen({ host: config.host, port: config.port });
-  } catch {
+    app.log.info({ event: 'server.ready', port: config.port, database: config.database.configured, accounts: Boolean(config.auth.secret && config.database.configured && config.auth.mail) });
+  } catch (error) {
     await app.close();
-    throw new Error('Impossibile avviare il server Nexus. Verificare host, porta e disponibilità della porta.');
+    throw error;
   }
 }
 
 void start().catch((error: unknown) => {
-  // Only known configuration messages are safe to display; never dump env or errors.
-  if (error instanceof ServerConfigurationError || error instanceof DatabaseConfigurationError) {
-    console.error(error.message);
-  } else {
-    console.error('Impossibile avviare il server Nexus. Verificare la configurazione e la disponibilità della porta.');
-  }
+  startupFailure(error);
   process.exitCode = 1;
 });

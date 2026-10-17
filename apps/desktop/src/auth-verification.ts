@@ -15,6 +15,9 @@ export async function verifyDesktopAuth(output: string): Promise<void> {
   const password = randomBytes(32).toString('base64url');
   const signal = AbortSignal.timeout(55_000);
   const originalOpen = shell.openExternal;
+  const originalFetch = globalThis.fetch;
+  let sessionChecks = 0;
+  let fault: 'network' | 'rate_limit' | 'invalid_expiry' | 'expired' | undefined;
   let opened: string | undefined;
   let mailId: string | undefined;
   let browserCookies = '';
@@ -72,6 +75,25 @@ export async function verifyDesktopAuth(output: string): Promise<void> {
     // Replace only the OS browser launcher in this explicitly requested harness.
     // PKCE generation and code exchange remain the real official plugin paths.
     shell.openExternal = async (url: string) => { opened = url; };
+    // Fault injection is confined to this explicit QA fixture's transport. No
+    // real account, cookie value or provider credential is inspected or emitted.
+    globalThis.fetch = async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      if (url.origin !== server || url.pathname !== '/auth/get-session') return originalFetch(input, init);
+      sessionChecks++;
+      const nextFault = fault;
+      fault = undefined;
+      if (nextFault === 'network') throw new TypeError('QA transport outage');
+      if (nextFault === 'rate_limit') return new Response(JSON.stringify({ message: 'Too many requests' }), {
+        status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': '60' },
+      });
+      const response = await originalFetch(input, init);
+      if (nextFault !== 'invalid_expiry' && nextFault !== 'expired') return response;
+      assert.equal(response.status, 200);
+      const data = await response.json() as { session: { expiresAt: string } };
+      data.session.expiresAt = nextFault === 'invalid_expiry' ? 'invalid' : new Date(Date.now() - 60_000).toISOString();
+      return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
     first = new DesktopAuth(() => undefined);
     assert.equal((await first.getState()).status, 'signed_out');
     assert.equal((await first.signIn()).status, 'signing_in');
@@ -108,11 +130,46 @@ export async function verifyDesktopAuth(output: string): Promise<void> {
     assert.equal(ciphertext.includes('better-auth'), false);
     first.dispose();
     first = undefined;
-    restored = new DesktopAuth(() => undefined);
+    let accountTransitions = 0;
+    restored = new DesktopAuth(() => { accountTransitions++; });
     const resumed = await restored.getState();
     assert.equal(resumed.status, 'signed_in', 'Encrypted desktop session did not survive client reconstruction.');
     assert.equal(resumed.user?.email, email);
     checks.push('OS-encrypted atomic storage and validated restoration');
+
+    const beforeConcurrent = sessionChecks;
+    const beforeTransitions = accountTransitions;
+    const concurrent = await Promise.all(Array.from({ length: 20 }, () => restored!.getState()));
+    assert.ok(concurrent.every(value => value.status === 'signed_in'));
+    assert.equal(sessionChecks - beforeConcurrent, 1, 'Overlapping account reads flooded the session endpoint.');
+    assert.equal(accountTransitions, beforeTransitions, 'Unchanged validation emitted redundant account transitions.');
+    checks.push('overlapping account checks coalesced without redundant transitions');
+
+    for (const failure of ['network', 'rate_limit', 'invalid_expiry'] as const) {
+      fault = failure;
+      const interrupted = await restored.getState();
+      assert.equal(interrupted.status, 'unavailable', 'A failed check must deny authenticated local actions.');
+      if (failure === 'rate_limit') assert.match(interrupted.message ?? '', /rate limited/);
+      const recovered = await restored.getState();
+      assert.equal(recovered.status, 'signed_in', 'The next check did not recover the saved session.');
+      assert.equal(recovered.user?.email, email);
+    }
+    checks.push('transient outage, rate limit and invalid expiry recover without login');
+
+    fault = 'expired';
+    assert.equal((await restored.getState()).status, 'signed_out', 'Expired timestamps remained authenticated.');
+    const afterExpired = sessionChecks;
+    await new Promise(resolve => setTimeout(resolve, 30));
+    assert.equal((await restored.getState()).status, 'signed_out');
+    assert.equal(sessionChecks, afterExpired, 'Expired session entered a refresh timer loop.');
+    checks.push('expired session clears local credential without a timer loop');
+
+    // Restore only this QA account's encrypted record to independently verify
+    // server-side revocation after the preceding expiry fault cleared it.
+    restored.dispose();
+    await writeFile(path.join(app.getPath('userData'), 'account.bin'), ciphertext, { mode: 0o600 });
+    restored = new DesktopAuth(() => undefined);
+    assert.equal((await restored.getState()).status, 'signed_in');
 
     const revoke = await authRequest('revoke-sessions', {}, browserCookies);
     assert.equal(revoke.status, 200, 'Server-side session revocation failed.');
@@ -124,6 +181,7 @@ export async function verifyDesktopAuth(output: string): Promise<void> {
     console.log(`Desktop account verification passed: ${checks.length} real integration checks; no credentials emitted.`);
   } finally {
     shell.openExternal = originalOpen;
+    globalThis.fetch = originalFetch;
     first?.dispose();
     restored?.dispose();
     if (browserCookies) await authRequest('sign-out', {}, browserCookies).catch(() => undefined);

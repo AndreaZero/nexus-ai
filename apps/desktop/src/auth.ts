@@ -15,6 +15,8 @@ const signedOut = (message: string | null = null): NexusAuthState => ({
   status: 'signed_out', user: null, expiresAt: null, persistent: false, message,
 });
 
+class AccountCheckError extends Error {}
+
 export function desktopAccountEndpoints(): { server: string; web: string } {
   return {
     server: publicServiceUrl(!app.isPackaged && process.env['BETTER_AUTH_URL'] || __NEXUS_AUTH_SERVER_URL__),
@@ -32,6 +34,7 @@ export class DesktopAuth {
   private timeout: NodeJS.Timeout | undefined;
   private expiryTimer: NodeJS.Timeout | undefined;
   private operations: Promise<unknown> = Promise.resolve();
+  private stateCheck: Promise<NexusAuthState> | undefined;
   private initialized = false;
   private readonly client;
 
@@ -84,21 +87,29 @@ export class DesktopAuth {
   }
 
   private update(state: NexusAuthState): NexusAuthState {
-    this.state = nexusAuthStateSchema.parse(state);
+    const next = nexusAuthStateSchema.parse(state);
+    const changed = JSON.stringify(this.state) !== JSON.stringify(next);
+    this.state = next;
     if (this.expiryTimer) clearTimeout(this.expiryTimer);
     this.expiryTimer = undefined;
     if (state.status === 'signed_in' && state.expiresAt) {
-      const delay = Math.min(Math.max(0, Date.parse(state.expiresAt) - Date.now()), 2_147_483_647);
-      this.expiryTimer = setTimeout(() => { void this.getState(); }, delay);
+      const delay = Math.min(Math.max(1, Date.parse(state.expiresAt) - Date.now()), 2_147_483_647);
+      this.expiryTimer = setTimeout(() => {
+        this.expiryTimer = undefined;
+        void this.getState();
+      }, delay);
       this.expiryTimer.unref();
     }
-    this.publish(this.state);
+    // A revalidation is not an account transition. Re-emitting the same user
+    // makes consumers reload their authorized domains after every local check.
+    if (changed) this.publish(this.state);
     return this.state;
   }
 
   private unavailable(error: unknown): NexusAuthState {
     return this.update({ ...signedOut(), status: 'unavailable', message: error instanceof AuthStorageError
       ? error.message
+      : error instanceof AccountCheckError ? error.message
       : 'The account server is unavailable. Check its address and connection, then retry.' });
   }
 
@@ -151,10 +162,21 @@ export class DesktopAuth {
         await this.clearLocal();
         return this.update(signedOut('Your session has expired or was revoked. Sign in again.'));
       }
+      if (result.error.status === 429) {
+        throw new AccountCheckError('Account checks are temporarily rate limited. Wait a minute, then refresh Nexus. Your saved sign-in has been kept.');
+      }
       throw new Error('Session could not be checked.');
     }
     await this.flush();
-    if (!result.data || Date.parse(String(result.data.session.expiresAt)) <= Date.now()) {
+    if (!result.data) {
+      await this.clearLocal();
+      return this.update(signedOut('Your session has expired or was revoked. Sign in again.'));
+    }
+    const expiresAt = new Date(result.data.session.expiresAt).getTime();
+    // Invalid server data must never schedule a NaN/zero-delay timer or be
+    // accepted as authentication. Keep the encrypted credential for recovery.
+    if (!Number.isFinite(expiresAt)) throw new Error('Invalid session expiry.');
+    if (expiresAt <= Date.now()) {
       await this.clearLocal();
       return this.update(signedOut('Your session has expired or was revoked. Sign in again.'));
     }
@@ -169,12 +191,19 @@ export class DesktopAuth {
       await this.clearLocal();
       return this.update(signedOut('Verify your email in the browser before signing in.'));
     }
-    return this.update({ status: 'signed_in', user, expiresAt: new Date(result.data.session.expiresAt).toISOString(), persistent: true, message: null });
+    return this.update({ status: 'signed_in', user, expiresAt: new Date(expiresAt).toISOString(), persistent: true, message: null });
   }
 
   getState(): Promise<NexusAuthState> {
     if (this.verificationOnly) return Promise.resolve({ ...signedOut(), status: 'unavailable', message: 'Account checks are disabled during isolated desktop verification.' });
-    return this.run(() => this.state.status === 'signing_in' ? Promise.resolve(this.state) : this.refresh());
+    // Coalesce overlapping reads only while they remain the queue tail. A
+    // queued logout/callback/domain action is a barrier, never bypassed by an
+    // earlier read. Sequential checks still validate revocation at the server.
+    if (this.stateCheck && this.operations === this.stateCheck) return this.stateCheck;
+    const pending = this.run(() => this.state.status === 'signing_in' ? Promise.resolve(this.state) : this.refresh());
+    this.stateCheck = pending;
+    void pending.finally(() => { if (this.stateCheck === pending) this.stateCheck = undefined; });
+    return pending;
   }
 
   /** This method stays in main; only the validated domain DTO crosses preload. */

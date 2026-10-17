@@ -13,6 +13,7 @@ import { AUTH_CLIENT_IP_HEADER, DESKTOP_AUTH_ORIGIN, createNexusAuth } from './a
 import { createEmailSender, EmailDeliveryError } from './email.js';
 import type { ServerConfig } from './config.js';
 import { createCollaborationService } from './collaboration.js';
+import { createServerLogStream, errorDiagnostic, installRequestLogging, logRoute, type LogOutput } from './logging.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -23,17 +24,19 @@ class OriginNotAllowedError extends Error {
   }
 }
 
-export async function buildServer(config: ServerConfig): Promise<FastifyInstance> {
+export async function buildServer(config: ServerConfig, logOutput?: LogOutput): Promise<FastifyInstance> {
   const app = Fastify({
     logger: {
       level: config.logLevel,
       redact: ['req.headers.authorization', 'req.headers.cookie', 'res.headers["set-cookie"]'],
+      stream: createServerLogStream(logOutput),
     },
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 1024 * 1024,
     requestTimeout: 30_000,
     trustProxy: false,
   });
+  installRequestLogging(app);
   const database = createDatabaseBoundary(config.database);
   const mail = config.auth.mail ? createEmailSender(config.auth.mail) : null;
   const auth = createNexusAuth(config.auth, database, mail);
@@ -56,7 +59,7 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
         return reply.code(statusCode).send({ error: 'invalid_request', message: 'Richiesta non valida.' });
       }
     }
-    app.log.error({ requestId: request.id }, 'Errore interno durante la richiesta.');
+    app.log.error({ event: 'request.error', requestId: request.id, route: logRoute(request.url), ...errorDiagnostic(error) });
     if (isCollaboration) return reply.code(503).send({ ok: false, code: 'unavailable', message: 'Servizio collaborazione temporaneamente non disponibile.' });
     return reply.code(500).send({ error: 'internal_error', message: 'Errore interno del server.' });
   });
@@ -111,8 +114,10 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
         return fail(401, 'auth_required', 'Accedi con un account verificato per continuare.');
       }
       const resultDTO = await collaboration.execute({ id: session.user.id, email: session.user.email }, input.data);
+      if (!resultDTO.ok) app.log.warn({ event: 'collaboration.failure', requestId: request.id, operation: input.data.operation, outcome: resultDTO.code });
       return reply.send(resultDTO);
-    } catch {
+    } catch (error) {
+      app.log.error({ event: 'collaboration.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
       return fail(503, 'unavailable', 'Servizio collaborazione temporaneamente non disponibile.');
     }
   });
@@ -153,7 +158,8 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
         user: nexusUserSchema.parse({ id: session.user.id, name: session.user.name, email: session.user.email, emailVerified: session.user.emailVerified, image: session.user.image ?? null }),
         expiresAt: session.session.expiresAt.toISOString(),
       };
-    } catch {
+    } catch (error) {
+      app.log.error({ event: 'auth.failure', requestId: request.id, route: '/auth/me', ...errorDiagnostic(error) });
       return reply.code(503).send(unavailable);
     }
   });
@@ -199,11 +205,15 @@ export async function buildServer(config: ServerConfig): Promise<FastifyInstance
         return reply.send(response.body ? await response.text() : null);
       } catch (error) {
         if (emailRequest) await delay(Math.max(0, 500 - (Date.now() - startedAt)));
-        if (error instanceof EmailDeliveryError) return reply.code(503).send({ error: 'email_unavailable', message: error.message });
+        if (error instanceof EmailDeliveryError) {
+          app.log.error({ event: 'email.failure', requestId: request.id, route: logRoute(request.url), ...errorDiagnostic(error) });
+          return reply.code(503).send({ error: 'email_unavailable', message: error.message });
+        }
         if (error instanceof APIError && error.statusCode >= 400 && error.statusCode < 500) {
+          app.log.warn({ event: 'auth.failure', requestId: request.id, route: logRoute(request.url), statusCode: error.statusCode, ...errorDiagnostic(error) });
           return reply.code(error.statusCode).send(error.body);
         }
-        app.log.error({ requestId: request.id }, 'Servizio account temporaneamente non disponibile.');
+        app.log.error({ event: 'auth.failure', requestId: request.id, route: logRoute(request.url), ...errorDiagnostic(error) });
         return reply.code(503).send(unavailable);
       }
     },

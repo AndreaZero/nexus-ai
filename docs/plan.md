@@ -81,6 +81,8 @@ Adottare runtime ufficiale/versione, schema generato, home dedicata e supervisor
 
 **Evidenze T05:** check completo, 65 test, build, smoke Electron sviluppo/pacchetto e confronto shell passati. Runtime ufficiale distribuito con l'app: handshake/account anonimo/catalogo/chiusura provati sia in sviluppo sia dal vendor impacchettato Windows x64. Nessuna credenziale di altre app usata, nessuna inferenza autenticata dichiarata. Installer 0.5.0 unsigned generato; nessuna nuova migrazione. Restano login personale/keyring, risposta, interruzione e ripresa del maintainer. macOS/Linux non provati nativamente; T06 non avviato.
 
+**Feedback/correzione 0.5.1:** login personale confermato dal maintainer; segnalati recupero manuale al riavvio e Nexus auth indisponibile dopo chat con backend attivo. Corretti race/risultati obsoleti, accorpati check, ripristino Codex automatico e log Chalk server richiesti. Check, 73 test, build, smoke e 9 controlli auth reali passati; causa specifica dopo chat ancora da confermare nella nuova prova Windows con log. Stato/evidenze aggiornati in [status.md](status.md); T06 non avviato.
+
 ### T06 — Sessione AI e contesto, reference 2
 
 **Dipendenze:** T05. **Ownership:** chat/composer; contesto/repository; backend cronologia. Contratti già stabiliti prima della divisione.

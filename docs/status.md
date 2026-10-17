@@ -1,6 +1,22 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T05 implementato e consegnato per verifica personale Windows**. T01–T03 accettati dal maintainer; T04 consegnato con prova manuale ancora distinta. T06 non avviato.
+Aggiornato: **17 ottobre 2026**. **T05 0.5.1 corretto e consegnato per nuova verifica Windows**. Login Codex confermato; riavvio e blocco account dopo chat da riprovare con correzioni/log. T01–T03 accettati dal maintainer; T04 consegnato con prova manuale ancora distinta. T06 non avviato.
+
+## Correzione T05 0.5.1
+
+Feedback maintainer: login Codex riuscito; al riavvio Nexus/Codex richiedono refresh manuale e dopo avvio chat Nexus segnala account server unavailable. Backend riferito ancora attivo. Richiesti log server completi con Chalk. Nessun nuovo task avviato, credenziali/account/progetti preservati.
+
+| Fronte | Ownership | Obiettivo |
+| --- | --- | --- |
+| `/root/fix_auth` — integrato/rilasciato | `apps/desktop/src/auth.ts`, `auth-verification.ts` | Check concorrenti accorpati senza bypassare logout/callback/permessi; pubblicazione solo transizioni; gestione scadenze e 429 |
+| `/root/fix_renderer` — integrato/rilasciato | `apps/web/src/auth/**`, `apps/web/src/codex/**`, test renderer pertinenti | Sottoscrizione prima del recupero, revisioni contro risultati obsoleti, ripristino Codex una volta per account con Disconnect rispettato |
+| Coordinatore — integrato | server/logging/test, manifest/lockfile, docs e QA | Chalk 6.0.1, richieste/errori sanitizzati, verifiche reali auth e pacchetto Windows |
+
+Difetti di startup corretti; non è stata riprodotta la causa esatta del blocco dopo chat. I contatori DB ispezionati in sola lettura non dimostravano saturazione; nessuna attribuzione automatica al rate limiter. La nuova diagnostica distingue status HTTP, 429 e codici stabili senza esporre body o segreti. Accesso/ruoli restano riautorizzati dal backend, senza cache temporale che ritardi la revoca.
+
+**Verifiche 0.5.1:** `pnpm check` passato (52 file ai confini), **73/73 test** (bridge 13, desktop 26, server 23, DB 3, web 6, confini 2), build passata (300 moduli web), smoke Electron passato. `pnpm verify:auth-desktop` passato con **9 verifiche reali** PG/SMTP/PKCE/cifratura OS: primo ripristino, 20 controlli contemporanei→1 HTTP, nessun evento duplicato, outage/429/scadenza invalida e recupero, expiry senza loop, revoca. Errori di rete/429/dati errati iniettati soltanto sul trasporto QA. Eliminato l'unico account QA creato e le sue email, **1 account reale conservato**. Log HTTP osservati dal backend compilato, senza query/token. Versioni app/desktop/web/server **0.5.1**, contratti/bridge 0.5.0, DB 0.4.0 e UI 0.2.0. Nessuna nuova migrazione o cambio credenziali.
+
+Installer Windows x64 **0.5.1** generato, `release/win/Nexus-AI-0.5.1-win-x64.exe`, **219855203 byte**, unsigned; smoke dell'eseguibile impacchettato passato. Backend temporaneo QA arrestato, Mailpit preesistente conservato. Le prove personali di riavvio/chat rimangono distinte da questi controlli.
 
 ## Risultato T05
 
@@ -23,7 +39,7 @@ Aggiornato: **17 ottobre 2026**. **T05 implementato e consegnato per verifica pe
 
 Skill `nexus-coordination` e `openai-docs` applicate. Contratti fissati prima degli edit; un writer per manifest/contratti/schema. Nessuna nuova chat utente, installazione concorrente o commit degli agenti. Tutti gli handoff integrati; nessuna delega residua.
 
-## Evidenze T05
+## Evidenze iniziali T05 0.5.0
 
 | Ambito | Esito |
 | --- | --- |
@@ -36,7 +52,7 @@ Skill `nexus-coordination` e `openai-docs` applicate. Contratti fissati prima de
 | Shell | Tre layout reference, quattro gate collaborazione, tastiera/reduced motion e sessione a 960 px passati; cattura sessione ispezionata. Catture locali nel percorso storico `.nexus/visual/t02/` |
 | Pacchetto Windows | NSIS **0.5.0**, `release/win/Nexus-AI-0.5.0-win-x64.exe`, **219852006 byte**, unsigned; nessuna installazione automatica. Runtime escluso dall'asar e copiato una sola volta in resources |
 | Segreti/licenze | Scan 924 file source/build senza valori privati del `.env`; licenza Codex nell'asar, vendor notices conservati, documento terze parti incluso nelle resources |
-| Prova personale | **Pendente:** login Codex/keyring, risposta autenticata, interruzione e ripresa con account del maintainer. Catalogo anonimo e test di trasporto non dimostrano quota/diritti di inferenza |
+| Prova personale | Login Codex confermato dal maintainer dopo consegna; risposta completata/interruzione/ripresa non ancora confermate. Feedback e correzione 0.5.1 sopra. Catalogo anonimo e test di trasporto non dimostrano quota/diritti di inferenza |
 | macOS/Linux | Configurazioni native presenti; packaging, keyring e inferenza non provati qui |
 
 Rapporti locali `.nexus/visual/t05/`: runtime, runtime impacchettato e smoke. L'home QA anonima viene eliminata dopo lo shutdown; account reale e profili delle altre app conservati. I test di servizio usano trasporto controllato e non sono descritti come inferenza.
@@ -49,6 +65,6 @@ T04 implementa workspace/progetti PostgreSQL, membri/ruoli, inviti SMTP monouso,
 
 Chiudere app/backend precedenti, eseguire `pnpm install --frozen-lockfile` e `pnpm package:win`, riavviare `pnpm start:server` e app aggiornata oppure `pnpm start:desktop`. PostgreSQL e `.env` esistenti vanno bene. Mailpit una sola istanza per email Nexus/inviti; non riceve il login Codex.
 
-Seguire [prova personale T05](codex.md#prova-manuale-t05): Connect Codex → Sign in with ChatGPT, setup sandbox Windows esplicito, cartella collegata in Repos, modello e domanda sui file in AI Session. Verificare streaming, interruzione, nuovo messaggio e riapertura dello stesso thread. Login personale nella finestra ufficiale; nessuna password o API key da inviare in chat.
+Avviare **prima il backend aggiornato**, poi l'app 0.5.1. Il login Nexus viene ripristinato e Codex ricollegato automaticamente usando la home/keyring dedicata. Connect/login manuali restano disponibili quando necessari. Seguire [prova personale T05](codex.md#prova-manuale-t05), verificare chat/interruzione/riapertura e recupero senza refresh obbligatorio a ogni avvio. Se ricompare il blocco, riportare le righe server WARN/ERROR o i completamenti auth/collaboration vicini all'errore; [log e livelli](../CONTRIBUTING.md#log-server-e-diagnosi). Nessuna password o API key da inviare in chat.
 
 Registrare feedback prima di avviare T06. Firma/notarizzazione/hosting restano T16. Modalità offline avanzata T08: per T05 il backend deve essere raggiungibile per riaccertare sessione e ruolo.
