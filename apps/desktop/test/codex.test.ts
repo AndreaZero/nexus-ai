@@ -26,6 +26,7 @@ class RuntimeFixture {
   failure: CodexProcessError | undefined;
   responseFailure = false;
   pauseCatalog: (() => Promise<void>) | undefined;
+  pauseTurn: (() => Promise<void>) | undefined;
   count = 0;
   turnCount = 0;
   threads = new Map<string, unknown>();
@@ -52,7 +53,7 @@ class RuntimeFixture {
       this.threads.set(thread.id, thread); return { thread };
     }
     if (method === 'thread/read' || method === 'thread/resume') return { thread: this.threads.get(String(data?.['threadId'])) };
-    if (method === 'turn/start') return { turn: { id: `turn-${++this.turnCount}`, status: 'inProgress', items: [], error: null } };
+    if (method === 'turn/start') { await this.pauseTurn?.(); return { turn: { id: `turn-${++this.turnCount}`, status: 'inProgress', items: [], error: null } }; }
     return {};
   }
   client() { return this as unknown as Pick<CodexProcess, 'start' | 'request' | 'onNotification' | 'onServerRequest' | 'respond' | 'reject' | 'onExit' | 'dispose'>; }
@@ -72,14 +73,15 @@ async function fixture() {
   let browserAvailable = true;
   let attachments: { name: string; text: string }[] = [];
   let attachmentFailure = false;
+  const authCalls = { state: 0, repository: 0 };
   const service = new DesktopCodex({ userData: directory, executable: path.join(directory, 'codex.exe'), clientVersion: '0.5.0', platform: 'win32',
-    auth: { getState: async () => account,
-      authorizeRepository: async () => allowed ? { userId: account.user!.id } : { ok: false as const, code: 'forbidden', message: 'Denied' } },
+    auth: { getState: async () => { authCalls.state++; return account; },
+      authorizeRepository: async () => { authCalls.repository++; return allowed ? { userId: account.user!.id } : { ok: false as const, code: 'forbidden', message: 'Denied' }; } },
     bindings: { get: async (userId, project, repository) => ({ projectId: project, repositoryId: repository, deviceId: projectId, rootPath: currentFolder, label: userId, updatedAt: '2026-10-17T00:00:00.000Z' }) },
     createProcess: options => { homes.push(options.home); return runtime.client(); }, publish: state => snapshots.push(structuredClone(state)), openExternal: async url => { if (!browserAvailable) throw new Error('Browser unavailable.'); browserUrls.push(url); },
     readAttachments: async () => { if (attachmentFailure) throw new Error('Attachment unavailable.'); return attachments; },
   });
-  return { directory, folder, runtime, service, snapshots, browserUrls, homes, setAccount: (value: NexusAuthState) => { account = value; service.nexusStateChanged(value); }, setAllowed: (value: boolean) => { allowed = value; }, setFolder: (value: string) => { currentFolder = value; }, setBrowserAvailable: (value: boolean) => { browserAvailable = value; },
+  return { directory, folder, runtime, service, snapshots, browserUrls, homes, authCalls, setAccount: (value: NexusAuthState) => { account = value; service.nexusStateChanged(value); }, setAllowed: (value: boolean) => { allowed = value; }, setFolder: (value: string) => { currentFolder = value; }, setBrowserAvailable: (value: boolean) => { browserAvailable = value; },
     setAttachments: (files: { name: string; text: string }[]) => { attachments = files; }, setAttachmentFailure: () => { attachmentFailure = true; },
     close: async () => { await service.dispose(); await rm(directory, { recursive: true, force: true }); } };
 }
@@ -159,6 +161,59 @@ test('session execution reauthorizes repository, validates catalog/effort and de
     const denied = await test.service.request({ operation: 'getState' });
     assert.equal(denied.ok, false); assert.equal(denied.state.session, null); assert.equal(test.runtime.disposed, true);
   } finally { await test.close(); }
+});
+
+test('temporary Nexus loss interrupts once, declines approvals and preserves local runtime without replay', async () => {
+  const f = await fixture();
+  try {
+    await f.service.request({ operation: 'connect' }); await f.service.request(open);
+    const proof = await f.service.authorizeSharing(projectId, repositoryId, 'thread-1'); assert.equal(proof.cwd, await realpath(f.folder));
+    await f.service.request(send);
+    const turns = f.runtime.calls.filter(call => call.method === 'turn/start').length;
+    const unavailable: NexusAuthState = { status: 'unavailable', user: null, expiresAt: null, persistent: false, message: 'Offline' };
+    f.setAccount(unavailable); f.setAccount(unavailable);
+    assert.equal(f.runtime.disposed, false);
+    assert.equal(f.runtime.calls.filter(call => call.method === 'turn/interrupt').length, 1);
+    const denied = await f.service.request(send); assert.equal(denied.ok, false); assert.equal(denied.state.session?.threadId, 'thread-1'); assert.equal(denied.state.policy, 'readOnly');
+    f.runtime.serverRequest({ id: 901, method: 'item/commandExecution/requestApproval', params: { threadId: 'thread-1', turnId: 'turn-1', itemId: 'offline-command', command: 'node --version', cwd: f.folder, startedAtMs: Date.now() } });
+    assert.deepEqual(f.runtime.responses.at(-1), { id: 901, result: { decision: 'decline' } });
+    f.setAccount(nexusAccount()); await f.service.request({ operation: 'getState' });
+    assert.equal(f.runtime.disposed, false); assert.equal(f.runtime.calls.filter(call => call.method === 'turn/start').length, turns);
+    assert.equal(f.runtime.calls.filter(call => call.method === 'thread/start').length, 1);
+    f.setFolder(path.dirname(f.folder));
+    await assert.rejects(f.service.authorizeSharing(projectId, repositoryId, 'thread-1'));
+  } finally { await f.close(); }
+});
+
+test('stream capture source proof checks current local binding without issuing account HTTP requests', async () => {
+  const f = await fixture();
+  try {
+    await f.service.request({ operation: 'connect' }); await f.service.request(open);
+    const before = { ...f.authCalls };
+    for (let index = 0; index < 8; index++) await f.service.authorizeSharing(projectId, repositoryId, 'thread-1');
+    assert.deepEqual(f.authCalls, before);
+    await assert.rejects(f.service.authorizeSharing(projectId, secondRepository, 'thread-1'));
+    f.setFolder(path.dirname(f.folder)); await assert.rejects(f.service.authorizeSharing(projectId, repositoryId, 'thread-1'));
+    assert.deepEqual(f.authCalls, before);
+  } finally { await f.close(); }
+});
+
+test('Nexus loss during turn/start interrupts its late turn identifier instead of replaying it after recovery', async () => {
+  const f = await fixture();
+  let release: () => void = () => undefined;
+  let entered: () => void = () => undefined;
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  try {
+    await f.service.request({ operation: 'connect' }); await f.service.request(open);
+    f.runtime.pauseTurn = async () => { entered(); await waiting; };
+    const sending = f.service.request(send); await started;
+    f.setAccount({ status: 'unavailable', user: null, expiresAt: null, persistent: false, message: 'Offline' });
+    f.setAccount(nexusAccount()); release();
+    const result = await sending; assert.equal(result.ok, false); assert.equal(result.state.session?.status, 'interrupted');
+    assert.equal(f.runtime.calls.filter(call => call.method === 'turn/interrupt').length, 1);
+    assert.equal(f.runtime.calls.filter(call => call.method === 'turn/start').length, 1); assert.equal(f.runtime.disposed, false);
+  } finally { release(); await f.close(); }
 });
 
 test('thread mapping resumes only account/project/repository/canonical folder matches', async () => {

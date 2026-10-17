@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { DESKTOP_IPC, collaborationRequestSchema, collaborationResponseSchema, desktopInfoSchema, localBindingRequestSchema, localBindingResponseSchema, nexusAuthStateSchema, codexRequestSchema, codexResponseSchema, codexStateSchema } from '@nexus-ai/contracts';
 import type { CollaborationRequest, DesktopBridge, LocalBindingRequest, NexusAuthState, CodexRequest, CodexState } from '@nexus-ai/contracts';
 import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema, type ContextRequest, type SessionsRequest, type WorkspaceRequest } from '@nexus-ai/contracts';
+import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema, type RealtimeRequest, type RealtimeState } from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -30,6 +31,15 @@ const bridge: DesktopBridge = Object.freeze({
   workspace: Object.freeze({
     async request(input: WorkspaceRequest) {
       return workspaceResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.workspaceRequest, workspaceRequestSchema.parse(input)));
+    },
+  }),
+  realtime: Object.freeze({
+    async request(input: RealtimeRequest) { return realtimeResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.realtimeRequest, realtimeRequestSchema.parse(input))); },
+    onStateChanged(callback: (state: RealtimeState) => void) {
+      if (typeof callback !== 'function') throw new TypeError('A realtime state listener is required.');
+      const listener = (_event: Electron.IpcRendererEvent, value: unknown) => { const parsed = realtimeStateSchema.safeParse(value); if (parsed.success) callback(parsed.data); };
+      ipcRenderer.on(DESKTOP_IPC.realtimeStateChanged, listener);
+      return () => { ipcRenderer.removeListener(DESKTOP_IPC.realtimeStateChanged, listener); };
     },
   }),
   codex: Object.freeze({

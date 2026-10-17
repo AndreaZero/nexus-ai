@@ -34,6 +34,7 @@ function fakeDatabase(options: { membership?: Membership; rows?: Stored[]; failA
   const membership = options.membership ?? { workspace: 'member', project: 'developer' };
   let records = new Map((options.rows ?? []).map(row => [row.id, structuredClone(row)]));
   let events: Record<string, unknown>[] = [];
+  let sequence = 0;
   const statements: { sql: string; values: readonly unknown[] }[] = [];
   let queue = Promise.resolve();
   let released = 0;
@@ -42,6 +43,7 @@ function fakeDatabase(options: { membership?: Membership; rows?: Stored[]; failA
       let unlock: (() => void) | undefined;
       let before: Map<string, Stored> | undefined;
       let beforeEvents = 0;
+      let beforeSequence = sequence;
       return {
         async query(sql: string, values: readonly unknown[] = []) {
           statements.push({ sql, values });
@@ -52,8 +54,9 @@ function fakeDatabase(options: { membership?: Membership; rows?: Stored[]; failA
             await previous;
             before = structuredClone(records);
             beforeEvents = events.length;
+            beforeSequence = sequence;
           } else if (sql === 'COMMIT' || sql === 'ROLLBACK') {
-            if (sql === 'ROLLBACK' && before) { records = before; events = events.slice(0, beforeEvents); }
+            if (sql === 'ROLLBACK' && before) { records = before; events = events.slice(0, beforeEvents); sequence = beforeSequence; }
             unlock?.();
             unlock = undefined;
           } else if (sql.includes('wm.role AS workspace_role')) {
@@ -83,6 +86,8 @@ function fakeDatabase(options: { membership?: Membership; rows?: Stored[]; failA
           } else if (sql.startsWith('INSERT INTO collaboration_event')) {
             if (options.failAudit) throw new Error('SQL secret SELECT question with DATABASE_URL password');
             events.push(JSON.parse(String(values[4])) as Record<string, unknown>);
+          } else if (sql.startsWith('INSERT INTO project_realtime_cursor')) {
+            rows = [{ sequence: String(++sequence) }];
           } else if (sql.includes('FROM task')) {
             rows = [{ id: sessionId, title: 'Team task', visibility: 'team', status: 'todo' },
               { id: secondSession, title: 'Client task', visibility: 'client', status: 'done' }]
@@ -171,6 +176,7 @@ test('replayed publication is idempotent; stale or changed creation cannot silen
   const retry = await service.execute(actor, publication());
   assert.deepEqual(retry, first);
   assert.equal(db.events().length, 1);
+  assert.equal(db.statements.filter(({ sql }) => sql.startsWith('INSERT INTO realtime_event')).length, 1);
   const changed = await service.execute(actor, publication({ title: 'Changed without version' }));
   assert.ok(!changed.ok && changed.code === 'conflict');
   const update = await service.execute(actor, publication({ expectedVersion: 1, title: 'Explicit update' }));

@@ -46,13 +46,13 @@ Gli harness account richiedono backend e Mailpit attivi. Quello HTTP elimina il 
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T07
+## Build e prova Windows T08
 
-Versione T07: **0.7.0**. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.7.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Nessuna nuova migrazione rispetto a T06 (0002 già applicata); nessun cambio credenziali o nuovo DB. Codex nativo 0.159.2 è incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app/backend precedenti prima della build e riavviarli dopo.
+Versione T08: **0.8.0**. Eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.8.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. La migrazione additiva 0003 è già applicata sul DB locale; il comando è idempotente. Nessun cambio credenziali o nuovo DB. Codex nativo 0.159.2 è incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app/backend precedenti prima della build e riavviarli dopo.
 
 Dopo la build tenere aperti:
 
-Per T07 verificare Workspace write con consenso, modifica reale su cartella Git dedicata, diff split/unified, approvazione negata/consentita/scaduta, output/report riconosciuto e preview configurata secondo [session.md](docs/session.md#build-e-prova-del-maintainer). **Open in Editor** richiede VS Code con protocollo `vscode://` registrato. Contesto, bozza e Share T06 restano disponibili; nessuno stream live o controllo remoto anticipato.
+Per T08 verificare due account sullo stesso progetto, presenza, **Share selected messages live**, audience, Stop sharing, riavvio backend e revoca secondo [realtime.md](docs/realtime.md#build-e-prova-del-maintainer). `pnpm verify:realtime` esegue la prova locale PostgreSQL/Mailpit/HTTP/WS con fixture temporanei propri; `pnpm verify:workspace` verifica anche preview/consenso e pannello connessione nel renderer reale con trasporto controllato. I percorsi T07 restano in [session.md](docs/session.md#build-e-prova-del-maintainer). **Open in Editor** richiede VS Code con protocollo `vscode://` registrato.
 
 ```powershell
 # Terminale 1
@@ -75,7 +75,7 @@ Per T04 aprire **Projects**, creare workspace/progetto e selezionarlo. In **Team
 
 Per T05, dopo l'accesso Nexus, aprire **Settings → Codex**, collegare il runtime e scegliere l'accesso personale ChatGPT nel browser. È un login distinto da quello Nexus: l'email Codex non passa da Mailpit. Il ritorno viene gestito dal runtime locale; attendere lo stato account connesso. Il device code è un'alternativa esplicita se il browser non completa il flusso. Su Windows usare il setup sandbox mostrato nelle impostazioni se richiesto. In **Repos** collegare una cartella a un repository del progetto, con ruolo owner/developer, poi aprire **AI Session**, scegliere modello/effort dal catalogo e inviare una domanda sui file chiedendo sola lettura. Controllare streaming, interruzione, nuovo messaggio e riapertura sullo stesso thread. [Passi e limiti completi](docs/codex.md#prova-manuale-t05).
 
-L'accesso personale usa lo storage sicuro OS nella home Codex di Nexus, distinta dalle altre app. Nessuna importazione automatica delle loro sessioni; API key solo se scelta esplicitamente e con relativo consumo API. Il catalogo da solo non prova diritti/quota di inferenza. Scritture e approvazioni interattive arrivano in T07; output e cronologia T05 restano locali, condivisione in T08.
+L'accesso personale usa lo storage sicuro OS nella home Codex di Nexus, distinta dalle altre app. Nessuna importazione automatica delle loro sessioni; API key solo se scelta esplicitamente e con relativo consumo API. Il catalogo da solo non prova diritti/quota di inferenza. Scritture/approvazioni locali T07, estratti T06 e condivisione selezionata live T08 sono disponibili con consensi distinti.
 
 Da 0.5.1 il renderer ascolta gli eventi Nexus prima del recupero iniziale, ignora letture obsolete e accorpa refresh simultanei. Dopo il ripristino Nexus collega automaticamente Codex una volta per account verificato, leggendo solo il proprio keyring: non apre un nuovo login o una richiesta AI. Disconnect resta rispettato durante navigazione/cambio progetto/focus; al riavvio l'app tenta nuovamente il collegamento. Se il backend parte dopo l'app, **Refresh Nexus** o il ritorno in primo piano recuperano la credenziale conservata; non esistono retry infiniti. Logout/revoca e permessi rimangono autorevoli sul server.
 

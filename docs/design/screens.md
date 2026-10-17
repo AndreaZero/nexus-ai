@@ -87,6 +87,8 @@ Il pianeta e le particelle della sidebar sono presenti anche qui. Nel hero la wa
 
 ## Flussi complementari da realizzare
 
+**T08 implementato:** presenza in header/Team Online, badge Live Sync, Connection panel e Live shared sessions in Session Info della reference2. Share apre scelta estratto/live, selezione senza default, preview congelata e consenso per i futuri delta degli stessi messaggi. I dialog non hanno una PNG dedicata e riusano le primitive della shell. Catture1586×992 in `.nexus/visual/t08/`, limiti e prova in [realtime](../realtime.md); overview completa reference3 resta T09.
+
 | Flusso | Risultato finito |
 | --- | --- |
 | Onboarding | Accesso Nexus, workspace/progetto, cartella locale, Codex connect, riepilogo dati condivisi |

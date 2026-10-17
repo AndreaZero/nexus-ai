@@ -14,6 +14,8 @@ import { SHARE_SESSION_EVENT } from '../session/publication.js';
 import { APPROVALS_EVENT, Approvals, ExecutionPolicy } from '../session/Approvals.js';
 import { CodeWorkspace } from '../session/CodeWorkspace.js';
 import { useLocalWorkspace } from '../session/workspace.js';
+import { DomainDialog } from '../collaboration/components.js';
+import { ConnectionPanel, LiveShares, SHARE_LIVE_EVENT, ShareLiveSession } from '../realtime/RealtimePanels.js';
 
 const contextTabs = [{ id: 'context', label: 'Context & Files' }, { id: 'tasks', label: 'Tasks' }, { id: 'info', label: 'Session Info' }];
 
@@ -24,17 +26,20 @@ export function SessionView({ onNavigate }: WorkspaceViewProps) {
   const project = collaboration.project;
   const repository = project?.repository;
   const session = codex.state.session;
-  const [contextTab, setContextTab] = useState('context');
-  const [mobilePanel, setMobilePanel] = useState('chat');
+  const [contextTab, setContextTab] = useState(window.nexusDesktop ? 'context' : 'info');
+  const [mobilePanel, setMobilePanel] = useState(window.nexusDesktop ? 'chat' : 'context');
   const local = useSessionContext();
   const workspace = useLocalWorkspace();
   const [approvals, setApprovals] = useState(false);
   useEffect(() => { const open = () => setApprovals(true); window.addEventListener(APPROVALS_EVENT, open); return () => window.removeEventListener(APPROVALS_EVENT, open); }, []);
   const draft = local.draft;
   const [share, setShare] = useState(false);
+  const [shareChoice, setShareChoice] = useState(false);
+  const [liveShare, setLiveShare] = useState(false);
   const [historyVersion, setHistoryVersion] = useState(0);
   const history = useProjectHistory(project?.id, collaboration.ready && Boolean(project), historyVersion);
-  useEffect(() => { const open = () => setShare(true); window.addEventListener(SHARE_SESSION_EVENT, open); return () => window.removeEventListener(SHARE_SESSION_EVENT, open); }, []);
+  useEffect(() => { const open = () => setShareChoice(true); window.addEventListener(SHARE_SESSION_EVENT, open); return () => window.removeEventListener(SHARE_SESSION_EVENT, open); }, []);
+  useEffect(() => { const open = () => setLiveShare(true); window.addEventListener(SHARE_LIVE_EVENT, open); return () => window.removeEventListener(SHARE_LIVE_EVENT, open); }, []);
   const [newMessages, setNewMessages] = useState(false);
   const transcript = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
@@ -92,10 +97,12 @@ export function SessionView({ onNavigate }: WorkspaceViewProps) {
         <div className="composer-tools"><ExecutionPolicy enabled={ready} />{running && <Button type="button" size="sm" disabled={codex.busy} onClick={interrupt}><Icon name="pause" size={12} />Interrupt response</Button>}<span className="codex-input-hint">{local.enabled && draft ? local.draftStatus === 'saved' ? 'Draft saved locally' : local.draftStatus === 'saving' ? 'Saving draft…' : 'Draft not saved' : 'Shift + Enter for a new line'}</span></div>
       </form>
     </section>
-    <div className="session-right"><section className="session-context" aria-label="Session context"><Tabs items={contextTabs} selected={contextTab} onChange={setContextTab} label="Session context" />{contextTab === 'context' ? <LocalContextPanels tasks={history.tasks} onNavigate={onNavigate} workspace={workspace} /> : contextTab === 'tasks' ? <div className="context-tab-empty"><TaskRows tasks={history.tasks} /></div> : <div className="session-info-panel"><SessionDetails session={session} /><SharedHistory items={history.items} projectId={project?.id} loading={history.loading} error={history.error} onRefresh={history.refresh} /></div>}</section>
+    <div className="session-right"><section className="session-context" aria-label="Session context"><Tabs items={contextTabs} selected={contextTab} onChange={setContextTab} label="Session context" />{contextTab === 'context' ? <LocalContextPanels tasks={history.tasks} onNavigate={onNavigate} workspace={workspace} /> : contextTab === 'tasks' ? <div className="context-tab-empty"><TaskRows tasks={history.tasks} /></div> : <div className="session-info-panel"><ConnectionPanel /><SessionDetails session={session} /><LiveShares /><SharedHistory items={history.items} projectId={project?.id} loading={history.loading} error={history.error} onRefresh={history.refresh} /></div>}</section>
       <CodeWorkspace workspace={workspace} />
     </div>
     {approvals && technical && <Approvals onClose={() => setApprovals(false)} />}
+    {shareChoice && session && technical && <DomainDialog title="Share this session" onClose={() => setShareChoice(false)}><div className="session-publish-body"><p>Select and review message text before sharing it with the project. Execution and approvals stay on this device.</p><div className="realtime-share-options"><Button onClick={() => { setShareChoice(false); setShare(true); }}><Icon name="upload" size={15} />Publish a frozen excerpt</Button><p>Publish selected complete messages once.</p><Button onClick={() => { setShareChoice(false); setLiveShare(true); }}><Icon name="sessions" size={15} />Share selected messages live</Button><p>Share the selected text and future text appended to those same messages, after explicit consent.</p></div></div></DomainDialog>}
+    {liveShare && session && technical && <ShareLiveSession session={session} onClose={() => setLiveShare(false)} onShared={() => setContextTab('info')} />}
     {share && session && technical && <PublishSession session={session} onClose={() => setShare(false)} onPublished={() => { setHistoryVersion(value => value + 1); setContextTab('info'); }} />}
   </div>;
 }

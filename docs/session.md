@@ -2,6 +2,8 @@
 
 La stessa app segue la reference `examples/design/2.png`. File, diff, output e cronologia Codex rimangono locali; la cronologia sul server contiene soltanto gli estratti selezionati e confermati con **Share**. T06 introduce contesto e cronologia, T07 aggiunge workspace codice e approvazioni locali.
 
+Da T08, **Share** propone l'estratto congelato oppure la condivisione live dei messaggi selezionati con preview e consenso. Presenza, connessione, testo condiviso e recupero sono descritti in [realtime.md](realtime.md). File/diff/output/approvazioni non vengono aggiunti automaticamente.
+
 ## Workspace codice e controllo locale T07
 
 La policy iniziale resta **Read only**. Il driver locale owner/developer può scegliere **Workspace write** per il binding corrente, a turno fermo, spuntare il consenso e confermare **Enable workspace writes**: autorizza le operazioni consentite dalla sandbox nella cartella collegata. Non ogni scrittura genera un prompt: il runtime decide quando chiedere un'escalation. La rete nella sandbox resta disabilitata e le directory temporanee generali non vengono aggiunte alle root scrivibili. Cambio account, cartella o arresto del runtime azzera il consenso locale; non esiste modalità full access.

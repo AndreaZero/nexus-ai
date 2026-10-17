@@ -14,8 +14,10 @@ import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
 import { DesktopCodex, codexRuntimePath } from './codex.js';
 import { DesktopContext } from './context.js';
 import { DesktopWorkspace } from './workspace.js';
+import { DesktopRealtime } from './realtime.js';
 import { EncryptedAuthStorage } from './auth-storage.js';
 import { contextRequestSchema, contextResponseSchema, sessionsRequestSchema, sessionsResponseSchema, workspaceRequestSchema, workspaceResponseSchema } from '@nexus-ai/contracts';
+import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema } from '@nexus-ai/contracts';
 
 protocol.registerSchemesAsPrivileged([
   { scheme: 'nexus', privileges: { standard: true, secure: true, supportFetchAPI: true } },
@@ -35,6 +37,7 @@ let desktopAuth: DesktopAuth | undefined;
 let desktopCodex: DesktopCodex | undefined;
 let desktopContext: DesktopContext | undefined;
 let desktopWorkspace: DesktopWorkspace | undefined;
+let desktopRealtime: DesktopRealtime | undefined;
 
 function receiveAccountCallback(value: string) {
   // Never log OS callback URLs: their fragment contains a temporary credential.
@@ -152,6 +155,7 @@ async function initialize() {
   }
 
   desktopAuth = new DesktopAuth((state) => {
+    desktopRealtime?.nexusStateChanged(state);
     desktopCodex?.nexusStateChanged(state);
     desktopContext?.nexusStateChanged(state);
     desktopWorkspace?.nexusStateChanged(state);
@@ -202,12 +206,32 @@ async function initialize() {
     return desktopWorkspace!.request(workspaceRequestSchema.parse(args[0])).then(result => workspaceResponseSchema.parse(result));
   });
 
+  desktopRealtime = new DesktopRealtime({ auth: {
+    getState: () => desktopAuth!.getState(), realtimeSession: () => desktopAuth!.realtimeSession(),
+    authorizeRepository: (projectId, repositoryId) => desktopAuth!.authorizeRealtimeRepository(projectId, repositoryId),
+  }, bindings: bindingStorage,
+    verifySource: async (...args) => {
+      if (!desktopCodex) throw new Error('The local session is unavailable.');
+      return desktopCodex.authorizeSharing(...args);
+    },
+    storage: new EncryptedAuthStorage(path.join(app.getPath('userData'), 'realtime-queue.bin'), safeStorage, process.platform),
+    publish: state => {
+      const window = mainWindow;
+      if (window && !window.isDestroyed() && isTrustedIpcSender({ senderId: window.webContents.id, mainFrame: true, url: window.webContents.getURL() }, window.webContents.id, devUrl)) window.webContents.send(DESKTOP_IPC.realtimeStateChanged, realtimeStateSchema.parse(state));
+    },
+  });
+  ipcMain.handle(DESKTOP_IPC.realtimeRequest, (event, ...args: unknown[]) => {
+    requireTrustedCaller(event, args, 1);
+    return desktopRealtime!.request(realtimeRequestSchema.parse(args[0])).then(result => realtimeResponseSchema.parse(result));
+  });
+
   desktopCodex = new DesktopCodex({
     userData: app.getPath('userData'), clientVersion: app.getVersion(), platform: process.platform,
     executable: codexRuntimePath(app.isPackaged, process.resourcesPath, app.getAppPath(), process.platform),
     auth: desktopAuth, bindings: bindingStorage, openExternal: url => shell.openExternal(url),
     readAttachments: (...args) => desktopContext!.resolveForSend(...args),
     publish: (state) => {
+      desktopRealtime?.observeCodex(state);
       const window = mainWindow;
       if (window && !window.isDestroyed() && isTrustedIpcSender({
         senderId: window.webContents.id, mainFrame: true, url: window.webContents.getURL(),
@@ -312,6 +336,8 @@ async function initialize() {
         sessionsState: await window.nexusDesktop.sessions.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         contextKeys: Object.keys(window.nexusDesktop.context), sessionsKeys: Object.keys(window.nexusDesktop.sessions),
         workspaceKeys: Object.keys(window.nexusDesktop.workspace),
+        realtimeKeys: Object.keys(window.nexusDesktop.realtime),
+        realtimeState: await window.nexusDesktop.realtime.request({operation:'getState'}),
         workspaceState: await window.nexusDesktop.workspace.request({operation:'getChanges',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         collaborationState: await window.nexusDesktop.collaboration.request({operation:'listWorkspaces'}),
         localBindingState: await window.nexusDesktop.localBinding.request({operation:'get',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
@@ -323,6 +349,7 @@ async function initialize() {
           window.nexusDesktop.sessions.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
           window.nexusDesktop.workspace.request({operation:'openEditor',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',fileId:null,path:'/arbitrary'}),
           window.nexusDesktop.codex.request({operation:'resolveApproval',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',approvalId:'b6981157-a6fb-4947-a392-8ed54b0d7d57',decision:'acceptForSession'}),
+          window.nexusDesktop.realtime.request({operation:'connect',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary',url:'ws://invalid.example'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -339,15 +366,17 @@ async function initialize() {
       const contextState = contextResponseSchema.parse(check['contextState']);
       const sessionsState = sessionsResponseSchema.parse(check['sessionsState']);
       const workspaceState = workspaceResponseSchema.parse(check['workspaceState']);
+      const realtimeState = realtimeResponseSchema.parse(check['realtimeState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           JSON.stringify(check['contextKeys']) !== '["request"]' || JSON.stringify(check['sessionsKeys']) !== '["request"]' ||
           contextState.ok || contextState.code !== 'auth_required' || sessionsState.ok || sessionsState.code !== 'auth_required' ||
           JSON.stringify(check['workspaceKeys']) !== '["request"]' || workspaceState.ok || workspaceState.code !== 'auth_required' ||
+          JSON.stringify(check['realtimeKeys']) !== '["request","onStateChanged"]' || realtimeState.state.projectId !== null || realtimeState.state.presence.length !== 0 ||
           localBindingState.ok || localBindingState.code !== 'auth_required' ||
-          JSON.stringify(check['codexKeys']) !== '["request","onStateChanged"]' || codexState.ok || codexState.code !== 'auth_required' || codexState.state.runtime !== 'stopped' ||
+          JSON.stringify(check['codexKeys']) !== '["request","onStateChanged"]' || codexState.ok || !['auth_required', 'unavailable'].includes(codexState.code) || codexState.state.runtime !== 'stopped' ||
           JSON.stringify(check['authKeys']) !== '["getState","signIn","cancelSignIn","signOut","onStateChanged"]' ||
           !info.capabilities.canRunLocalSession || !info.capabilities.canOpenLocalEditor) {
         throw new Error('Renderer isolation, CSP, capability or mount check failed.');
@@ -383,7 +412,7 @@ app.on('before-quit', (event) => {
   if (desktopCodex && !runtimeShutdown) {
     event.preventDefault();
     runtimeShutdown = true;
-    void desktopCodex.dispose().finally(() => app.quit());
+    void Promise.all([desktopRealtime?.dispose(), desktopCodex.dispose()]).finally(() => app.quit());
   }
 });
 

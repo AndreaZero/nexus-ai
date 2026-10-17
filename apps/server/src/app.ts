@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
-import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema, sessionsRequestSchema, sessionsResponseSchema } from '@nexus-ai/contracts';
+import { collaborationRequestSchema, collaborationResponseSchema, healthResponseSchema, nexusUserSchema, sessionsRequestSchema, sessionsResponseSchema, realtimeApiRequestSchema, realtimeApiResponseSchema } from '@nexus-ai/contracts';
 import { createDatabaseBoundary } from '@nexus-ai/db';
 import Fastify, { LogController, type FastifyInstance } from 'fastify';
 import { fromNodeHeaders } from 'better-auth/node';
@@ -15,6 +15,9 @@ import type { ServerConfig } from './config.js';
 import { createCollaborationService } from './collaboration.js';
 import { createServerLogStream, errorDiagnostic, installRequestLogging, logRoute, type LogOutput } from './logging.js';
 import { createSessionsService } from './sessions.js';
+import { createRealtimeService } from './realtime.js';
+import { installRealtimeSocket } from './realtime-socket.js';
+import { createRealtimeBudget } from './realtime-rate.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -43,13 +46,31 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const auth = createNexusAuth(config.auth, database, mail);
   const collaboration = createCollaborationService(database, mail, config.auth.webURL);
   const sessions = createSessionsService(database, error => app.log.error({ event: 'sessions.failure', ...errorDiagnostic(error) }));
+  const realtime = createRealtimeService(database, error => app.log.error({ event: 'realtime.failure', ...errorDiagnostic(error) }));
+  const realtimeOrigins = [config.auth.webURL, new URL(config.auth.baseURL).origin, DESKTOP_AUTH_ORIGIN];
+  const realtimeBudget = createRealtimeBudget();
+  const realtimeSocket = installRealtimeSocket(app, {
+    service: realtime, origins: realtimeOrigins,
+    async authorize(request) {
+      if (!auth) return null;
+      const headers = fromNodeHeaders(request.headers);
+      headers.set(AUTH_CLIENT_IP_HEADER, request.socket.remoteAddress ?? '127.0.0.1');
+      for (const name of ['x-forwarded-for', 'x-real-ip', 'forwarded']) headers.delete(name);
+      const result = await auth.api.getSession({ headers, query: { disableCookieCache: true } });
+      if (!result?.user.emailVerified || result.session.expiresAt.getTime() <= Date.now()) return null;
+      return { id: result.user.id, email: result.user.email };
+    },
+    report(event, outcome) { app.log.info({ event, ...(outcome ? { outcome } : {}) }); },
+  });
+  app.addHook('preClose', async () => { await realtimeSocket.close(); });
   app.addHook('onClose', async () => {
     mail?.close();
     await database.close();
   });
 
   app.setErrorHandler((error, request, reply) => {
-    const isCollaboration = ['/api/collaboration', '/api/sessions'].includes(request.url.split('?')[0] ?? '');
+    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime'].includes(request.url.split('?')[0] ?? '');
+    if (isCollaboration) { reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer'); }
     if (error instanceof OriginNotAllowedError) {
       if (isCollaboration) return reply.code(403).send({ ok: false, code: 'forbidden', message: 'Origine della richiesta non consentita.' });
       return reply.code(403).send({ error: 'origin_not_allowed', message: 'Origin non consentita.' });
@@ -70,7 +91,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   await app.register(cors, {
     delegator(request, callback) {
       const requestPath = request.url.split('?')[0];
-      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions';
+      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime';
       const origin = request.headers.origin;
       const allowed = isAuth
         ? origin === config.auth.webURL || origin === new URL(config.auth.baseURL).origin || origin === DESKTOP_AUTH_ORIGIN
@@ -162,6 +183,35 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
       codex: 'local_only',
       timestamp: new Date().toISOString(),
     });
+  });
+
+  app.post('/api/realtime', { bodyLimit: 1024 * 1024 }, async (request, reply) => {
+    reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer');
+    const fail = (status: number, code: 'invalid_request' | 'forbidden' | 'auth_required' | 'unavailable', message: string) =>
+      reply.code(status).send(realtimeApiResponseSchema.parse({ ok: false, code, message }));
+    const ipBudget = realtimeBudget.consume(`ip:${request.ip}`, 1000);
+    if (!ipBudget.allowed) { reply.header('Retry-After', String(ipBudget.retryAfterSeconds)); return fail(429, 'unavailable', 'Troppe richieste realtime. Riprova tra poco.'); }
+    if (!realtimeOrigins.includes(request.headers.origin ?? '')) return fail(403, 'forbidden', 'Origine della richiesta non consentita.');
+    if (request.headers['content-type']?.split(';')[0]?.trim().toLowerCase() !== 'application/json') return fail(400, 'invalid_request', 'È richiesta una richiesta JSON.');
+    const input = realtimeApiRequestSchema.safeParse(request.body);
+    if (!input.success) return fail(400, 'invalid_request', 'Richiesta realtime non valida.');
+    if (!auth) return fail(503, 'unavailable', 'Servizio account non disponibile.');
+    try {
+      const headers = fromNodeHeaders(request.headers); headers.set(AUTH_CLIENT_IP_HEADER, request.ip);
+      for (const name of ['x-forwarded-for', 'x-real-ip', 'forwarded']) headers.delete(name);
+      const result = await auth.api.getSession({ headers, query: { disableCookieCache: true }, returnHeaders: true });
+      const cookies = result.headers.getSetCookie(); if (cookies.length) reply.header('Set-Cookie', cookies);
+      const account = result.response;
+      if (!account?.user.emailVerified || account.session.expiresAt.getTime() <= Date.now()) return fail(401, 'auth_required', 'Accedi con un account verificato per continuare.');
+      const accountBudget = realtimeBudget.consume(`account:${account.user.id}`, 600);
+      if (!accountBudget.allowed) { reply.header('Retry-After', String(accountBudget.retryAfterSeconds)); return fail(429, 'unavailable', 'Troppe richieste realtime. Riprova tra poco.'); }
+      const outcome = realtimeApiResponseSchema.parse(await realtime.execute({ id: account.user.id, email: account.user.email }, input.data));
+      if (!outcome.ok) app.log.warn({ event: 'realtime.failure', requestId: request.id, operation: input.data.operation, outcome: outcome.code });
+      return reply.send(outcome);
+    } catch (error) {
+      app.log.error({ event: 'realtime.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
+      return fail(503, 'unavailable', 'Realtime temporaneamente non disponibile.');
+    }
   });
 
   const unavailable = { error: 'auth_unavailable', message: 'Accesso non disponibile. Verificare database, configurazione account e servizio email.' };

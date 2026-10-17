@@ -1,10 +1,18 @@
 # Dati, API ed eventi
 
-**T06 implementato:** `DesktopBridge.context.request` get/pickFiles/removeFile/readFile/saveDraft per contesto locale autorizzato e cifrato, IDs file opachi; `DesktopBridge.sessions.request` e `POST /api/sessions` list/read/listProjectTasks/publish per soli estratti confermati. Schemi in `context.ts`/`sessions.ts`, limiti 8 file/64 KiB ciascuno/256 KiB totali e 20 messaggi/128 Ki caratteri complessivi. `CodexRequest.send.attachmentIds` seleziona solo file del binding corrente; `CodexSession` include piano/usage/start osservati. Dettagli in [session.md](session.md). Nessun upload automatico di thread/file/tool o evento realtime T08 anticipato.
+**T06 implementato:** `DesktopBridge.context.request` get/pickFiles/removeFile/readFile/saveDraft per contesto locale autorizzato e cifrato, IDs file opachi; `DesktopBridge.sessions.request` e `POST /api/sessions` list/read/listProjectTasks/publish per soli estratti confermati. Schemi in `context.ts`/`sessions.ts`, limiti 8 file/64 KiB ciascuno/256 KiB totali e 20 messaggi/128 Ki caratteri complessivi. `CodexRequest.send.attachmentIds` seleziona solo file del binding corrente; `CodexSession` include piano/usage/start osservati. Dettagli in [session.md](session.md). Nessun upload automatico di thread/file/tool.
 
 T01 implementa la base; T03 aggiunge identità e `DesktopBridge.auth` ristretto. T04 implementa workspace/progetti/membership/inviti/repository con `POST /api/collaboration`, union validata di operazioni di dominio; `DesktopBridge.collaboration.request` mantiene il cookie nel main. `DesktopBridge.localBinding.request` accetta soltanto get/select/remove e ID progetto/repository, con autorizzazione server e selettore cartella nativo. Schemi autorevoli in `packages/contracts/src/collaboration.ts`, policy/trasporto in [collaboration.md](collaboration.md). Non esiste fetch/exec/file API generica nel bridge.
 
-`GET /health` descrive liveness e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag e `/auth/me` solo profilo sanitizzato e scadenza. Schema/account in [auth.md](auth.md). Le rotte REST per task, allegati, runtime e realtime elencate sotto restano progettuali; in T04 non sono esposte e rispondono 404. Nessun download disponibile per un estraneo o per un membro.
+`GET /health` descrive liveness e probe DB reale (`not_configured`, `not_connected`, `connected`, `unavailable`), senza affermare presenza Codex. `/auth/*` è operativo tramite Better Auth; `/auth/status` espone due flag e `/auth/me` solo profilo sanitizzato e scadenza. Schema/account in [auth.md](auth.md). Le rotte REST per task, allegati e runtime elencate sotto restano progettuali; nessun download allegati disponibile. Le route operative per collaborazione, sessioni e realtime sono descritte nei paragrafi dedicati.
+
+## Contratti realtime T08
+
+`DesktopBridge.realtime.request` accetta getState/connect/disconnect/retry/discardPending/readShare/startSharing/stopSharing; `onStateChanged` consegna soltanto il DTO validato. `RealtimeState` distingue connection, cursor, snapshot autorizzato, presence, pending, sharing e lastSyncedAt. Nessun URL/path/cookie/socket arbitrario dal renderer.
+
+`POST /api/realtime` espone snapshot/readShare/upload; WebSocket `/api/realtime` usa join/heartbeat/ack e restituisce snapshot/events/presence/heartbeat/denied. Schemi strict in `packages/contracts/src/realtime.ts`, comportamenti e limiti in [realtime.md](realtime.md). Cookie nel main o HttpOnly browser, Origin verificata, nessuna credenziale in query. La coda cifrata invia soltanto start/append/stop dei messaggi scelti, max20/128Ki caratteri, append16Ki. Batch UUID/hash/offset e receipt dopo COMMIT garantiscono retry idempotente; il cursore è una stringa decimale per progetto.
+
+Gli eventi durevoli T08 sono `session.changed` e `live.changed`: eventId UUID, projectId, sequence, entityId, occurredAt, senza testo/driver path/raw protocol. I dettagli passano da una lettura riautorizzata. Presence è effimera e aggregata per account; non è attività produttiva. Revoca o ruolo ridotto invalidano la proiezione anche su socket aperto. Coda mai usata per prompt, comandi o approvazioni; nessun controllo remoto.
 
 ## Contratti locali T07
 
@@ -50,11 +58,11 @@ I conteggi sui client arrivano da proiezioni autorizzate. Tempo, locale e fuso s
 | `/projects/:id/updates`, `/deliverables`, `/feedback` | Pubblicazione, download, commento e approvazione | Audience e capability di scrittura distinte |
 | `/repositories`, `/deployments`, `/health` | Collegamenti, sincronizzazione e dati di ambiente | Progetto e provider autorizzato |
 | `/notifications`, `/search` | Notifiche personali e ricerca | Solo oggetti accessibili; niente indici che rivelino progetti estranei |
-| `/realtime` | Join/leave progetto, eventi e heartbeat | Sessione Nexus valida e controllo membership per messaggio |
+| `/api/realtime` — operativo T08 | Snapshot/readShare/upload HTTP; join/eventi/heartbeat WebSocket | Sessione Nexus e membership/audience ricontrollate durante la connessione |
 
 Le mutazioni espongono idempotency key dove possono essere ritentate; aggiornamenti task/documenti usano `version` o `expectedVersion` e ritornano conflitto gestibile. Validare body, query, parametri e payload provider. Gli allegati hanno limiti di tipo/dimensione e percorsi storage scelti dal server.
 
-## Evento condiviso
+## Evento condiviso progettuale oltre T08
 
 ```json
 {
@@ -73,7 +81,7 @@ Le mutazioni espongono idempotency key dove possono essere ritentate; aggiorname
 }
 ```
 
-ID e sequenze dell'esempio sono illustrativi. Il server determina `actor`, progetto, visibilità consentita, `receivedAt` e sequenza dal contesto autenticato: non si fida di tali campi forniti dal client. `occurredAt` non determina l'ordine canonico.
+Questo envelope esteso è progettuale, non il frame T08: quello effettivo è lo schema metadata descritto sopra. ID e sequenze dell'esempio sono illustrativi. Il server determina attore, progetto, visibilità consentita e sequenza dal contesto autenticato: non si fida di tali campi forniti dal client. `occurredAt` non determina l'ordine canonico.
 
 Famiglie: `presence.*`, `session.*`, `turn.*`, `message.*`, `approval.*`, `repository.*`, `task.*`, `milestone.*`, `update.*`, `deliverable.*`, `feedback.*`, `deployment.*`, `notification.*`, `membership.*`. Presenza ed heartbeat possono essere effimeri; messaggi, decisioni e mutazioni accettate sono durevoli. Gli eventi normalizzati non sono copie del protocollo Codex.
 
@@ -81,16 +89,16 @@ Famiglie: `presence.*`, `session.*`, `turn.*`, `message.*`, `approval.*`, `repos
 
 1. Autenticare HTTP e upgrade WebSocket, validare Origin ed evitare token in query persistenti nei log. Applicare controlli di sessione/revoca durante la connessione.
 2. Al join, il server acquisisce un high-watermark coerente e uno snapshot autorizzato, poi consegna gli eventi successivi senza una finestra di perdita fra snapshot e sottoscrizione.
-3. Il client conserva il cursore riconosciuto e deduplica per `eventId`. Retry con stesso `sourceEventId` non crea un secondo record. ACK di upload dopo commit, non dopo ricezione in memoria.
-4. Dopo reconnect, replay dal cursore; se scaduto, `resync_required` e nuovo snapshot. Il server restituisce il cursore globale di avanzamento anche quando filtra eventi: il client non interpreta gap autorizzati come eventi persi.
+3. Il client conserva il cursore riconosciuto e ignora sequenze duplicate. Retry T08 con stesso batchId/payload non crea un secondo record. ACK di upload dopo commit, non dopo ricezione in memoria; ACK WS limitato al cursore effettivamente consegnato su quel socket.
+4. T08 ricostruisce uno snapshot autorevole al join/reconnect e consegna successivamente eventi ordinati. Un cursore scaduto/futuro o eventi nascosti causano snapshot con resync, senza divulgare entità interne; il testo accettato non dipende dalla retention degli eventi metadata.
 5. Revoca/riduzione ruolo: invalidare cache e sottoscrizioni, eliminare la proiezione locale non più accessibile e negare replay/download. Le code pendenti vengono riautorizzate prima del flush.
 6. Timeout, limiti coda, backoff con jitter e annullamento visibile. Niente retry illimitati di un errore permanente, di un comando shell o di un'approvazione.
 
 ## Stato sessione e controllo locale
 
-**Implementazione T05 locale:** contratti Zod `CodexState`, `CodexRequest`, `CodexResponse` in `packages/contracts/src/codex.ts`; `DesktopBridge.codex.request/onStateChanged`. Account, runtime, login e sessione sono stati distinti; nessun RPC/cwd arbitrario o token nel DTO. Modelli dal catalogo, messaggi massimo 200 e attività 100; testo di ogni messaggio massimo 128 Ki caratteri, attività 32 Ki, budget aggregati 512 Ki/256 Ki. IPC coalescente 50 ms, protocollo linea 8 MiB/coda 16 MiB e richieste pendenti limitate. ID repository/progetto validati e autorizzati dal main, mapping thread locale sul cwd canonico. Policy readOnly e interruzione reali; approvazioni interattive T07. Gli eventi condivisi descritti sopra restano contratto futuro T08, senza upload T05.
+**Implementazione T05 locale:** contratti Zod `CodexState`, `CodexRequest`, `CodexResponse` in `packages/contracts/src/codex.ts`; `DesktopBridge.codex.request/onStateChanged`. Account, runtime, login e sessione sono stati distinti; nessun RPC/cwd arbitrario o token nel DTO. Modelli dal catalogo, messaggi massimo 200 e attività 100; testo di ogni messaggio massimo 128 Ki caratteri, attività 32 Ki, budget aggregati 512 Ki/256 Ki. IPC coalescente 50 ms, protocollo linea 8 MiB/coda 16 MiB e richieste pendenti limitate. ID repository/progetto validati e autorizzati dal main, mapping thread locale sul cwd canonico. Policy readOnly e interruzione reali; approvazioni interattive T07 e testo scelto live T08. Gli eventi condivisi estesi restano progettuali; il contratto T08 è descritto sopra.
 
-Stati applicativi: `created → starting → ready → running → completed`; transizioni aggiuntive `waiting_approval`, `interrupted`, `failed`, `disconnected`. Uno stesso thread può contenere più turni: completare un turno non chiude tutta la sessione. La connettività Nexus è uno stato separato dal runtime Codex. Se il server è offline, un lavoro locale può continuare ma la UI deve dichiarare che non è condiviso live.
+Stati applicativi: `created → starting → ready → running → completed`; transizioni aggiuntive `waiting_approval`, `interrupted`, `failed`, `disconnected`. Uno stesso thread può contenere più turni: completare un turno non chiude tutta la sessione. La connettività Nexus è uno stato separato dal runtime Codex. T08 preserva processo e cronologia durante indisponibilità transitoria Nexus, ma interrompe il turno e nega nuove esecuzioni finché l'autorità non torna verificabile. Nessun replay di prompt o approvazioni al recupero.
 
 Il controllo accetta solo driver e dispositivo associati, sessione e turno correnti, capability presenti e policy locale. Solo il driver invia input a Codex, interrompe un turno o risponde a una richiesta di esecuzione. Gli altri membri aggiungono commenti/proposte autorizzate. Una risposta a un'approvazione scaduta, già risolta o di un altro turno è rifiutata. Non accodare decisioni per eseguirle automaticamente in futuro.
 

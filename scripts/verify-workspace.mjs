@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 // Isolated UI/IPC QA: actual Git files and Node TAP, controlled provider transport, no personal login.
 const root = fileURLToPath(new URL('../', import.meta.url));
-const output = path.join(root, '.nexus/visual/t07');
+const output = path.join(root, '.nexus/visual/t08');
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(path.join(output, 'workspace-qa-'));
 const requireDesktop = createRequire(path.join(root, 'apps/desktop/package.json'));
@@ -40,7 +40,7 @@ try {
   });
   if (result.code !== 0) throw new Error(`Workspace QA failed (${result.code}): ${result.text}`);
   const report = JSON.parse(await readFile(path.join(output, 'workspace-report.json'), 'utf8'));
-  console.log(`Workspace UI/IPC QA passed: ${report.checks.length} checks; real Git/Node TAP, controlled provider transport. Captures: .nexus/visual/t07/`);
+  console.log(`Workspace UI/IPC QA passed: ${report.checks.length} checks; real Git/Node TAP, controlled provider transport. Captures: .nexus/visual/t08/`);
 } finally {
   if (path.dirname(directory) === output && path.basename(directory).startsWith('workspace-qa-')) await rm(directory, { recursive: true, force: true });
   else { console.error('Unexpected QA cleanup target; cleanup skipped.'); process.exitCode = 1; }

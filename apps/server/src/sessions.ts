@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { appendRealtimeEvent } from './realtime-events.js';
 import type { DatabaseBoundary } from '@nexus-ai/db';
 import {
   sessionsRequestSchema, sessionsResponseSchema, type ProjectTask, type SessionsRequest,
@@ -105,6 +106,7 @@ async function publish(db: Client, actor: Actor, access: ProjectAccess, request:
   await db.query(`INSERT INTO collaboration_event (id, workspace_id, project_id, actor_id, event_type, payload)
     VALUES ($1, $2, $3, $4, 'publishSession', $5::jsonb)`, [randomUUID(), access.workspace_id, request.projectId, actor.id,
     JSON.stringify({ sessionId: row.id, version: row.version, status: row.status, visibility: row.visibility, messageCount: row.message_count })]);
+  await appendRealtimeEvent(db, request.projectId, actor.id, 'session.changed', row.id);
   return { ok: true, kind: 'session', item: sessionDTO(row), messages: row.messages };
 }
 

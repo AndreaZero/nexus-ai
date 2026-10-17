@@ -24,6 +24,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D18 | Adottata in T05 | Packaging sul relativo OS e architettura Node nativa x64/arm64, per distribuire Electron e Codex della stessa architettura. Due architetture richiedono due build native. Licenza Apache-2.0 Codex e notices conservati nel pacchetto |
 | D19 | Adottata in T07 | ReadOnly default, workspaceWrite esplicito per binding senza network/tmp e senza full access. Solo approvazioni moderne singole, UUID effimero/scadenza, riautorizzazione e consumo prima dell'I/O; negate richieste che implicano consenso permanente o contesti non supportati |
 | D20 | Adottata in T07 | Diff locale mediante oggetti Git e letture descriptor bounded, senza filtri repository; apertura VS Code via URI fissa costruita dal main. Preview URL scelta esplicitamente e aperta nel browser di sistema, nessun embed con privilegi o deploy/probe implicito |
+| D21 | Adottata in T08 | Outbox metadata PostgreSQL atomica e receipt UUID/hash/offset dopo COMMIT. Snapshot corrente al join/reconnect, letture dei dettagli riautorizzate, retention1.000 eventi; presenza effimera e poll2s su una sola istanza, senza broker obbligatorio |
+| D22 | Adottata in T08 | Solo messaggi scelti e loro futuri delta dopo preview/consenso; coda main cifrata e limitata, ripristino sospeso con Retry esplicito. Nessun nuovo messaggio, file, comando o consenso eseguibile accodato; indisponibilità Nexus conserva processo Codex ma interrompe il turno e torna readOnly |
 
 ## Da concretizzare al momento opportuno
 

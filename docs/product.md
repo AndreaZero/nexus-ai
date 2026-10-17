@@ -17,6 +17,7 @@ Creare un progetto salva anagrafica, ruoli e collegamento repository. Non crea a
 | Sessione / Context & Files | Chat Codex locale, file scelti, branch/HEAD osservati, piano/token se forniti dal runtime; bozza per progetto | T05–T06 |
 | Code Preview / Terminal / Approvals | Diff locale rispetto a HEAD e diff provider distinti, split/unified, output/exit reali, report TAP/Jest riconosciuti; workspaceWrite esplicito e consenso singolo del driver | T07 |
 | Cronologia condivisa | Share: messaggi selezionati, preview e audience confermata; altri membri leggono soltanto estratti autorizzati | T06, aggiornamento live T08 |
+| Live shared sessions / Connection | Testo scelto e futuri delta degli stessi ID con consenso; presenza corrente, ultimo sync, pendenti/retry/stop e revoca. Nessun nuovo messaggio o azione locale condiviso implicitamente | T08, [guida](realtime.md) |
 | Team online / Live activity | Dispositivi connessi, presenza con scadenza ed eventi autorizzati, senza dedurre online dalla sola membership | T08–T10 |
 | Tasks / Roadmap / Outcomes | Task e milestone creati, sessioni collegate, risultati/deliverable pubblicati e feedback | T11 |
 | GitHub / Code / Recent changes | Prima cartella/repo locale; poi collegamento GitHub autorizzato, branch, commit e PR via API/eventi. Nessun push automatico dedotto dal login Nexus | Osservazione Git locale T06, diff T07, integrazione GitHub completa T12 |

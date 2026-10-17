@@ -26,6 +26,8 @@ import { CodexProvider } from './codex/CodexProvider.js';
 import './codex/codex.css';
 import { SessionProvider } from './session/SessionProvider.js';
 import './session/session.css';
+import { RealtimeProvider } from './realtime/RealtimeProvider.js';
+import './realtime/realtime.css';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -39,7 +41,7 @@ const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
 
 export function App() {
   captureInvitation();
-  return <AuthProvider><CollaborationProvider><CodexProvider><SessionProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</SessionProvider></CodexProvider></CollaborationProvider></AuthProvider>;
+  return <AuthProvider><CollaborationProvider><CodexProvider><RealtimeProvider><SessionProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</SessionProvider></RealtimeProvider></CodexProvider></CollaborationProvider></AuthProvider>;
 }
 
 function ShellApp() {

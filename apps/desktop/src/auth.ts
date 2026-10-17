@@ -219,6 +219,29 @@ export class DesktopAuth {
     return parsed.success ? parsed.data : { ok: false, code: 'unavailable', message: 'The session server could not complete this operation.' };
   }
 
+  /** Main-process capability only; cookie is never part of DesktopBridge or renderer DTOs. */
+  async realtimeSession(): Promise<{ userId: string; cookie: string; server: string } | null> {
+    // Supplying the current cookie is not authorization: every domain request and
+    // socket delivery is authenticated at the server. Avoid a second auth HTTP
+    // request for every text batch; the regular account checks still detect expiry.
+    const state = this.state.status === 'signed_in' && this.state.expiresAt && Date.parse(this.state.expiresAt) > Date.now()
+      ? this.state : await this.getState();
+    if (state.status !== 'signed_in' || !state.user) return null;
+    const cookie = this.client.getCookie();
+    return cookie ? { userId: state.user.id, cookie, server: desktopAccountEndpoints().server } : null;
+  }
+
+  /** Server-authoritative project check, without redundant /auth/get-session traffic per batch. */
+  async authorizeRealtimeRepository(projectId: string, repositoryId: string): Promise<{ userId: string } | Exclude<CollaborationResponse, { ok: true }>> {
+    const session = await this.realtimeSession();
+    if (!session) return { ok: false, code: this.state.status === 'unavailable' ? 'unavailable' : 'auth_required', message: 'Reconnect your Nexus account before synchronizing.' };
+    const response = await requestCollaboration(session.server, session.cookie, { operation: 'getProject', projectId });
+    if (this.state.status !== 'signed_in' || this.state.user?.id !== session.userId || this.client.getCookie() !== session.cookie) return { ok: false, code: 'auth_required', message: 'Your Nexus account changed.' };
+    if (!response.ok) return response;
+    if (response.kind !== 'project' || response.item.id !== projectId || response.item.repository?.id !== repositoryId || !response.item.capabilities.viewRepository || !['owner', 'developer'].includes(response.item.role)) return { ok: false, code: 'forbidden', message: 'Your current project role cannot share this local session.' };
+    return { userId: session.userId };
+  }
+
   authorizeRepository(projectId: string, repositoryId: string): Promise<{ userId: string } | Exclude<CollaborationResponse, { ok: true }>> {
     return this.withSession(async (userId) => {
       const response = await requestCollaboration(desktopAccountEndpoints().server, this.client.getCookie(), { operation: 'getProject', projectId });

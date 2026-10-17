@@ -1,6 +1,37 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T07 0.7.0 implementato e consegnato per verifica Windows** ([issue #7](https://github.com/AndreaZero/nexus-ai/issues/7)), autorizzato dal maintainer con multiagenti. Build Windows T06 funzionante confermata e issue #6 chiusa; il feedback non certifica tutti i percorsi personali o le altre piattaforme. T08 non avviato.
+Aggiornato: **17 ottobre 2026**. **T08 consegnato, in attesa di verifica utente** su via esplicito del maintainer dopo conferma della build Windows T07. Il feedback non certifica tutti i percorsi personali o le altre piattaforme. [Issue T08 aperta](https://github.com/AndreaZero/nexus-ai/issues/8), T07 chiusa; T09 non avviato.
+
+## Ownership T08 integrate/rilasciate e contratto
+
+| Fronte | Percorsi scrivibili | Obiettivo / handoff |
+| --- | --- | --- |
+| `/root/t08_server` — integrato | `apps/server/src/realtime*.ts`, `app.ts`, `sessions.ts`, test server pertinenti | HTTP upload selezionato, outbox atomica, WS autenticato, snapshot/replay/ACK/presenza/revoca |
+| `/root/t08_desktop` — integrato | `apps/desktop/src/realtime*.ts`, test corrispondenti, `codex.ts` e suo test per perdita auth transitoria | WS nel main, coda cifrata/bounded, offset/idempotenza, recupero senza replay eseguibile |
+| `/root/t08_web` — integrato | `apps/web/src/**`, `apps/web/vite.config.ts`, test web | Presenza e sync reali reference, share live esplicito e proiezioni autorizzate, recupero senza dati obsoleti |
+| Coordinatore — integrato | contratti/DB/migrazione, auth/main/preload, manifest/lockfile, logging, QA/docs | Contratti unici e migrazione additiva 0003, integrazione e consegna |
+
+Contratti fissati in `packages/contracts/src/realtime.ts`: HTTP `POST /api/realtime` snapshot/readShare/upload; WS `/api/realtime` join/heartbeat/ack, frame snapshot/events/presence/heartbeat/denied. Cursori decimali per progetto, eventi durevoli solo metadata con proiezioni attuali: i dettagli selezionati si rileggono tramite readShare, senza raw protocol/tool/file. Migrazione 0003: project_realtime_cursor, live_share, realtime_event, realtime_upload; receipt idempotente con hash e ACK dopo COMMIT. Upload start/append/stop con offset testuali, max20 messaggi/128Ki caratteri, batch append16Ki. Condivisione soltanto messaggi scelti e confermati, futuri delta degli stessi ID; nessun nuovo messaggio o comando aggiunto implicitamente. Queue main cifrata max100/1MiB, riautorizzata prima del flush, scoping account/progetto/repo/root e nessun consenso/esecuzione in coda. Reconnect massimo8 tentativi con backoff+jitter e retry manuale; presenza heartbeat15s/scadenza45s, permessi/sessione ricontrollati anche a connessione aperta. Singolo backend con outbox PostgreSQL, nessun Redis/provider/deploy aggiunto. T09 non avviato.
+
+## Evidenze T08 e prossimo passo
+
+| Ambito | Esito |
+| --- | --- |
+| Installazione/statici | `pnpm install --frozen-lockfile`, `pnpm check` passati: typecheck/lint e confini 72 file. Lint/typecheck QA mirati dopo estensione delle catture |
+| Test integrati | **160/160**: bridge13, DB3, desktop72, server43, web27, confini2. Coda/offset/stop a coda piena, revoca, Unicode, backpressure, rate, ACK WS separato da HTTP e scoping inclusi. Esecuzione nativa fuori dal sandbox Windows che blocca rename/Git dei fixture |
+| Build | `pnpm build` passato; renderer322 moduli, chunk principale548 kB minificati (warning dimensione Vite, nessun errore). Main ESM include compatibilità createRequire per ws; preload isolato CJS |
+| Migrazione | **0003_realtime.sql** applicata sul DB locale dedicato, **4 migrazioni** registrate. Additiva e idempotente, nessuna migrazione all'avvio; `.env` e account/progetti conservati |
+| Percorso reale realtime | `pnpm verify:realtime`: **8 scenari** PG/SMTP/HTTP/WS reali con tre account temporanei. Presenza a due, estraneo, offset/idempotenza, audience/cursore, vero servizio desktop con ACK perso dopo commit, backend riavviato, revoca di socket aperto, Origin e metadata. Source Codex controllata e storage in memoria del fixture: nessuna inferenza personale |
+| UI/IPC/visivo | `pnpm verify:workspace`: **13 controlli**, renderer/preload effettivi, Git/TAP reali e trasporti dichiarati controllati. Nuove catture Connection e consenso live a1586×992 ispezionate, PNG2/3 originali aperte. Nessuna preselezione e conferma disabilitata senza consenso; layout/pianeta/particelle T02 preservati |
+| Electron/shell | Smoke sviluppo e pacchetto Windows passati, IPC realtime validato/Node assente. Tre layout reference, quattro gate collaborazione, tastiera, reduced motion e960px passati |
+| Pacchetto Windows | NSIS **0.8.0 x64**, `release/win/Nexus-AI-0.8.0-win-x64.exe`, **220017318 byte**, unsigned. Nessuna installazione automatica |
+| Segreti/pulizia | Scan **1513 file** sorgenti/build, **0** valori privati `.env`; **0** account/workspace QA T08 residui, **1 account reale** conservato. Rimossi solo email e cartelle QA proprie, Mailpit preesistente lasciato attivo |
+| Limiti e prova personale | Singola istanza backend/poll2s, retention1.000 eventi metadata; stato attuale e testo accettato persistenti. Condivisione solo stessi ID selezionati. Ripristino coda sospeso, Retry esplicito; nessun replay di esecuzione/approvazione. Due account e stream personale da provare dal maintainer |
+| macOS/Linux | Codice e packaging portabili; build, keyring e prova nativa non eseguiti qui |
+
+Versioni root/desktop/web/server/contratti/DB **0.8.0**, bridge0.5.0/UI0.2.0 invariati; Codex ufficiale **0.159.2** e generated schema invariati. Nuova dipendenza `ws`8.22.0 con tipi8.18.2, Zod4.6.7 nel desktop come nei contratti. Il main riusa la credenziale corrente senza duplicare `/auth/get-session` a ogni delta; autorizzazione corrente comunque applicata dal server per ogni operazione e dal controllo membership live. Nessun agente ha installato dipendenze o fatto commit; integrazione unica.
+
+Chiudere app/backend precedenti, `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`; riavviare server e app in terminali separati. Guida a due account, Share live, Stop, reconnect e revoca in [realtime.md](realtime.md#build-e-prova-del-maintainer). Rapporti/catture `.nexus/visual/t08/`; shell nel percorso storico `.nexus/visual/t02/`. Attendere feedback del maintainer prima di T09.
 
 ## Ownership T07 integrate/rilasciate e contratto
 
@@ -13,7 +44,7 @@ Aggiornato: **17 ottobre 2026**. **T07 0.7.0 implementato e consegnato per verif
 
 Contratti T07 in `packages/contracts/src/{codex,workspace}.ts`. Policy iniziale readOnly; workspaceWrite solo scelta locale esplicita, limitata al binding corrente, network sandbox disabilitato. Richieste moderne provider tradotte in ID UUID opachi, decisione acceptOnce/decline, massimo 20 pendenti e scadenza entro 110 s; mai persistenza/replay/autorizzazioni di sessione. Riautorizzazione owner/developer e binding prima di rispondere, invalidazione su stop/logout/cambio binding/turno. Legacy e richieste non supportate negate. Diff/output/report rimangono locali e non entrano automaticamente negli estratti T06. Workspace API senza path, comandi o schemi arbitrari dal renderer: file UUID del risultato locale, editor URI VS Code costruito nel main, preview URL configurato esplicitamente e aperto nel browser di sistema. Nessuna migrazione DB prevista; T08/T12/T13 non avviati.
 
-## Evidenze T07 e prossimo passo
+## Evidenze e procedura storica T07
 
 | Ambito | Esito |
 | --- | --- |
@@ -30,7 +61,7 @@ Contratti T07 in `packages/contracts/src/{codex,workspace}.ts`. Policy iniziale 
 
 Versioni root/desktop/web/contratti **0.7.0**, server/DB 0.6.0, bridge 0.5.0 e UI 0.2.0; runtime ufficiale invariato **0.159.2** e generated schema immutato. Ownership chiuse dopo integrazione; nessun agente ha installato dipendenze o fatto commit. Rapporti/catture in `.nexus/visual/t07/`, shell nel percorso storico `.nexus/visual/t02/`.
 
-Chiudere app/backend precedenti, `pnpm install --frozen-lockfile` e `pnpm package:win`, poi `pnpm start:server` e `pnpm start:desktop` in terminali separati oppure app aggiornata. Nessuna nuova migrazione o configurazione PostgreSQL rispetto a T06. Su un proprio repository Git dedicato verificare Workspace write con conferma, file creato sul disco/diff, operazione negata/consentita una volta/scaduta, report test e URL preview. [Passi esatti e limiti](session.md#build-e-prova-del-maintainer). Attendere feedback del maintainer prima di T08.
+Procedura consegnata con T07: installazione/packaging e prova di Workspace write, file/diff, approvazioni e preview in [session.md](session.md#build-e-prova-del-maintainer). Il maintainer ha confermato la build Windows funzionante e autorizzato T08, ora consegnato sopra con la nuova migrazione0003.
 
 ## Ownership T06 integrate/rilasciate e contratto
 

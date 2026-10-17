@@ -1,5 +1,12 @@
 # Changelog
 
+### 2026-10-17 — T08: realtime, presenza e recupero
+
+- WebSocket Nexus autenticato e presenza per progetto, audience/ruoli verificati durante la connessione e revoca su socket aperto. Outbox metadata PostgreSQL atomica, snapshot autorevole e upload idempotenti con ACK dopo COMMIT.
+- Share live soltanto per messaggi scelti con preview/consenso e futuri delta degli stessi ID; coda main cifrata/limitata, Stop senza perdere il suffisso già osservato, Retry/discard e recupero senza duplicare testo accettato. Nessun replay di prompt/approvazioni o controllo remoto.
+- Presenza/Live Sync reali in header e Team Online, Connection/Live shares in Session Info nello stile reference2/3. Lifecycle Codex conservato durante outage Nexus, turno interrotto/readOnly e nessuna ripartenza automatica.
+- Versione0.8.0 per app/server/contratti/DB, migrazione additiva0003 sul DB esistente, ws8.22.0 e Zod4.6.7 desktop; runtime Codex0.159.2 invariato. 160 test, 8 scenari PG/HTTP/WS, 13 controlli UI/IPC, check/build/smoke/shell e pacchetto Windows passati. Account reale conservato e QA rimossi. Guida `docs/realtime.md`; prova personale e macOS/Linux distinte, T09 non avviato.
+
 ### 2026-10-17 — T07: diff, output e approvazioni locali
 
 - Confermata dal maintainer la build Windows T06; integrati tre fronti runtime, workspace locale e renderer nella reference 2.

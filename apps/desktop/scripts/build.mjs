@@ -27,7 +27,9 @@ const common = {
 };
 
 await Promise.all([
-  build({ ...common, entryPoints: [path.join(root, 'src/main.ts')], outfile: path.join(root, 'dist/main.mjs'), format: 'esm' }),
+  build({ ...common, entryPoints: [path.join(root, 'src/main.ts')], outfile: path.join(root, 'dist/main.mjs'), format: 'esm',
+    // ws uses CommonJS builtin imports; retain a Node-only require in the ESM main bundle.
+    banner: { js: "import { createRequire as nexusCreateRequire } from 'node:module'; const require = nexusCreateRequire(import.meta.url);" } }),
   // Sandboxed preloads only support a limited require; bundle all application imports.
   build({ ...common, entryPoints: [path.join(root, 'src/preload.ts')], outfile: path.join(root, 'dist/preload.cjs'), format: 'cjs' }),
 ]);

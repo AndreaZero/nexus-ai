@@ -8,7 +8,9 @@ export default defineConfig(({ command, mode }) => {
   const environmentDirectory = fileURLToPath(new URL('../../', import.meta.url));
   const environment = loadEnv(mode, environmentDirectory, 'VITE_');
   const server = getServerUrl(environment['VITE_NEXUS_SERVER_URL'], development);
-  const connectionOrigins = ["'self'", ...(server ? [server.origin] : []), ...(development ? ['ws://127.0.0.1:5173'] : [])];
+  const websocketServer = server ? new URL(server.origin) : null;
+  if (websocketServer) websocketServer.protocol = websocketServer.protocol === 'https:' ? 'wss:' : 'ws:';
+  const connectionOrigins = ["'self'", ...(server && websocketServer ? [server.origin, websocketServer.origin] : []), ...(development ? ['ws://127.0.0.1:5173'] : [])];
   const policy = [
     "default-src 'none'",
     `script-src 'self'${development ? " 'unsafe-inline'" : ''}`,

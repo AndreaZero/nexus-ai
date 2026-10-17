@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T07 0.7.0 implementato e consegnato per verifica Windows**, dopo conferma della build T06. Ownership integrate e contratti in `docs/status.md`; renderer reference 2, diff/output e approvazioni locali, cronologia condivisa solo con pubblicazione esplicita. T08 non avviato. Runtime ufficiale Codex **0.159.2**, schema generato immutato. Preservare shell T02, account reale e auth/collaborazione. Credenziali Codex solo home/keyring Nexus dedicati: nessuna lettura auth di altre app o fallback API implicito. Non stampare `.env` o credenziali; `.env.example` resta pubblico. Nessuna migrazione all'avvio o operazione di produzione implicita.
+La fase corrente è **T08 consegnato, in attesa di verifica utente**, dopo conferma della build Windows T07. Fronti multiagente integrati e ownership rilasciate in `docs/status.md`; realtime/presenza/recupero con messaggi selezionati esplicitamente, guida in `docs/realtime.md`. T09 non avviato. Runtime ufficiale Codex **0.159.2**, schema generato immutato. Preservare shell T02, account reale, auth/collaborazione, diff e approvazioni T07. Credenziali Codex solo home/keyring Nexus dedicati: nessuna lettura auth di altre app o fallback API implicito. Non stampare `.env` o credenziali; `.env.example` resta pubblico. Nessuna migrazione all'avvio o operazione di produzione implicita.
 
 ## Prodotto e architettura
 

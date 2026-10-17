@@ -97,7 +97,7 @@ Collegare toolbar, stepper, stream messaggi, attività strumenti, piano esposto,
 
 ### T07 — Diff, output e approvazioni
 
-**Stato:** [implementato e consegnato per verifica Windows — issue #7](https://github.com/AndreaZero/nexus-ai/issues/7), su via esplicito del maintainer dopo conferma build T06. **Dipendenze:** T06. **Ownership:** runtime, workspace locale e renderer integrati/rilasciati; coordinatore contratti, main/preload, integrazione e consegna. Schema provider 0.159.2 invariato; ownership dettagliate in `status.md`.
+**Stato:** [build Windows confermata dal maintainer — issue #7 chiusa](https://github.com/AndreaZero/nexus-ai/issues/7), con via esplicito a T08. **Dipendenze:** T06. **Ownership:** runtime, workspace locale e renderer integrati/rilasciati; coordinatore contratti, main/preload, integrazione e consegna. Schema provider 0.159.2 invariato; ownership dettagliate in `status.md`. Il feedback non certifica ogni percorso personale o altre piattaforme.
 
 Completare Code Preview/Terminal/Tests/Preview, diff reale, output strumenti, report test riconosciuti e approvazioni del driver. Distinguere piano, esecuzione e deliverable. Approvals counter, Pause e Stop riflettono stato/capacità effettivi; apertura editor sicura per OS.
 
@@ -106,6 +106,8 @@ Completare Code Preview/Terminal/Tests/Preview, diff reale, output strumenti, re
 **Evidenze T07:** check e 124 test integrati passati; Git/filesystem reali, sandbox policy e scoping/replay/expiry/ruoli. Harness Electron UI/IPC con Git e TAP reali isolati, provider controllato: 10 controlli, nessuna inferenza o credenziale personale. Build/smoke/package e confronto visivo in [status.md](status.md). Nessuna nuova migrazione DB o dipendenza. Prova con il proprio Codex e build native macOS/Linux ancora distinte.
 
 ### T08 — Realtime, presenza e recupero
+
+**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #8](https://github.com/AndreaZero/nexus-ai/issues/8). Fronti server, desktop e renderer integrati; ownership rilasciate. Contratti/DB/IPC, lockfile e consegna gestiti dal coordinatore. Guida effettiva e limiti in [realtime.md](realtime.md); evidenze in [status.md](status.md). T09 non avviato.
 
 **Dipendenze:** T07; contratti di evento da T01/T04. **Ownership:** backend outbox/replay; desktop coda upload; renderer reducer/presenza.
 

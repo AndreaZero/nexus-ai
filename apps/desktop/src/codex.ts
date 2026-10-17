@@ -63,6 +63,8 @@ export class DesktopCodex {
   private readonly seenApprovals = new Set<string>();
   private readonly fileApprovalDetails = new Map<string, number>();
   private startingTurn = false;
+  private nexusUnavailable = false;
+  private nexusEpoch = 0;
   private readonly threads: CodexThreadStorage;
   private readonly dependencies: Dependencies;
   constructor(dependencies: Dependencies) {
@@ -86,10 +88,38 @@ export class DesktopCodex {
 
   /** Called synchronously on Nexus transitions, including expiry, logout and offline denial. */
   nexusStateChanged(state: NexusAuthState): void {
+    if (state.status === 'unavailable') { this.pauseForNexusLoss(); return; }
+    this.nexusUnavailable = false;
     if (this.userId && (state.status !== 'signed_in' || state.user?.id !== this.userId)) this.stop();
   }
 
+  /** A network outage is not logout. Deny waiting execution and interrupt once, without replay on recovery. */
+  private pauseForNexusLoss(): void {
+    if (this.nexusUnavailable) return;
+    this.nexusUnavailable = true;
+    this.nexusEpoch++;
+    this.clearApprovals();
+    this.state.policy = 'readOnly';
+    const session = this.state.session;
+    if (session?.status === 'running' && session.turnId && this.process) {
+      this.interruptAfterNexusLoss(this.process, session.threadId, session.turnId);
+    }
+    this.state.notice = 'Nexus is unavailable. Execution approvals were declined and the active turn was interrupted. Reconnect before starting another action.';
+    this.publish(true);
+  }
+
+  private interruptAfterNexusLoss(runtime: ProcessClient, threadId: string, turnId: string): void {
+    if (this.completedTurns.has(turnId)) return;
+    this.completedTurns.add(turnId);
+    void runtime.request('turn/interrupt', { threadId, turnId }).catch(() => undefined);
+  }
+
+  private assertNexusEpoch(epoch: number): void {
+    if (epoch !== this.nexusEpoch || this.nexusUnavailable) throw new RequestError('unavailable', 'The Nexus connection changed during this request. No action will be retried automatically.');
+  }
+
   private stop(): void {
+    this.nexusEpoch++;
     this.clearApprovals();
     this.completedTurns.clear(); this.seenApprovals.clear(); this.fileApprovalDetails.clear(); this.startingTurn = false;
     const current = this.process;
@@ -97,6 +127,7 @@ export class DesktopCodex {
     this.userId = undefined;
     this.context = undefined;
     this.loginId = undefined;
+    this.nexusUnavailable = false;
     if (this.guardTimer) clearInterval(this.guardTimer);
     this.guardTimer = undefined;
     this.state = emptyState();
@@ -107,6 +138,24 @@ export class DesktopCodex {
   async dispose(): Promise<void> {
     this.stop();
     await this.shutdown;
+  }
+
+  /** Main-only source proof for encrypted local capture; upload authorization is checked independently. */
+  async authorizeSharing(projectId: string, repositoryId: string, threadId: string): Promise<{ userId: string; cwd: string }> {
+    const epoch = this.nexusEpoch;
+    const context = this.context; const runtime = this.process; const userId = this.userId;
+    if (!context || !runtime || !userId || context.userId !== userId || context.projectId !== projectId || context.repositoryId !== repositoryId ||
+        this.nexusUnavailable || this.state.session?.threadId !== threadId || this.state.session.projectId !== projectId || this.state.session.repositoryId !== repositoryId) {
+      throw new RequestError('invalid_request', 'Open the current repository session before sharing its selected messages.');
+    }
+    const binding = await this.dependencies.bindings.get(userId, projectId, repositoryId);
+    let cwd: string | undefined;
+    try { if (binding) { cwd = await realpath(binding.rootPath); if (!(await stat(cwd)).isDirectory()) cwd = undefined; } } catch { /* A moved/missing local folder is a failed source proof. */ }
+    this.assertNexusEpoch(epoch); this.assertCurrent(runtime, userId);
+    if (!cwd || this.context !== context || context.key !== codexSessionKey(userId, projectId, repositoryId, cwd) || this.state.session.threadId !== threadId) {
+      throw new RequestError('invalid_request', 'The local repository session binding changed. Reopen it before sharing.');
+    }
+    return { userId: context.userId, cwd: context.cwd };
   }
 
   request(input: CodexRequest): Promise<CodexResponse> {
@@ -138,11 +187,16 @@ export class DesktopCodex {
 
   private async nexusUser(): Promise<string> {
     const account = await this.dependencies.auth.getState();
+    if (account.status === 'unavailable') {
+      this.pauseForNexusLoss();
+      throw new RequestError('unavailable', 'Nexus is unavailable. Your local session is preserved; retry after the connection recovers.');
+    }
     if (account.status !== 'signed_in' || !account.user) {
       this.stop();
       throw new RequestError('auth_required', 'Sign in to Nexus AI before connecting your personal Codex account.');
     }
     if (this.userId && this.userId !== account.user.id) this.stop();
+    this.nexusUnavailable = false;
     return account.user.id;
   }
 
@@ -236,6 +290,9 @@ export class DesktopCodex {
     const userId = await this.nexusUser();
     const authorized = await this.dependencies.auth.authorizeRepository(projectId, repositoryId);
     if ('ok' in authorized) {
+      if (authorized.code === 'unavailable' || this.nexusUnavailable) {
+        this.pauseForNexusLoss(); throw new RequestError('unavailable', 'Nexus could not verify your current project role. No local action was started.');
+      }
       this.stop();
       throw new RequestError(authorized.code === 'auth_required' ? 'auth_required' : 'forbidden', 'Your current project role cannot run a local Codex session.');
     }
@@ -259,6 +316,7 @@ export class DesktopCodex {
   private async perform(request: CodexRequest): Promise<void> {
     if (request.operation === 'disconnect') { await this.dispose(); return; }
     const userId = await this.nexusUser();
+    const epoch = this.nexusEpoch;
     if (request.operation === 'getState') {
       if (this.context) {
         const current = await this.authorize(this.context.projectId, this.context.repositoryId);
@@ -326,6 +384,7 @@ export class DesktopCodex {
     }
     const context = await this.authorize(request.projectId, request.repositoryId);
     this.assertCurrent(runtime, userId);
+    this.assertNexusEpoch(epoch);
     if (this.context && context.key !== this.context.key) { this.clearApprovals(); this.state.policy = 'readOnly'; }
     if (!this.state.account) throw new RequestError('codex_auth_required', 'Connect your personal ChatGPT account to Codex in Settings first.');
     if (request.operation === 'resolveApproval') { await this.resolveApproval(runtime, context, request.approvalId, request.decision); return; }
@@ -361,6 +420,7 @@ export class DesktopCodex {
     // Recheck the role and binding after thread disk I/O, immediately before execution.
     const current = await this.authorize(request.projectId, request.repositoryId);
     this.assertCurrent(runtime, userId);
+    this.assertNexusEpoch(epoch);
     if (current.key !== context.key) { await this.dispose(); throw new RequestError('invalid_request', 'The linked folder changed. Open the current repository session again.'); }
     const session = this.state.session!;
     const temporaryId = `local-${randomUUID()}`;
@@ -381,13 +441,19 @@ export class DesktopCodex {
           : { type: 'readOnly', networkAccess: false } });
       this.assertCurrent(runtime, userId);
       if (!identifier(response.turn.id)) throw new Error('Invalid turn identifier.');
+      if (epoch !== this.nexusEpoch || this.nexusUnavailable) {
+        session.turnId = response.turn.id;
+        this.interruptAfterNexusLoss(runtime, session.threadId, response.turn.id);
+        session.status = 'interrupted';
+        throw new RequestError('unavailable', 'The Nexus connection changed while the turn started. The turn was interrupted and will not be replayed.');
+      }
       // A fast completion notification can arrive before the RPC response.
       if (session.turnId !== response.turn.id || session.status === 'running') this.applyTurn(response.turn);
       this.startingTurn = false;
       this.publish(true);
     } catch (error) {
       this.startingTurn = false; this.clearApprovals();
-      if (this.state.session === session) { session.status = 'failed'; session.error = 'The request could not start. Check account access, quota and sandbox setup before retrying.'; this.publish(true); }
+      if (this.state.session === session) { if (session.status !== 'interrupted') session.status = 'failed'; session.error = 'The request could not start. Check account access, quota and sandbox setup before retrying.'; this.publish(true); }
       throw error;
     }
   }
@@ -537,6 +603,11 @@ export class DesktopCodex {
       if (!record(turn) || !identifier(turn['id']) || this.completedTurns.has(turn['id']) ||
           (turn['id'] !== session.turnId && !this.startingTurn)) return;
       this.startingTurn = false;
+      if (this.nexusUnavailable) {
+        session.turnId = turn['id']; session.status = 'interrupted';
+        if (this.process) this.interruptAfterNexusLoss(this.process, session.threadId, turn['id']);
+        this.publish(true); return;
+      }
     } else if (event.method === 'turn/completed') {
       const turn = params['turn'];
       if (!record(turn) || !identifier(turn['id']) || (turn['id'] !== session.turnId && (!this.startingTurn || this.completedTurns.has(turn['id'])))) return;
@@ -633,6 +704,7 @@ export class DesktopCodex {
   }
 
   private async resolveApproval(runtime: ProcessClient, context: Context, id: string, decision: 'acceptOnce' | 'decline'): Promise<void> {
+    const epoch = this.nexusEpoch;
     const pending = this.approvals.get(id);
     if (pending?.cwd && decision === 'acceptOnce') {
       let canonical: string | null = null;
@@ -660,6 +732,7 @@ export class DesktopCodex {
       }
     }
     // perform already authorizes immediately before this method; no asynchronous gap to the one-shot response.
+    this.assertNexusEpoch(epoch);
     if (!await this.finishApproval(id, decision === 'acceptOnce' ? 'accept' : 'decline')) throw new RequestError('unavailable', 'The execution decision could not reach Codex and was not retried. Interrupt the turn before retrying.');
   }
 
@@ -677,7 +750,7 @@ export class DesktopCodex {
     const context = this.context;
     const started = params['startedAtMs'];
     const expiresAt = typeof started === 'number' && Number.isSafeInteger(started) ? Math.min(Date.now() + 110000, started + 110000) : 0;
-    const supported = modern && runtime === this.process && context && session?.status === 'running' && this.state.policy === 'workspaceWrite' &&
+    const supported = modern && !this.nexusUnavailable && runtime === this.process && context && session?.status === 'running' && this.state.policy === 'workspaceWrite' &&
       params['threadId'] === session.threadId && params['turnId'] === session.turnId && !this.completedTurns.has(session.turnId!) && identifier(params['itemId']) && this.approvals.size < 20 &&
       expiresAt > Date.now() && typeof started === 'number' && started <= Date.now() + 5000 && params['grantRoot'] == null && (!command || ((params['kind'] === undefined || params['kind'] === 'command') &&
       params['environmentId'] == null && params['networkApprovalContext'] == null && typeof params['command'] === 'string' && params['command'].length > 0 && params['command'].length <= 16000 &&

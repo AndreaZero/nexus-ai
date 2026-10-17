@@ -40,6 +40,8 @@ Queste fonti supportano la fattibilità della proposta, non sostituiscono la ver
 
 **Aggiornamento T07:** schema 0.159.2 per sandbox workspaceWrite, CommandExecutionRequestApproval/FileChangeRequestApproval, decisione accept/decline, delta output e diff; nessuna modifica ai generated. Consultata la [documentazione ufficiale VS Code](https://code.visualstudio.com/docs/configure/command-line#_opening-vs-code-with-urls) per URI di apertura file/cartella. Le prove UI/IPC con provider controllato restano distinte dall'esecuzione personale Codex.
 
+**Aggiornamento T08:** [ws — autenticazione dell'upgrade HTTP](https://github.com/websockets/ws#client-authentication) e API browser nativa; `ws`8.22.0 e `@types/ws`8.18.2 verificati sul registro tramite pnpm. Origin/cookie verificati prima dell'upgrade, no query token e no compressione. Schema Codex0.159.2 invariato; protocollo realtime Nexus distinto dal protocollo provider. PNG2 e3 aperte per presenza/header e Session Info. Contratto, limiti e verifiche effettive in [realtime.md](realtime.md).
+
 ## Preparazione T03
 
 Il maintainer ha confermato T02 Windows funzionante e UI approvata, autorizzando T03 con multiagenti e chiedendo i prerequisiti PostgreSQL prima di introdurre account/persistenza. Il database locale sarà creato personalmente dal maintainer.

@@ -7,6 +7,7 @@ import type { CodexNotification, CodexProcess, CodexServerRequest } from '@nexus
 import { DesktopCodex } from './codex.ts';
 import { DesktopWorkspace } from './workspace.ts';
 import { APP_URL, isTrustedIpcSender, rendererAssetPath } from './security.ts';
+import { realtimeRequestSchema, realtimeResponseSchema, type RealtimeState } from '@nexus-ai/contracts';
 
 // Standalone verification entry, bundled into the disposable QA directory by scripts/verify-workspace.mjs.
 // Not imported by main.ts, exposed as a renderer route, or included in application startup.
@@ -84,6 +85,8 @@ handle(DESKTOP_IPC.collaborationRequest, value => {
 });
 handle(DESKTOP_IPC.contextRequest, value => { const request = contextRequestSchema.parse(value); return contextResponseSchema.parse({ ok: true, context: { projectId, repositoryId, folderLabel: binding.label, files: [], repository: { isGit: true, branch: 'main', head: null, dirty: true, ahead: null, behind: null, observedAt: now }, draft: request.operation === 'saveDraft' ? request.text : '', updatedAt: now }, preview: null }); });
 handle(DESKTOP_IPC.sessionsRequest, value => { const request = sessionsRequestSchema.parse(value); return sessionsResponseSchema.parse(request.operation === 'listProjectTasks' ? { ok: true, kind: 'tasks', items: [] } : { ok: true, kind: 'sessions', items: [] }); });
+const realtime: RealtimeState = { projectId, connection: 'online', cursor: '0', snapshot: { projectId, cursor: '0', sessions: [], shares: [] }, presence: [{ userId: account.user!.id, name: account.user!.name, role: 'owner', connections: 1, lastSeenAt: now }], pending: 0, sharing: null, lastSyncedAt: now, notice: 'Isolated UI fixture; no remote connection.' };
+handle(DESKTOP_IPC.realtimeRequest, value => { const request = realtimeRequestSchema.parse(value); return realtimeResponseSchema.parse({ ok: true, state: request.operation === 'disconnect' ? { ...realtime, connection: 'idle', snapshot: null, presence: [] } : realtime, share: null }); });
 const checks: string[] = [];
 async function waitFor(expression: string) {
   await window.webContents.executeJavaScript(`new Promise((resolve,reject)=>{const test=()=>{if(${expression}){observer.disconnect();clearTimeout(timer);resolve(true)}};const observer=new MutationObserver(test);const timer=setTimeout(()=>{observer.disconnect();reject(new Error('Workspace UI condition timed out'))},8000);observer.observe(document.documentElement,{subtree:true,childList:true,attributes:true});test()})`);
@@ -125,7 +128,21 @@ try {
   await waitFor("!document.querySelector('.execution-request')"); assert.deepEqual(fixture.responses.find(value => value.id === 71)?.result, { decision: 'decline' }); checks.push('UI decline resolves the exact provider callback');
   ask(72); await waitFor("document.querySelector('.execution-request')"); await click('Allow once');
   await waitFor("!document.querySelector('.execution-request')"); assert.deepEqual(fixture.responses.find(value => value.id === 72)?.result, { decision: 'accept' }); assert.equal(fixture.responses.filter(value => value.id === 72).length, 1); checks.push('UI allow once resolves once, no execution in QA');
-  await writeFile(path.join(input.output, 'workspace-report.json'), JSON.stringify({ checks, provider: 'controlled transport, no inference', filesystem: 'real isolated Git files', tests: 'actual Node TAP', osOpens: 'intercepted', personalCredentials: false }, null, 2));
+  await window.webContents.executeJavaScript(`document.querySelector('button[aria-label="Close dialog"]').click()`);
+  await click('Session Info'); await waitFor("document.querySelector('.realtime-panel')");
+  await capture('realtime-connection'); checks.push('Connection and presence render inside the reference Session Info panel (controlled state)');
+  await click('Share'); await click('Share selected messages live');
+  await waitFor("document.querySelector('.session-publish-selection input')");
+  assert.equal(await window.webContents.executeJavaScript(`document.querySelectorAll('.session-publish-selection input:checked').length`), 0);
+  assert.equal(await window.webContents.executeJavaScript(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Review selected messages').disabled`), true);
+  await window.webContents.executeJavaScript(`document.querySelector('.session-publish-selection input').click()`);
+  await click('Review selected messages'); await waitFor("document.querySelector('.realtime-consent input')");
+  assert.equal(await window.webContents.executeJavaScript(`[...document.querySelectorAll('button')].find(b=>b.textContent.trim()==='Confirm live sharing').disabled`), true);
+  await capture('realtime-consent'); checks.push('Live share has no preselection and requires reviewed text plus explicit future-text consent');
+  await window.webContents.executeJavaScript(`document.querySelector('.realtime-consent input').click()`);
+  await click('Confirm live sharing'); await waitFor("!document.querySelector('.realtime-consent')");
+  checks.push('Live share confirmation reaches the validated production preload (upload transport controlled in this UI fixture)');
+  await writeFile(path.join(input.output, 'workspace-report.json'), JSON.stringify({ checks, provider: 'controlled transport, no inference', realtime: 'controlled projection and request transport; see verify:realtime for real HTTP/WS/DB', filesystem: 'real isolated Git files', tests: 'actual Node TAP', osOpens: 'intercepted', personalCredentials: false }, null, 2));
   await codex.dispose(); window.destroy(); app.exit(0);
 } catch (error) { await codex.dispose(); console.error(error instanceof Error ? error.message : 'Workspace QA failed'); app.exit(1); }
 }

@@ -150,4 +150,19 @@ export const aiSession = pgTable('ai_session', {
 }, (table) => [index('ai_session_project_idx').on(table.projectId), check('ai_session_visibility_check', sql`${table.visibility} IN ('team', 'client')`), check('ai_session_status_check', sql`${table.status} IN ('created', 'running', 'completed', 'interrupted', 'failed')`), check('ai_session_version_check', sql`${table.version} > 0`), check('ai_session_messages_check', sql`jsonb_typeof(${table.messages}) = 'array' AND jsonb_array_length(${table.messages}) <= 20`)]);
 
 export const collaborationSchema = { workspace, workspaceMember, project, projectMember, repository, invitation, collaborationEvent, milestone, task, aiSession };
-export const databaseSchema = { ...authSchema, ...collaborationSchema };
+export const projectRealtimeCursor = pgTable('project_realtime_cursor', {
+  projectId: text('project_id').primaryKey().references(() => project.id, { onDelete: 'cascade' }), sequence: bigint('sequence', { mode: 'bigint' }).notNull().default(0n),
+}, table => [check('project_realtime_cursor_sequence_check', sql`${table.sequence} >= 0`)]);
+export const liveShare = pgTable('live_share', {
+  id: text('id').primaryKey(), projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }), authorId: text('author_id').notNull().references(() => user.id), deviceId: text('device_id').notNull(),
+  title: text('title').notNull(), visibility: text('visibility').notNull(), status: text('status').notNull().default('active'), messages: jsonb('messages').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(), updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [index('live_share_project_idx').on(table.projectId, table.updatedAt), check('live_share_title_check', sql`char_length(${table.title}) BETWEEN 1 AND 140`), check('live_share_visibility_check', sql`${table.visibility} IN ('team', 'client')`), check('live_share_status_check', sql`${table.status} IN ('active', 'stopped')`), check('live_share_messages_check', sql`jsonb_typeof(${table.messages}) = 'array' AND jsonb_array_length(${table.messages}) BETWEEN 1 AND 20`)]);
+export const realtimeEvent = pgTable('realtime_event', {
+  projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }), sequence: bigint('sequence', { mode: 'bigint' }).notNull(), eventId: text('event_id').notNull().unique(), kind: text('kind').notNull(), entityId: text('entity_id').notNull(), actorId: text('actor_id').notNull().references(() => user.id), occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [primaryKey({ columns: [table.projectId, table.sequence] }), check('realtime_event_sequence_check', sql`${table.sequence} > 0`), check('realtime_event_kind_check', sql`${table.kind} IN ('session.changed', 'live.changed')`)]);
+export const realtimeUpload = pgTable('realtime_upload', {
+  projectId: text('project_id').notNull().references(() => project.id, { onDelete: 'cascade' }), batchId: text('batch_id').notNull(), authorId: text('author_id').notNull().references(() => user.id), shareId: text('share_id').notNull().references(() => liveShare.id, { onDelete: 'cascade' }), payloadHash: text('payload_hash').notNull(), sequence: bigint('sequence', { mode: 'bigint' }).notNull(), committedAt: timestamp('committed_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [primaryKey({ columns: [table.projectId, table.batchId] }), check('realtime_upload_sequence_check', sql`${table.sequence} > 0`)]);
+export const realtimeSchema = { projectRealtimeCursor, liveShare, realtimeEvent, realtimeUpload };
+export const databaseSchema = { ...authSchema, ...collaborationSchema, ...realtimeSchema };
