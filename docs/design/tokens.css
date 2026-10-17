@@ -1,0 +1,78 @@
+/* Design specification, not an application entrypoint.
+   Reconstructed from examples/design/*.png; transfer to packages/ui in T02. */
+:root {
+  color-scheme: dark;
+  --nexus-bg-app: #050b12;
+  --nexus-bg-sidebar: #040c13;
+  --nexus-bg-surface: #08121d;
+  --nexus-bg-surface-end: #050d15;
+  --nexus-bg-raised: #101e2d;
+  --nexus-bg-selected: #071e3e;
+  --nexus-border-subtle: #142d40;
+  --nexus-border-strong: #31526c;
+  --nexus-text-primary: #edf4ff;
+  --nexus-text-secondary: #b2c4da;
+  --nexus-text-muted: #7692af;
+  --nexus-accent-cyan: #00b7ff;
+  --nexus-accent-blue: #0866ff;
+  --nexus-accent-violet: #8355ff;
+  --nexus-positive: #00e6a0;
+  --nexus-positive-bg: #042b24;
+  --nexus-warning: #f5b941;
+  --nexus-warning-bg: #30230c;
+  --nexus-danger: #f34e63;
+  --nexus-danger-bg: #2c111a;
+  --nexus-diff-add-bg: #06251d;
+  --nexus-diff-add-text: #7ce6b7;
+  --nexus-diff-remove-bg: #301621;
+  --nexus-diff-remove-text: #ef9cab;
+  --nexus-chart-code: #00b7ff;
+  --nexus-chart-editor: #9766ff;
+  --nexus-chart-tests: #00e6a0;
+  --nexus-chart-build: #f5b941;
+  --nexus-chart-deploy: #8355ff;
+  --nexus-font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --nexus-font-code: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  --nexus-text-xs: 0.625rem;
+  --nexus-text-sm: 0.75rem;
+  --nexus-text-md: 0.875rem;
+  --nexus-text-lg: 1rem;
+  --nexus-text-title: 1.875rem;
+  --nexus-leading-body: 1.45;
+  --nexus-space-1: 4px;
+  --nexus-space-2: 8px;
+  --nexus-space-3: 12px;
+  --nexus-space-4: 16px;
+  --nexus-space-5: 20px;
+  --nexus-space-6: 24px;
+  --nexus-sidebar-width: 212px;
+  --nexus-card-gap: 12px;
+  --nexus-card-padding: 14px;
+  --nexus-radius-control: 6px;
+  --nexus-radius-card: 9px;
+  --nexus-radius-pill: 999px;
+  --nexus-surface-gradient: linear-gradient(160deg, #0a1623 0%, #050d15 100%);
+  --nexus-primary-gradient: linear-gradient(110deg, #087dff 0%, #0053ef 100%);
+  --nexus-active-gradient: linear-gradient(125deg, #00b7ff 0%, #1672ff 52%, #8355ff 100%);
+  --nexus-glow-cyan: 0 0 14px rgb(0 183 255 / 20%);
+  --nexus-glow-positive: 0 0 10px rgb(0 230 160 / 25%);
+  --nexus-glow-violet: 0 0 14px rgb(131 85 255 / 18%);
+  --nexus-shadow-panel: 0 5px 18px rgb(0 0 0 / 16%);
+  --nexus-motion-fast: 140ms;
+  --nexus-motion-panel: 200ms;
+  --nexus-motion-progress: 320ms;
+  --nexus-motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --nexus-z-content: 0;
+  --nexus-z-header: 10;
+  --nexus-z-popover: 30;
+  --nexus-z-modal: 50;
+  --nexus-z-toast: 60;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --nexus-motion-fast: 0ms;
+    --nexus-motion-panel: 0ms;
+    --nexus-motion-progress: 0ms;
+  }
+}

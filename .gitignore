@@ -1,0 +1,37 @@
+# Dependencies and generated packages
+node_modules/
+.pnpm-store/
+dist/
+build/
+out/
+release/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+auth.json
+credentials.json
+
+# Local runtime data, logs and editor metadata
+.nexus/
+*.log
+*.sqlite
+*.sqlite-*
+*.db
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.example.json

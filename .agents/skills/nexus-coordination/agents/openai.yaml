@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nexus AI Coordination"
+  short_description: "Coordina task e agenti del progetto Nexus AI"
+  default_prompt: "Usa $nexus-coordination per sviluppare il task corrente di Nexus AI con ownership separate e integrazione unica."

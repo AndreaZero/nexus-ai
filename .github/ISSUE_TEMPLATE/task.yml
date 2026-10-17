@@ -1,0 +1,32 @@
+name: Task di sviluppo
+description: Una consegna concreta del piano Nexus AI
+title: "Txx: "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Risultato
+      description: Collegare il task in docs/plan.md e descrivere il comportamento da consegnare.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Dipendenze e ownership
+      description: Task precedenti, fronti paralleli e percorsi riservati; un autore per contratti, migrazioni e lockfile.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criteri di completamento
+      description: Comportamenti osservabili, reference pertinenti e documenti da aggiornare.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verifica mirata e build utente
+      description: Controlli necessari e azioni manuali per il maintainer; registrare gli OS effettivamente provati.
+    validations:
+      required: true
