@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### 2026-10-17 — T03: ritorno browser → desktop
+
+- Corretto il reload di `/desktop-auth` dopo **Continue in Nexus AI**: il redirect web interrompeva il timer del callback desktop, lasciando l'app in attesa. Il trasferimento resta ora sulla pagina e usa il proxy ufficiale per aprire Nexus.
+- Aggiunto un test con i plugin reali per rilevare navigazioni web premature e verificare callback OS/consumo del cookie. Passati test mirato, lint e build web; rientro OS manuale da riconfermare. Documentati riavvio backend e rinnovo del tentativo scaduto.
+
 ### 2026-10-17 — T03: account e persistenza
 
 - Implementati pool PostgreSQL/Drizzle, cinque tabelle auth e migrazioni SQL esplicite/idempotenti, senza creazione automatica di account iniziali.

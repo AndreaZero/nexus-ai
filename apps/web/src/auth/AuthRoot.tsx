@@ -6,6 +6,7 @@ import { useMotionPreference } from '../use-motion-preference.js';
 import { useAccount } from './AuthProvider.js';
 import { accountErrorMessage, desktopQuery, getAuthClient } from './client.js';
 import { accountUrl, completedAccountUrl, isDesktopJourney } from './configuration.js';
+import { transferDesktopSession } from './desktop-transfer.js';
 import './auth.css';
 
 const headings: Record<string, { title: string; description: string }> = {
@@ -167,10 +168,10 @@ function DesktopContinuation() {
     try {
       const client = getAuthClient();
       // This official endpoint binds the existing browser session to the active desktop PKCE challenge.
-      const result = await client.electron.transferUser({ callbackURL: accountUrl('/desktop-auth') }, { query });
-      if (result.error) { setError(accountErrorMessage(result.error)); return; }
       if (redirectTimer.current) clearInterval(redirectTimer.current);
-      redirectTimer.current = client.ensureElectronRedirect({ timeout: 4_000, interval: 200 });
+      const result = await transferDesktopSession(client, query);
+      if (result.error) { setError(accountErrorMessage(result.error)); return; }
+      redirectTimer.current = result.redirectTimer;
       setOpened(true);
     } catch { setError(accountErrorMessage(null)); }
     finally { setPending(false); }

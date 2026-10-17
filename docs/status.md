@@ -2,6 +2,12 @@
 
 Aggiornato: **17 ottobre 2026**. **T03 implementato e consegnato per verifica Windows del maintainer** ([issue #3](https://github.com/AndreaZero/nexus-ai/issues/3)). T01 e T02 già accettati su Windows. T04 non avviato.
 
+## Correzione dal feedback Windows
+
+Il maintainer segnala desktop fermo su “Complete sign-in” anche dopo **Continue in Nexus AI**. Individuato un conflitto nel browser: `transferUser` riceveva un `callbackURL` web, quindi il redirect plugin predefinito di Better Auth ricaricava `/desktop-auth` prima che il timer Electron potesse aprire il protocollo OS. La richiesta ora omette quel redirect e lascia consumare il cookie al proxy ufficiale. Nessuna modifica a credenziali, account o confini IPC.
+
+Test di regressione con i client/plugin ufficiali 1.7.10: nessuna navigazione HTTP durante il trasferimento, invocazione del callback OS e consumo del cookie temporaneo. Test, lint e build web passati. La pagina corretta richiede il riavvio del backend compilato, che registra gli asset statici all'avvio, e una nuova richiesta desktop; rientro OS manuale ancora da confermare. Correzione del coordinatore limitata al browser, nessun fronte parallelo necessario.
+
 ## Risultato T03
 
 - PostgreSQL locale predisposto dal maintainer: server **18.1**, DB/ruolo `nexus_ai_dev`, UTF8 e ownership `public` corretta; login reale verificato senza mostrare credenziali.
