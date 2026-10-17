@@ -121,3 +121,7 @@ Il controllo accetta solo driver e dispositivo associati, sessione e turno corre
 `private` resta sul dispositivo; `team` è condiviso con sviluppatori autorizzati; `client` è la proiezione esplicitamente pubblicata per clienti/viewer assegnati. Il server non trasforma un blob interno in client solo cambiandone il flag: costruisce un payload consentito. Non inviare prima un evento grezzo pensando di ripulirlo nel renderer.
 
 Prima dell'upload escludere auth store, env, chiavi, path home e output riconosciuto come sensibile; l'utente sceglie contesto e livello di condivisione. Il filtraggio automatico non garantisce la rimozione di ogni segreto: servono selezione esplicita dei dati, preview di pubblicazione e policy per progetto. Log operativi usano ID e stati, non token, prompt e dump dei processi. Markdown, link, allegati e output terminale sono input non affidabili e non acquisiscono privilegi tramite rendering.
+
+## T12 — Git e GitHub
+
+packages/contracts/src/repositories.ts fissa git.request (solo main) e repositories.request (server/bridge), snapshotId/fileIds opachi, autore/commit espliciti e scope progetto/repository. resolveActivity legge la provenienza autorizzata dei link feed; createPull/review usano requestId durevole e headSha. Endpoint main-only credential non è esportato nel bridge; webhook raw separato. Nuovo repository.changed invalida WS senza esporre contenuti. Contratti strict, risposte correlate e unknown separato da zero; [workflow e limiti](repositories.md).

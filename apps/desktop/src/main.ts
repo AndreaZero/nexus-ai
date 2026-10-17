@@ -15,6 +15,8 @@ import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
 import { DesktopCodex, codexRuntimePath } from './codex.js';
 import { DesktopContext } from './context.js';
 import { DesktopWorkspace } from './workspace.js';
+import { DesktopGit } from './git.js';
+import { gitRequestSchema, gitResponseSchema, repositoriesRequestSchema, repositoriesResponseSchema } from '@nexus-ai/contracts';
 import { DesktopRealtime } from './realtime.js';
 import { DesktopTelemetry } from './telemetry.js';
 import { EncryptedAuthStorage } from './auth-storage.js';
@@ -42,6 +44,7 @@ let desktopAuth: DesktopAuth | undefined;
 let desktopCodex: DesktopCodex | undefined;
 let desktopContext: DesktopContext | undefined;
 let desktopWorkspace: DesktopWorkspace | undefined;
+let desktopGit: DesktopGit | undefined;
 let desktopRealtime: DesktopRealtime | undefined;
 let desktopTelemetry: DesktopTelemetry | undefined;
 
@@ -166,6 +169,7 @@ async function initialize() {
     desktopCodex?.nexusStateChanged(state);
     desktopContext?.nexusStateChanged(state);
     desktopWorkspace?.nexusStateChanged(state);
+    desktopGit?.nexusStateChanged(state);
     const window = mainWindow;
     if (window && !window.isDestroyed() && isTrustedIpcSender({
       senderId: window.webContents.id,
@@ -208,6 +212,15 @@ async function initialize() {
   });
 
   desktopWorkspace = new DesktopWorkspace({ auth: desktopAuth, bindings: bindingStorage, openExternal: url => shell.openExternal(url) });
+  desktopGit=new DesktopGit({authorize:(projectId,repositoryId)=>desktopAuth!.authorizeGit(projectId,repositoryId),credential:(projectId,repositoryId)=>desktopAuth!.gitCredential(projectId,repositoryId),bindings:bindingStorage,workspace:desktopWorkspace});
+  ipcMain.handle(DESKTOP_IPC.gitRequest,(event,...args:unknown[])=>{
+    requireTrustedCaller(event,args,1);
+    return desktopGit!.request(gitRequestSchema.parse(args[0])).then(result=>gitResponseSchema.parse(result));
+  });
+  ipcMain.handle(DESKTOP_IPC.repositoriesRequest,(event,...args:unknown[])=>{
+    requireTrustedCaller(event,args,1);
+    return desktopAuth!.repositoriesRequest(repositoriesRequestSchema.parse(args[0])).then(result=>repositoriesResponseSchema.parse(result));
+  });
   ipcMain.handle(DESKTOP_IPC.workspaceRequest, (event, ...args: unknown[]) => {
     requireTrustedCaller(event, args, 1);
     return desktopWorkspace!.request(workspaceRequestSchema.parse(args[0])).then(result => workspaceResponseSchema.parse(result));
@@ -388,6 +401,9 @@ async function initialize() {
         overviewKeys: Object.keys(window.nexusDesktop.overview), telemetryKeys: Object.keys(window.nexusDesktop.telemetry),
         pulseKeys: Object.keys(window.nexusDesktop.pulse),
         workKeys:Object.keys(window.nexusDesktop.work),
+        gitKeys:Object.keys(window.nexusDesktop.git), repositoriesKeys:Object.keys(window.nexusDesktop.repositories),
+        gitState:await window.nexusDesktop.git.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
+        repositoriesState:await window.nexusDesktop.repositories.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',page:1}),
         workState:await window.nexusDesktop.work.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',kind:'task'}),
         pulseState: await window.nexusDesktop.pulse.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
         overviewState: await window.nexusDesktop.overview.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74'}),
@@ -409,6 +425,8 @@ async function initialize() {
           window.nexusDesktop.pulse.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',cookie:'arbitrary'}),
           window.nexusDesktop.work.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',kind:'task',cookie:'arbitrary'}),
           window.nexusDesktop.work.download({projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',id:'02f71f6e-69b1-49b7-b6d8-df89167070b9',path:'C:/arbitrary'}),
+        window.nexusDesktop.git.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',command:'arbitrary'}),
+          window.nexusDesktop.repositories.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',page:1,token:'arbitrary'}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -430,10 +448,13 @@ async function initialize() {
       const telemetryState = telemetryResponseSchema.parse(check['telemetryState']);
       const workState = workResponseSchema.parse(check['workState']);
       const pulseState = pulseResponseSchema.parse(check['pulseState']);
+      const gitState=gitResponseSchema.parse(check['gitState']);const repositoriesState=repositoriesResponseSchema.parse(check['repositoriesState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","work","codex","auth"]' ||
+          JSON.stringify(check['gitKeys']) !== '["request"]' || gitState.ok || !['auth_required','forbidden','unavailable'].includes(gitState.code) ||
+          JSON.stringify(check['repositoriesKeys']) !== '["request"]' || repositoriesState.ok || !['auth_required','unavailable'].includes(repositoriesState.code) ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","work","git","repositories","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           JSON.stringify(check['overviewKeys']) !== '["request"]' || overviewState.ok || !['auth_required', 'unavailable'].includes(overviewState.code) ||
           JSON.stringify(check['telemetryKeys']) !== '["request"]' || telemetryState.ok || !['auth_required', 'unavailable'].includes(telemetryState.code) ||
           JSON.stringify(check['workKeys']) !== '["request","download"]' || workState.ok || !['auth_required','unavailable'].includes(workState.code) ||

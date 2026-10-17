@@ -110,3 +110,5 @@ Il pianeta e le particelle della sidebar sono presenti anche qui. Nel hero la wa
 | Search/notifications | Ricerca autorizzata con scorciatoia, centro notifiche e stato letto |
 
 Non esistono reference per questi flussi: usare componenti, palette e densità già definite, senza spacciare una scelta progettuale per dettaglio della PNG.
+
+**T12 implementato:** Code/Repos e dialoghi Git/PR/review riusano surface, tab, bordi, densità e focus delle reference; diff split/unified con numeri e colori derivato da Git/patch reali. Repository Context della sessione mantiene la composizione reference2 e apre Code. Feed reference1/3 risolve commit/PR/review autorizzati; summary mostra commit osservati UTC, mai una metrica decorativa. Pianeta/wave/particelle restano T02/T10; nessuna PNG dedicata alle nuove pagine. [Workflow](../repositories.md).

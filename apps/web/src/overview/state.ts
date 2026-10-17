@@ -15,6 +15,7 @@ export function activityChanged(current: OverviewActivity[], next: OverviewActiv
   return current.slice(0, next.length).map(item => item.id).join(':') !== next.map(item => item.id).join(':');
 }
 export function activityHref(item: Pick<OverviewActivity, 'target'>) {
+  if (item.target.kind === 'repository_activity') return `#/code?activity=${encodeURIComponent(item.target.id)}`;
   const workKinds: Record<string, string> = { work_task: 'task', work_milestone: 'milestone', work_document: 'document', work_update: 'update', work_deliverable: 'deliverable', work_feedback: 'feedback', work_comment: 'comment' };
   const kind = workKinds[item.target.kind];
   if (kind) return `#/${kind === 'task' || kind === 'milestone' ? 'tasks' : 'docs'}?kind=${kind}&id=${encodeURIComponent(item.target.id)}`;

@@ -43,6 +43,13 @@
       "when": 1792270800000,
       "tag": "0005_project_work",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792274400000,
+      "tag": "0006_repositories",
+      "breakpoints": true
     }
   ]
 }

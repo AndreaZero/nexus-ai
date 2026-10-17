@@ -137,7 +137,7 @@ Completare composizione, wave/particelle e nodi, milestone, summary, active sess
 
 ### T11 — Task, roadmap, documenti e consegne cliente
 
-**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #11](https://github.com/AndreaZero/nexus-ai/issues/11). Fronti task/roadmap, contenuti e renderer integrati; migrazione0005/contratti/desktop/QA coordinati. [Fonti e prova](work.md), evidenze in [status.md](status.md). T12 non avviato.
+**Stato:** [build Windows T11 confermata dal maintainer — issue #11 chiusa](https://github.com/AndreaZero/nexus-ai/issues/11). Fronti e prove in [work.md](work.md), evidenze in [status.md](status.md); via esplicito a T12.
 
 **Dipendenze:** T10. **Ownership:** task/roadmap; documenti/outcomes; backend deliverable/feedback. Root schema e migrazioni serializzati.
 
@@ -146,6 +146,8 @@ Completare CRUD task/milestone, assegnazioni e commenti, board estesa, progressi
 **Uscita:** task → sessione → risultato → aggiornamento → deliverable → feedback/approvazione attraversabile con ruoli corretti. **Build utente:** completare questo percorso con account sviluppatore e cliente.
 
 ### T12 — Git, GitHub e repository
+
+**Stato:** [implementato e consegnato, in attesa di verifica utente — issue #12](https://github.com/AndreaZero/nexus-ai/issues/12). Guida/configurazione in [repositories.md](repositories.md), prove distinte in [status.md](status.md).
 
 **Dipendenze:** T11; basi Git locali da T05–T07. **Ownership:** desktop Git; server integrazione GitHub; renderer code/repos.
 

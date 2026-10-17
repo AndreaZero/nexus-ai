@@ -6,6 +6,7 @@ import { realtimeRequestSchema, realtimeResponseSchema, realtimeStateSchema, typ
 import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, telemetryResponseSchema, type OverviewRequest, type TelemetryRequest } from '@nexus-ai/contracts';
 import { pulseRequestSchema, pulseResponseSchema, type PulseRequest } from '@nexus-ai/contracts';
 import { workRequestSchema, workResponseSchema, workDownloadRequestSchema, type WorkRequest, type WorkDownloadRequest } from '@nexus-ai/contracts';
+import { gitRequestSchema, gitResponseSchema, repositoriesRequestSchema, repositoriesResponseSchema, type GitRequest, type RepositoriesRequest } from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -57,6 +58,12 @@ const bridge: DesktopBridge = Object.freeze({
   work: Object.freeze({
     async request(input: WorkRequest) { return workResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.workRequest, workRequestSchema.parse(input))); },
     async download(input: WorkDownloadRequest) { return workResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.workDownload, workDownloadRequestSchema.parse(input))); },
+  }),
+  git: Object.freeze({
+    async request(input:GitRequest){return gitResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.gitRequest,gitRequestSchema.parse(input)));},
+  }),
+  repositories: Object.freeze({
+    async request(input:RepositoriesRequest){return repositoriesResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.repositoriesRequest,repositoriesRequestSchema.parse(input)));},
   }),
   codex: Object.freeze({
     async request(input: CodexRequest) {

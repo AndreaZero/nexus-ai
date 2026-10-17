@@ -8,6 +8,7 @@ import type { RealtimeRequest, RealtimeResponse, RealtimeState } from './realtim
 import type { OverviewRequest, OverviewResponse, TelemetryRequest, TelemetryResponse } from './overview.js';
 import type { PulseRequest, PulseResponse } from './pulse.js';
 import type { WorkRequest, WorkResponse, WorkDownloadRequest } from './work.js';
+import type { GitRequest, GitResponse, RepositoriesRequest, RepositoriesResponse } from './repositories.js';
 export * from './collaboration.js';
 export * from './codex.js';
 export * from './context.js';
@@ -17,6 +18,7 @@ export * from './realtime.js';
 export * from './overview.js';
 export * from './pulse.js';
 export * from './work.js';
+export * from './repositories.js';
 
 export const DESKTOP_IPC = {
   getInfo: 'nexus:desktop:get-info',
@@ -39,6 +41,8 @@ export const DESKTOP_IPC = {
   pulseRequest: 'nexus:pulse:request',
   workRequest: 'nexus:work:request',
   workDownload: 'nexus:work:download',
+  gitRequest: 'nexus:git:request',
+  repositoriesRequest: 'nexus:repositories:request',
 } as const;
 
 export const nexusUserSchema = z.object({
@@ -84,6 +88,8 @@ export interface DesktopBridge {
   readonly telemetry: { request(request: TelemetryRequest): Promise<TelemetryResponse> };
   readonly pulse: { request(request: PulseRequest): Promise<PulseResponse> };
   readonly work: { request(request: WorkRequest): Promise<WorkResponse>; download(request: WorkDownloadRequest): Promise<WorkResponse> };
+  readonly git: { request(request: GitRequest): Promise<GitResponse> };
+  readonly repositories: { request(request: RepositoriesRequest): Promise<RepositoriesResponse> };
   readonly codex: {
     request(request: CodexRequest): Promise<CodexResponse>;
     onStateChanged(callback: (state: CodexState) => void): () => void;

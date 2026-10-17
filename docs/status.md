@@ -1,5 +1,44 @@
 # Stato operativo
 
+Aggiornato: **18 ottobre 2026**. **T12 consegnato, in attesa di verifica utente** — [issue12](https://github.com/AndreaZero/nexus-ai/issues/12). Build Windows T11 accettata, issue11 chiusa. T12 completa Git locale e GitHub (commit, branch, fetch/push espliciti, PR/review, sincronizzazione e webhook); T13–T16 restano successivi. Nessun cambio al runtime Codex o alle policy account.
+
+## Ownership T12 integrate/rilasciate e contratto
+
+| Agente | Obiettivo e percorsi scrivibili | Dipendenze / consegna |
+| --- | --- | --- |
+| /root/t12_git — integrato/rilasciato | DesktopGit, git-runner/safety/tests; apps/desktop/src/git*.ts e workspace.ts (solo esportare helper sicuri), non workspace-verification | packages/contracts/src/repositories.ts; classe DesktopGit.request; autorizzazione/credenziale iniettate dal coordinatore; Git reale isolato e nessun hook/filtro/credenziale ambientale |
+| /root/t12_github — integrato/rilasciato | Servizio GitHub/crypto/webhook/tests: apps/server/src/repositories*.ts e github*.ts | Contratti repositories.ts e DB 0006 definiti da root; factory createRepositoriesService(database, secret, reportError?), execute(actor,request), credential(actor,projectId,repositoryId), webhook(repositoryId,headers,rawBody); nessun app.ts/config/schema edit |
+| /root/t12_web — integrato/rilasciato | UI Code/Repos, PR/diff/review/sync: apps/web/src/** e apps/web/test/t12.test.mjs | Contratti stabili git/repositories, bridge disponibili da root; PNG1/2/3 e design docs obbligatori; no main/preload/manifest; handoff UI e controlli |
+| /root/t12_git — QA integrata/rilasciata | solo apps/desktop/src/repository-verification.ts e scripts/verify-repository-ui.mjs | Renderer/preload reali, Git isolato reale, API GitHub controllata dichiarata, catture Code/Repos/PR a1586 e960px; nessun edit UI |
+| Coordinatore — integrato | contratti/DB0006/schema, auth/main/preload/routes, proiezioni feed/Pulse, QA/docs/versioni/GitHub | Integrazione e verifica proporzionata; unico autore manifest/lockfile/migrazioni; agenti non installano, committano o pubblicano |
+
+Contratto fissato in packages/contracts/src/repositories.ts. Git locale solo desktop, snapshotId+fileIds opachi per selezione, autore esplicito e messaggio prima commit; branch/switch/fetch/pullFF/push separati, nessun force/reset/merge automatico. GitHub HTTPS github.com esclusivo, token fine-grained personale per account/repository cifrato AES-GCM nel server con chiave derivata dal segreto Nexus; nessun token nei DTO di risposta, storage renderer o log. Credential lease privata main su origine desktop distinta; browser escluso. API REST ufficiale GitHub per PR/review con SHA atteso e requestId/receipt contro duplicati. Webhook per repository configurato da owner con secret scelto, firma raw HMAC-SHA256 e delivery ID idempotente; metadati tecnici solo owner/developer, nessuna pubblicazione cliente implicita. DB0006: repository_connection(repository_id,user_id,token_cipher,login); repository_sync(repository_id,remote_url,snapshot JSONB); repository_webhook(repository_id,secret_cipher,configured_by); repository_delivery(repository_id,delivery_id,payload_hash); repository_receipt(repository_id,actor_id,request_id,payload_hash,response JSONB nullable); repository_activity(id,project_id,repository_id,actor_id,kind,title,url,sha nullable,pull_number nullable,external_key,occurred_at). Tutte con created_at/updated_at dove necessario; root consegna SQL prima esecuzione. appendRealtimeEvent nuovo repository.changed come invalidazione solo, feed proietta righe attualmente autorizzate. Verifica Git/HTTP/PG firma+replay+ruoli e UI effettiva; nessun dato reale modificato dai fixture.
+
+## Evidenze T12 e consegna
+
+| Ambito | Esito |
+| --- | --- |
+| Implementazione | Git locale snapshot/diff/history, commit selettivo con autore/indice temporaneo/CAS, create/switch branch, fetch/pullFF/push confermati. Repos token per account, PR draft/preview/detail/patch/review sullo SHA, retry ricevute, webhook e feed tecnico. Nessun merge/force implicito |
+| Persistenza | Migrazione0006_repositories additiva applicata esplicitamente al solo nexus_ai_dev, **7 migrazioni**. Account/progetti/.env conservati, nessun seed o migrazione all'avvio. URL cambiato invalida dati/credenziali vecchi atomicamente |
+| Contratti/confini | Bridge git/repositories strict, UUID opachi e correlazione tenant/pagine. Lease credenziale solo main/origine desktop, non nel bridge; token AES-GCM/AAD per account/repository e segreto Nexus stabile. Rifiuto di helper/hook/filtri/config eseguibile e protocolli/redirect alternativi |
+| Statici/build | Frozen/offline install passato, typecheck pacchetti/app, ESLint e confini100file passati dopo due correzioni lint (campo destructuring inutilizzato e controllo NUL). pnpm build passato; renderer678kB minificato con warning chunk non bloccante. Nessuna dipendenza/lockfile/schema Codex aggiunti |
+| Test | **258/258**: bridge13,DB3,desktop100,server94,web46,confini2. Git/socket/rename eseguiti fuori sandbox Windows. Dopo hardening finale UI, web46/46 ed ESLint/typecheck mirati ripassati; nessuna ripetizione globale della suite |
+| Git reale | Nove test native Git, commit selettivo/unborn/deletion, staged/conflict/index lock preservati, snapshot/file/ref CAS, branch, revoca e filtri/hook/remote spoof rifiutati. Nessun token personale o Git network su repo del maintainer |
+| PG/HTTP | pnpm verify:repositories **5 scenari** con tre account temporanei verificati e PG/Mailpit/HTTP reali. Token cifrato/isolation/ruoli/Origin/lease, sync/feed/Pulse, ricevuta PR persa riconciliata senza POST duplicati, review SHA/replay, webhook raw firma/replay/collisione/repository errato, disconnect e URL replacement. Ultimo controllo include resolveActivity e coalescenza di aggiornamenti dello stesso commit |
+| UI/IPC | pnpm verify:repository-ui: **13 controlli**, renderer/preload/Git effettivi; commit e branch reali con autore/SHA confermati anche dal runner. DTO GitHub/account/realtime controllati dichiarati per connessione token write-only, anteprima PR e review SHA, offline/revoca/960px/reduced motion. Integrazione finale del KPI commit Pulse verificata nella stessa QA |
+| Reference | PNG1/2/3 aperte; catture Code/diff, Repos, commit, PRdetail/review, reduced motion e960px ispezionate. Palette/Card/Dialog/focus e pianeta/wave conservati. Code/Repos sono estensioni senza PNG dedicata, non una dichiarazione di identità pixel delle nuove viste |
+| Feed/Pulse | repository.changed invalidazione WS senza contenuti; metadata soltanto ai tecnici attuali. Feed coalescente per attività e link risolti per ID; commit osservati UTC da dati reali, unknown prima sync, Mine soltanto con login collegato univoco. Nessuna metrica GitHub pubblicata automaticamente ai clienti |
+| Segreti/pulizia | Scan sorgenti/build1637file:0valori privati. QA account/workspace rimossi, **1 account reale conservato**,7migrazioni. Servizi del maintainer non fermati. Nessun POST GitHub personale, token di altre app o inferenza automatica |
+| Desktop/package | Smoke sviluppo e package finale passati. NSIS Windows x64 **0.12.0**, release/win/Nexus-AI-0.12.0-win-x64.exe, **220080460 byte**, NotSigned. Ultimo package include KPI Pulse; smoke hidden finale di win-unpacked passato, nessuna installazione automatica |
+| Versioni | Root/desktop/web/server/contratti/DB **0.12.0**; UI0.3.0,bridge0.5.0,Codex0.159.2 invariati. Git regolare/no sparse/submodule/worktree, diff50file64KiB, scan10kfile/16MiBperfile/64MiBtotale. GitHub30commit/PRpagina e100file/reviewpagina; ricevute100k e attività1000/repository |
+| Limiti/prova personale | GitHub personale (token dedicato, push/PR/review reali) e webhook HTTPS esterno attendono la configurazione/prova del maintainer. Windows manuale T12 ancora atteso; macOS/Linux non buildati nativamente qui. T13–T16 non avviati |
+
+Guida e passi Windows in [repositories.md](repositories.md); rapporti/catture in .nexus/visual/t12. T12 consegnato per la verifica del maintainer; il task successivo T13 richiede il suo via.
+
+---
+
+## Archivio consegna T11 (accettata dal maintainer il18ottobre)
+
 Aggiornato: **18 ottobre 2026**. **T11 consegnato, in attesa di verifica utente** — [issue11](https://github.com/AndreaZero/nexus-ai/issues/11). Il maintainer conferma WindowsT10; issue10 accettata/chiusa. Fronti T11 integrati, prove automatiche separate dalla build personale. T12 non avviato; runtime0.159.2 e correzione429 invariati.
 
 ## Ownership T11 integrate/rilasciate e contratto
@@ -183,7 +222,7 @@ Procedura consegnata con T07: installazione/packaging e prova di Workspace write
 | `/root/t06_desktop` — integrato | `apps/desktop/src/codex*.ts`, nuovo `context*.ts`, test disgiunti | File scelti nativamente, testo sicuro entro root, draft cifrato, Git locale osservato, input Codex, piano/token reali |
 | `/root/t06_server` — integrato | nuovo `apps/server/src/sessions.ts`, `sessions.test.ts` | Pubblicazione esplicita di estratti e cronologia autorizzata, lettura task di progetto esistenti |
 | `/root/t06_web` — integrato | `apps/web/src/**`, test web | Reference 2, file chip/preview, bozza, piano, metriche reali, condivisione con preview e cronologia pubblicata |
-| Coordinatore | contratti/DB/migrazioni, auth/main/preload desktop, route server/logging, manifest, QA/docs | Contratti unici, integrazione, migrazione additiva e consegna |
+| Coordinatore — integrato | contratti/DB/migrazioni, auth/main/preload desktop, route server/logging, manifest, QA/docs | Contratti unici, integrazione, migrazione additiva e consegna |
 
 Contratti fissati in `packages/contracts/src/{context,sessions,codex}.ts`. Fino a 8 file UTF-8 da 64 KiB e 256 KiB complessivi, soltanto selezione nativa dentro il binding autorizzato e senza file segreti/binari. Bozza locale cifrata e nessun path arbitrario dal renderer. La chat resta locale finché l'utente seleziona e conferma un estratto in preview: max 20 messaggi, 128 Ki caratteri complessivi; audience team/client e versione attesa. Il backend non riceve thread provider/path locali/credenziali/attività grezze. Scrittura/approvazioni T07 e realtime T08; niente task CRUD/GitHub/deploy anticipati. Ogni fronte ricontrolla account/ruoli/binding e conserva la correzione auth 0.5.1.
 
@@ -244,7 +283,7 @@ Installer Windows x64 **0.5.1** generato, `release/win/Nexus-AI-0.5.1-win-x64.ex
 | Bridge protocollo | `/root/t05_bridge` | `packages/codex-bridge/src/**`, `test/**`, `tsconfig.json` |
 | Desktop | `/root/t05_desktop` | `apps/desktop/src/**`, `test/**` |
 | Renderer | `/root/t05_web` | `apps/web/src/**` |
-| Integrazione | Coordinatore | contratti, schema generato, manifest/lockfile, provision/build/packaging, licenze, documenti e QA |
+| Integrazione | Coordinatore — integrato | contratti, schema generato, manifest/lockfile, provision/build/packaging, licenze, documenti e QA |
 
 Skill `nexus-coordination` e `openai-docs` applicate. Contratti fissati prima degli edit; un writer per manifest/contratti/schema. Nessuna nuova chat utente, installazione concorrente o commit degli agenti. Tutti gli handoff integrati; nessuna delega residua.
 

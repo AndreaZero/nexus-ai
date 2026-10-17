@@ -72,6 +72,8 @@ async function snapshot(db: Client, actor: Actor, request: PulseRequest): Promis
     createdAt: row.created_at.toISOString(), updatedAt: row.updated_at.toISOString(),
   }));
   const dailyWork = await readWorkActivity(db, request.projectId, team, { start: day.day_start, end: day.day_end, actorId: request.scope === 'mine' ? actor.id : null });
+  // Observed GitHub commits, deduplicated by repository/external SHA; never extrapolate unobserved history.
+  const repositoryCounts=team?(await db.query<{commits:string;comments:string;available:boolean}>(`SELECT EXISTS(SELECT 1 FROM repository_sync s JOIN repository r ON r.id=s.repository_id WHERE r.project_id=$1 AND s.snapshot->'pages'->'1'->>'observedAt' IS NOT NULL) AS available,count(*) FILTER(WHERE kind='commit')::text AS commits,count(*) FILTER(WHERE kind='review')::text AS comments FROM repository_activity WHERE project_id=$1 AND occurred_at >= $2 AND occurred_at < $3 AND ($4::boolean OR actor_id=$5)`,[request.projectId,day.day_start,day.day_end,request.scope==='project',actor.id])).rows[0]:null;
   return { ok: true, snapshot: {
     projectId: request.projectId, audience: team ? 'team' : 'client', overview: overview.snapshot,
     milestones: milestones.map(row => {
@@ -80,7 +82,7 @@ async function snapshot(db: Client, actor: Actor, request: PulseRequest): Promis
         state: value.total > 0 && value.completed === value.total ? 'completed' : value.completed > 0 || value.inProgress > 0 ? 'in_progress' : 'planned', progress: value };
     }), milestoneCount, progress: progress(counts),
     summary: { dayStart: day.day_start.toISOString(), dayEnd: day.day_end.toISOString(), scope: request.scope,
-      tasksUpdated: Number(counts.tasks_updated), sharedUpdates: sharedUpdates + dailyWork.length, sharedSource: 'retained_entities', commits: null, comments: dailyWork.filter(item => item.category === 'comments').length, buildsDeploys: null },
+      tasksUpdated: Number(counts.tasks_updated), sharedUpdates: sharedUpdates + dailyWork.length, sharedSource: 'retained_entities', commits: repositoryCounts?.available?Number(repositoryCounts.commits):null, comments: dailyWork.filter(item => item.category === 'comments').length+Number(repositoryCounts?.comments??0), buildsDeploys: null },
     outcomes,
   } };
 }

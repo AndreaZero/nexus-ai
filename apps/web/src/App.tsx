@@ -31,6 +31,7 @@ import './realtime/realtime.css';
 import { OverviewProvider } from './overview/OverviewProvider.js';
 import './overview/overview.css';
 import { WorkPage } from './work/WorkPages.js';
+import { CodePage } from './repositories/CodePage.js';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -77,7 +78,8 @@ function ShellApp() {
     : route === 'team' ? <TeamPage />
     : route === 'tasks' ? <WorkPage section="tasks" />
     : route === 'docs' ? <WorkPage section="docs" />
-    : route === 'repos' || route === 'code' ? <RepositoryPage />
+    : route === 'repos' ? <RepositoryPage />
+    : route === 'code' ? <CodePage />
     : route === 'invitations' ? <InvitationPage />
     : route === 'pulse' || route === 'portal' ? <PulseView {...viewProps} />
     : route === 'session' ? <SessionView {...viewProps} />

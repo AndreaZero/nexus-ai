@@ -1,5 +1,6 @@
 import type { DatabaseBoundary } from '@nexus-ai/db';
 import { readWorkActivity } from './work-activity.js';
+import { readRepositoryActivity } from './repo-activity.js';
 import {
   overviewRequestSchema, overviewResponseSchema,
   type OverviewActivity, type OverviewRequest, type OverviewResponse, type ProjectTask, type LiveShare,
@@ -66,7 +67,7 @@ async function dispatch(db: Client, actor: Actor, request: OverviewRequest, team
   } else {
     readThrough = (await db.query<{ sequence: string }>('SELECT sequence::text FROM overview_read_cursor WHERE project_id = $1 AND user_id = $2', [request.projectId, actor.id])).rows[0]?.sequence ?? '0';
   }
-  const items = [...await activity(db, request.projectId, team), ...await readWorkActivity(db, request.projectId, team)]
+  const items = [...await activity(db, request.projectId, team), ...await readWorkActivity(db, request.projectId, team),...await readRepositoryActivity(db,request.projectId,team)]
     .sort((a, b) => BigInt(a.sequence) > BigInt(b.sequence) ? -1 : 1).slice(0, 1000);
   const otherActivity = items.filter(item => item.actor.id !== actor.id);
   const unreadCount = otherActivity.filter(item => BigInt(item.sequence) > BigInt(readThrough)).length;

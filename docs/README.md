@@ -25,6 +25,7 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [Realtime T08](realtime.md) | Presenza, selezione/consenso live, outbox, recupero, revoca e prova a due account |
 | [Overview T09](overview.md) | Reference3, feed/filtri/link, notifiche e lettura persistente, misure locali opt-in e prova |
 | [Lavoro e consegne T11](work.md) | Board/roadmap, documenti e aggiornamenti, allegati, revisioni/feedback/approvazioni cliente |
+| [Git/GitHub T12](repositories.md) | Commit/branch/sync, token cifrati, PR/review, webhook e prova manuale |
 | [Pulse T10](pulse.md) | Reference1, wave/milestone/progresso, summary UTC, outcomes e preview client con fonti reali |
 
 Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.

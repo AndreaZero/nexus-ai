@@ -105,3 +105,5 @@ Usare directory dati OS, selettori cartella nativi, keychain disponibile e apert
 Il backend deve essere distribuibile come immagine/container con PostgreSQL, migrazioni controllate, storage allegati configurabile, email e URL pubblici HTTPS/WSS. Un singolo processo è sufficiente inizialmente; il broadcast deve dichiarare questo limite. Prima di più repliche introdurre fanout condiviso e rate limit coerenti, senza perdere l'outbox durevole. Non è autorizzato ora alcun acquisto o deploy a pagamento.
 
 Backup/restore del DB, retention, log privi di contenuti sensibili e endpoint di health operativa fanno parte di T16. Le metriche dell'ambiente del progetto e quelle del server Nexus sono domini distinti.
+
+T12 aggiunge DesktopGit (argv fissi, snapshot CAS e commit selettivo con indice temporaneo) e il dominio server repositories/GitHub. Token fine-grained per account/repository cifrati AES-GCM con AAD, lease soltanto al main, API PR/review con ricevute durevoli prima del POST e riconciliazione; webhook raw firmati/idempotenti. Feed tecnico e Pulse osservati restano filtrati dal ruolo attuale. Contratti, limiti e fonti in [repositories.md](repositories.md).

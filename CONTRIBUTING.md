@@ -37,6 +37,8 @@ pnpm package:win
 | `pnpm verify:session-rate` | Regressione429, finestre reali del limiter con tempo QA virtuale e controlli auth Electron su backend proprio |
 | `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
 | `pnpm verify:sessions` | Tre account temporanei: estratti/audience, versioni/concorrenza, idempotenza, task visibili e revoca su HTTP/PostgreSQL/SMTP |
+| `pnpm verify:repositories` | GitHub/ruoli/ricevute/webhook con PG/HTTP reali e API remota controllata |
+| `pnpm verify:repository-ui` | Code/Repos/PR/review nel renderer/preload reali e Git temporaneo |
 | `pnpm verify:work` | Workflow T11 con PG/SMTP/HTTP/WS reali: ruoli, CAS/ricevute, revisione/decisione, allegati, visibilità e revoca |
 | `pnpm verify:pulse` | Snapshot Pulse, audience e progressi oltre100task, summary UTC/mine, outcomes e revoca con PG/SMTP/HTTP/WS reali |
 | `pnpm verify:workspace` | Electron/IPC/UI reale con Git e TAP Node isolati, trasporto provider controllato e OS opens intercettati; nessuna credenziale o inferenza personale |
@@ -49,11 +51,11 @@ Gli harness account richiedono PostgreSQL locale e Mailpit attivi. `verify:accou
 
 Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
 
-## Build e prova Windows T11
+## Build e prova Windows T12
 
-Versione T11: **0.11.0**, task/roadmap/documenti/consegne cliente; correzione429 conservata. Eseguire `pnpm install --frozen-lockfile`, poi `pnpm package:win`: installer `release/win/Nexus-AI-0.11.0-win-x64.exe` su host x64; programma senza installer `release/win/win-unpacked/Nexus AI.exe`. Prima della build eseguire esplicitamente `pnpm db:migrate`:0005 estende il DB esistente, già applicata su questa macchina senza cancellare dati. Nessun cambio credenziali o nuovo DB. Codex nativo0.159.2 incluso, senza CLI globale/WSL richiesti. Pacchetto unsigned, nessuna installazione automatica. Arrestare app e backend precedenti prima della build e riavviarli entrambi dopo: il vecchio processo server mantiene il limiter precedente finché non viene riavviato.
+Versione T12: **0.12.0**, Git/GitHub, commit/branch/sincronizzazione, PR e review. Correzione429 e Codex0.159.2 conservati. Chiudere app/server precedenti; eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`. Installer unsigned `release/win/Nexus-AI-0.12.0-win-x64.exe`; programma `release/win/win-unpacked/Nexus AI.exe`. La migrazione additiva0006 porta a sette migrazioni, già applicata esplicitamente al DB locale senza cancellare dati o cambiare credenziali. Nessuna installazione automatica.
 
-Per T11 seguire la [prova completa](docs/work.md#build-e-prova-windows): task → sessione → documento/update → deliverable/file → feedback/approvazione cliente → nuova revisione Pending. `pnpm verify:work` verifica il workflow T11 con fixture PG/HTTP/WS proprie; `pnpm verify:workspace` include board/Docs, pubblicazione/revisioni/feedback e Pulse/preview cliente/reduced motion/960px nel renderer/preload effettivi. Rapporti `.nexus/visual/t11/`.
+Per T12 seguire la [prova completa](docs/repositories.md): diff e commit selezionato, branch, token GitHub dedicato, fetch/push confermati, PR e review sulla SHA letta. `pnpm verify:repositories` usa PostgreSQL/Mailpit/HTTP reali e GitHub controllato; `pnpm verify:repository-ui` renderer/preload/Git reali con risposte GitHub controllate. Nessun token personale o POST GitHub esterno nei verifier; rapporti `.nexus/visual/t12/`. La [prova T11](docs/work.md) e i comandi precedenti restano disponibili. Mac/Linux richiedono build native sul relativo OS.
 
 Dopo la build tenere aperti:
 

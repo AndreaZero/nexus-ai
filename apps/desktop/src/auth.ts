@@ -11,6 +11,8 @@ import { requestSessions } from './sessions-transport.js';
 import { requestOverview } from './overview-transport.js';
 import { requestPulse } from './pulse-transport.js';
 import { requestWork } from './work-transport.js';
+import { requestRepositories, requestGitCredential } from './repository-transport.js';
+import type { RepositoriesRequest, RepositoriesResponse } from '@nexus-ai/contracts';
 import type { WorkRequest, WorkResponse } from '@nexus-ai/contracts';
 import { type PulseRequest, type PulseResponse } from '@nexus-ai/contracts';
 import { type OverviewRequest, type OverviewResponse } from '@nexus-ai/contracts';
@@ -258,6 +260,29 @@ export class DesktopAuth {
       return { ...signedOut(), status: 'unavailable', message: 'Revalidate your Nexus account before continuing.' };
     }
     return structuredClone(this.state);
+  }
+
+  async repositoriesRequest(request: RepositoriesRequest): Promise<RepositoriesResponse> {
+    const before=await this.realtimeSession();
+    if(!before)return{ok:false,code:'auth_required',message:'Reconnect your Nexus account.'};
+    const response=await requestRepositories(before.server,before.cookie,request);
+    if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie)return{ok:false,code:'auth_required',message:'Your Nexus account changed.'};
+    return response;
+  }
+
+  async authorizeGit(projectId:string,repositoryId:string):Promise<{userId:string;remoteUrl:string}|null>{
+    const before=await this.realtimeSession();if(!before)return null;
+    const value=await requestCollaboration(before.server,before.cookie,{operation:'getProject',projectId});
+    if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie||!value.ok||value.kind!=='project'||value.item.repository?.id!==repositoryId||!value.item.capabilities.viewRepository||!['owner','developer'].includes(value.item.role))return null;
+    return{userId:before.userId,remoteUrl:value.item.repository.remoteUrl};
+  }
+
+  async gitCredential(projectId:string,repositoryId:string):Promise<string|null>{
+    const before=await this.realtimeSession();if(!before)return null;
+    const lease=await requestGitCredential(before.server,before.cookie,projectId,repositoryId);
+    const allowed=await this.authorizeGit(projectId,repositoryId);
+    if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie||!lease||allowed?.remoteUrl!==lease.remoteUrl)return null;
+    return lease.token;
   }
 
   /** Main-process capability only; cookie is never part of DesktopBridge or renderer DTOs. */

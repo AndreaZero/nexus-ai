@@ -28,7 +28,7 @@ const inside = (root: string, target: string) => {
 const invalidFile = () => new WorkspaceError('invalid_request', 'This file is unavailable or excluded from local changes. Refresh the changes and choose an existing text file.');
 const decoder = () => new TextDecoder('utf-8', { fatal: true });
 
-function allowedRelative(relative: string): boolean {
+export function allowedRelative(relative: string): boolean {
   if (!relative || relative.length > 2000 || path.isAbsolute(relative) || relative.includes('\0') || relative.includes(':') || relative.includes('\\')) return false;
   const parts = relative.split('/');
   if (parts.some(part => !part || part === '.' || part === '..' || /[. ]$/.test(part))) return false;
@@ -42,7 +42,7 @@ function allowedRelative(relative: string): boolean {
   return !/\.(?:pem|key|p12|pfx|keystore|jks|ppk|kdbx|sqlite|sqlite3|db|exe|dll|so|dylib|zip|gz|png|jpe?g|webp|gif|pdf|woff2?|ttf|ico)$/i.test(name);
 }
 
-function decodeText(buffer: Buffer): string {
+export function decodeText(buffer: Buffer): string {
   const text = decoder().decode(buffer);
   if ([...text].some(character => { const code = character.charCodeAt(0); return (code < 32 && ![9, 10, 13].includes(code)) || code === 127; }) ||
       /-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----/.test(text)) throw invalidFile();
@@ -70,7 +70,7 @@ async function safePath(cwd: string, relative: string, allowMissing: boolean): P
   return canonical;
 }
 
-async function readWorkingText(cwd: string, relative: string): Promise<Buffer | null> {
+export async function readWorkingText(cwd: string, relative: string): Promise<Buffer | null> {
   const filename = await safePath(cwd, relative, true);
   if (!filename) return null;
   let file: Awaited<ReturnType<typeof open>> | undefined;

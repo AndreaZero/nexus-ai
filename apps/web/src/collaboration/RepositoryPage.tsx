@@ -5,12 +5,13 @@ import { Badge, Button, Card, EmptyPanel, Icon } from '@nexus-ai/ui';
 import { useCollaboration } from './CollaborationProvider.js';
 import { collaborationRequest, errorMessage, localBindingRequest } from './client.js';
 import { Feedback, WorkspaceGate } from './components.js';
+import { RepositoryConnections } from '../repositories/Connections.js';
 
 export function RepositoryPage() {
   const data = useCollaboration();
   return <div className="domain-layout"><WorkspaceGate>
     <div className="domain-page-heading"><div><span className="domain-eyebrow">PROJECT CONNECTION</span><h2>Repository</h2><p>Shared repository details, with a separate local folder on each device.</p></div></div>
-    {!data.project ? <Card title="Select a project"><EmptyPanel title="No project selected" description="Open Projects to create or select a project." /></Card> : !data.project.capabilities.viewRepository ? <Card title="Repository access"><EmptyPanel title="Repository access is restricted" description="Your project role does not include technical repository details. Contact a project owner if your role needs to change." icon={<Icon name="shield" />} /></Card> : <RepositoryDetails key={`${data.project.id}:${data.project.repository?.id ?? 'none'}:${data.project.updatedAt}`} project={data.project} />}
+    {!data.project ? <Card title="Select a project"><EmptyPanel title="No project selected" description="Open Projects to create or select a project." /></Card> : !data.project.capabilities.viewRepository ? <Card title="Repository access"><EmptyPanel title="Repository access is restricted" description="Your project role does not include technical repository details. Contact a project owner if your role needs to change." icon={<Icon name="shield" />} /></Card> : <><RepositoryDetails key={`${data.project.id}:${data.project.repository?.id ?? 'none'}:${data.project.updatedAt}`} project={data.project} /><RepositoryConnections /></>}
   </WorkspaceGate></div>;
 }
 

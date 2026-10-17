@@ -229,6 +229,11 @@ async function dispatch(db: Client, actor: Actor, request: CollaborationRequest,
     case 'acceptInvitation': return acceptInvitation(db, actor, request.token);
     case 'setRepository': {
       await requireManager(db, actor, { kind: 'project', projectId: request.projectId }, true);
+      const previous=(await db.query<{id:string;remote_url:string}>('SELECT id,remote_url FROM repository WHERE project_id=$1',[request.projectId])).rows[0];
+      if(previous&&previous.remote_url!==request.remoteUrl){
+        // Never carry another remote's credentials, receipts, webhook or feed into a replacement URL.
+        for(const table of ['repository_connection','repository_sync','repository_webhook','repository_delivery','repository_receipt','repository_activity'])await db.query(`DELETE FROM ${table} WHERE repository_id=$1`,[previous.id]);
+      }
       const row = (await db.query<{ id: string; project_id: string; remote_url: string; default_branch: string }>(`INSERT INTO repository (id, project_id, remote_url, default_branch)
         VALUES ($1, $2, $3, $4) ON CONFLICT (project_id) DO UPDATE SET remote_url = EXCLUDED.remote_url, default_branch = EXCLUDED.default_branch RETURNING *`,
       [randomUUID(), request.projectId, request.remoteUrl, request.defaultBranch])).rows[0];

@@ -1,5 +1,11 @@
 # Changelog
 
+### 2026-10-18 — T12: Git, GitHub, PR e review
+
+- Accettata la build Windows T11; integrati tre fronti paralleli Git desktop, GitHub server e UI. Code con diff/history, commit selettivo autore/messaggio/preview, branch e fetch/pullFF/push espliciti, nessuna sovrascrittura di staged/conflict o force implicito.
+- Repos con token fine-grained dedicato cifrato per account/repository, PR draft/preview/detail/patch/review legata allo SHA. Ricevuta durevole prima del POST e riconciliazione per esiti incerti; webhook raw HMAC/delivery idempotente e isolamento ruoli/tenant. Feed tecnico con link veri e commit osservati UTC in Pulse, proiezione cliente filtrata.
+- Shell/palette/pianeta/wave preservati; nuove pagine/dialoghi coerenti con le primitive delle reference. Offline/revoca nascondono dati tecnici, input token svuotato e nessuna lettura di credenziali esterne.
+- Versione0.12.0, migrazione additiva0006 (7totali), nessuna nuova dipendenza o modifica al runtime Codex0.159.2/auth0.9.1. Passati258test,5scenari PG/HTTP e QA renderer/IPC/Git, build e smoke Windows; dettagli del package finale e limiti in docs/status.md. Guida docs/repositories.md; prova personale Windows e native Mac/Linux ancora distinte. T13–T16 restano successivi.
 ### 2026-10-18 — T11: task, roadmap e consegne cliente
 
 - Ricevuta conferma WindowsT10; integrati fronti task/roadmap, contenuti e UI con multiagenti. Board CRUD/CAS, assegnazioni/commenti, milestone/progressi da task visibili e link sessione pubblicata.

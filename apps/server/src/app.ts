@@ -22,6 +22,8 @@ import { createOverviewService } from './overview.js';
 import { createPulseService } from './pulse.js';
 import { createWorkService } from './work.js';
 import { workRequestSchema, workResponseSchema } from '@nexus-ai/contracts';
+import { repositoriesRequestSchema, repositoriesResponseSchema, repositoryScopeSchema } from '@nexus-ai/contracts';
+import { createRepositoriesService } from './repositories.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -58,6 +60,8 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const pulseBudget = createRealtimeBudget();
   const workBudget = createRealtimeBudget();
   const work = createWorkService(database, error => app.log.error({event: 'work.failure', ...errorDiagnostic(error)}));
+  const repositories=createRepositoriesService(database,config.auth.secret,error=>app.log.error({event:'repositories.failure',...errorDiagnostic(error)}));
+  const repositoriesBudget=createRealtimeBudget();
   const overview = createOverviewService(database, error => app.log.error({ event: 'overview.failure', ...errorDiagnostic(error) }));
   const pulse = createPulseService(database, error => app.log.error({ event: 'pulse.failure', ...errorDiagnostic(error) }));
   const realtimeSocket = installRealtimeSocket(app, {
@@ -80,7 +84,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   });
 
   app.setErrorHandler((error, request, reply) => {
-    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview', '/api/pulse', '/api/work'].includes(request.url.split('?')[0] ?? '');
+    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview', '/api/pulse', '/api/work', '/api/repositories','/api/repositories/credential'].includes(request.url.split('?')[0] ?? '');
     if (isCollaboration) { reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer'); }
     if (error instanceof OriginNotAllowedError) {
       if (isCollaboration) return reply.code(403).send({ ok: false, code: 'forbidden', message: 'Origine della richiesta non consentita.' });
@@ -102,7 +106,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   await app.register(cors, {
     delegator(request, callback) {
       const requestPath = request.url.split('?')[0];
-      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime' || requestPath === '/api/overview' || requestPath === '/api/pulse';
+      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime' || requestPath === '/api/overview' || requestPath === '/api/pulse' || requestPath === '/api/work' || requestPath === '/api/repositories' || requestPath === '/api/repositories/credential';
       const origin = request.headers.origin;
       const allowed = isAuth
         ? origin === config.auth.webURL || origin === new URL(config.auth.baseURL).origin || origin === DESKTOP_AUTH_ORIGIN
@@ -188,7 +192,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     return healthResponseSchema.parse({
       schemaVersion: 1,
       service: 'nexus-server',
-      version: '0.4.0',
+      version: '0.12.0',
       status: 'ok',
       database: await database.check(),
       codex: 'local_only',
@@ -310,6 +314,54 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
       app.log.error({ event: 'work.failure', requestId: request.id, operation: input.data.operation, ...errorDiagnostic(error) });
       return fail(503, 'unavailable', 'Project work temporaneamente non disponibile.');
     }
+  });
+
+  for(const endpoint of ['/api/repositories','/api/repositories/credential'] as const){
+    app.post(endpoint,{bodyLimit:64*1024},async(request,reply)=>{
+      reply.header('Cache-Control','no-store');reply.header('Referrer-Policy','no-referrer');
+      const fail=(status:number,code:'invalid_request'|'forbidden'|'auth_required'|'unavailable'|'rate_limited',message:string)=>reply.code(status).send({ok:false,code,message});
+      const budget=repositoriesBudget.consume(`ip:${request.ip}`,300);
+      if(!budget.allowed){reply.header('Retry-After',String(budget.retryAfterSeconds));return fail(429,'rate_limited','Too many repository requests. Retry shortly.');}
+      const origins=endpoint.endsWith('/credential')?[DESKTOP_AUTH_ORIGIN]:realtimeOrigins;
+      if(!origins.includes(request.headers.origin??''))return fail(403,'forbidden','Request origin unavailable.');
+      if(request.headers['content-type']?.split(';')[0]?.trim().toLowerCase()!=='application/json')return fail(400,'invalid_request','JSON required.');
+      const parsed=endpoint.endsWith('/credential')?repositoryScopeSchema.safeParse(request.body):repositoriesRequestSchema.safeParse(request.body);
+      if(!parsed.success)return fail(400,'invalid_request','Invalid repository request.');
+      if(!auth)return fail(503,'unavailable','Account service unavailable.');
+      try{
+        const headers=fromNodeHeaders(request.headers);headers.set(AUTH_CLIENT_IP_HEADER,request.ip);
+        for(const name of ['x-forwarded-for','x-real-ip','forwarded'])headers.delete(name);
+        const current=await auth.api.getSession({headers,query:{disableCookieCache:true},returnHeaders:true});
+        const cookies=current.headers.getSetCookie();if(cookies.length)reply.header('Set-Cookie',cookies);
+        const account=current.response;
+        if(!account?.user.emailVerified||account.session.expiresAt.getTime()<=Date.now())return fail(401,'auth_required','Sign in with a verified Nexus account.');
+        const accountBudget=repositoriesBudget.consume(`account:${account.user.id}`,180);
+        if(!accountBudget.allowed){reply.header('Retry-After',String(accountBudget.retryAfterSeconds));return fail(429,'rate_limited','Too many repository requests. Retry shortly.');}
+        const actor={id:account.user.id,email:account.user.email};
+        if(endpoint.endsWith('/credential')){
+          const value=await repositories.credential(actor,parsed.data.projectId,parsed.data.repositoryId);
+          return value?reply.send(value):fail(403,'forbidden','Reconnect GitHub for this repository.');
+        }
+        const value=repositoriesResponseSchema.parse(await repositories.execute(actor,repositoriesRequestSchema.parse(parsed.data)));
+        if(!value.ok)app.log.warn({event:'repositories.failure',requestId:request.id,outcome:value.code});
+        return reply.send(value);
+      }catch(error){app.log.error({event:'repositories.failure',requestId:request.id,...errorDiagnostic(error)});return fail(503,'unavailable','Repository service unavailable.');}
+    });
+  }
+  // Encapsulated parser preserves the exact bytes covered by GitHub's signature.
+  await app.register(async hook=>{
+    hook.removeContentTypeParser('application/json');
+    hook.addContentTypeParser('application/json',{parseAs:'buffer'},(_request,body,done)=>done(null,body));
+    hook.post<{Params:{repositoryId:string}}>('/api/repositories/webhook/:repositoryId',{bodyLimit:1024*1024},async(request,reply)=>{
+      reply.header('Cache-Control','no-store');
+      const budget=repositoriesBudget.consume(`webhook:${request.ip}`,300);
+      if(!budget.allowed){reply.header('Retry-After',String(budget.retryAfterSeconds));return reply.code(429).send({ok:false});}
+      if(!repositoryScopeSchema.shape.repositoryId.safeParse(request.params.repositoryId).success||!Buffer.isBuffer(request.body))return reply.code(400).send({ok:false});
+      const header=(name:string)=>typeof request.headers[name]==='string'?request.headers[name] as string:'';
+      const result=await repositories.webhook(request.params.repositoryId,{delivery:header('x-github-delivery'),event:header('x-github-event'),signature:header('x-hub-signature-256')},request.body);
+      if(result.status>=400)app.log.warn({event:'repositories.failure',requestId:request.id,outcome:'invalid_request'});
+      return reply.code(result.status).send({ok:result.status<400});
+    });
   });
 
   const unavailable = { error: 'auth_unavailable', message: 'Accesso non disponibile. Verificare database, configurazione account e servizio email.' };

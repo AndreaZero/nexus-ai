@@ -33,6 +33,8 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 
 | D26 | Adottata in T11 | Task/milestone/documenti CAS e ricevute UUID/hash persistenti; pubblicazione update e revisioni deliverable esplicita. Decisione cliente singola sulla revisione corrente Pending, separata da esecuzione Codex; storico immutable e audience corrente sul parent. Allegati scelti max1MiB/5perrevisione/20MiBprogetto nel DB con hash, recupero upload inutilizzati e download main con scelta destinazione; nessuno storage esterno obbligatorio |
 
+| D27 | Adottata in T12 | Git locale con operazioni esplicite, anteprima CAS/indice temporaneo e nessuna esecuzione di hook/filtri/helper. GitHub tramite token fine-grained per repository/account cifrato dal server; PR/review con ricevuta durevole e riconciliazione dei POST incerti. Webhook firma raw/delivery idempotente, metadati tecnici solo ai ruoli correnti; PAT scelto senza configurazione OAuth/App obbligatoria. Limiti e rotazione chiave in repositories.md |
+
 ## Da concretizzare al momento opportuno
 
 **T06:** bozza/selezione restano cifrate sul dispositivo; il backend persiste solo messaggi scelti con preview e conferma di audience. Nessuna promozione automatica di un thread completo a contenuto cliente. Osservazioni Git locali separate dall'autenticazione/API GitHub T12; condivisione pull separata dal realtime T08. Limiti e prova in [session.md](session.md).
@@ -41,6 +43,6 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 - **T05 implementato, prova personale pendente:** runtime 0.159.2 e isolamento fissati. Verificare login/keyring/inferenza su Windows e in seguito su Mac/Linux; T07 completa le approvazioni interattive e scritture sullo stesso protocollo.
 - **T03/T16:** URL server, servizio email per verifica/reset/inviti e provider PostgreSQL/object storage. Preparare configurazione self-host senza impegnare servizi a pagamento non richiesti.
 - **T03 accettato su Windows:** [account e prove](auth.md), login/rientro OS confermati dal maintainer. T04 aggiunge [collaborazione](collaboration.md) sullo stesso DB; prove native Mac/Linux restano distinte.
-- **T12/T16:** account GitHub App/OAuth, segreti, domini, firma e notarizzazione delle build richiedono credenziali/configurazioni reali del maintainer quando si arriva al relativo task.
+- **T12/T16:** GitHub richiede il token fine-grained dedicato inserito in Repos; webhook esterni richiedono dominio/server HTTPS. Firma e notarizzazione delle build richiedono credenziali del maintainer in T16.
 
 Le dipendenze esterne vengono segnalate per il task interessato senza sospendere il resto dello sviluppo indipendente. T01 è stato avviato al via esplicito del maintainer e consegnato per la sua verifica.
