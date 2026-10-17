@@ -1,6 +1,6 @@
 # Stato operativo
 
-Aggiornato: **17 ottobre 2026**. **T02 consegnato, in attesa di verifica visiva del maintainer** ([issue #2](https://github.com/AndreaZero/nexus-ai/issues/2)). T01 è accettato su Windows: il maintainer conferma che la build funziona ([issue #1 chiusa](https://github.com/AndreaZero/nexus-ai/issues/1)). T03 non avviato.
+Aggiornato: **17 ottobre 2026**. **T03 avviato: preparazione PostgreSQL e contratti auth**, multiagenti autorizzati. **T02 accettato su Windows**, build funzionante e UI approvata dal maintainer ([issue #2](https://github.com/AndreaZero/nexus-ai/issues/2)). T01 già accettato.
 
 ## Risultato T02
 
@@ -17,12 +17,15 @@ Aggiornato: **17 ottobre 2026**. **T02 consegnato, in attesa di verifica visiva 
 | --- | --- | --- | --- |
 | T00 | Completato | Coordinatore | Documenti, repository MIT pubblico e skill versionata |
 | T01 | Accettato Windows | Coordinatore + desktop/server/renderer | Ownership concluse; base, sicurezza, health e packaging |
-| T02 | Consegnato | Coordinatore | Routing, impostazioni, font/manifest/lockfile, icone native, QA, docs e pubblicazione |
+| T02 | Accettato Windows | Coordinatore | Build funzionante e UI approvata dal maintainer |
 | T02 UI | Integrato, ownership rilasciata | `/root/t02_ui` | `packages/ui/src/**` escluso `effects/**`; token, primitive, logo e icone |
 | T02 effetti | Integrato, ownership rilasciata | `/root/t02_effects` | `packages/ui/src/effects/**`; scene e lifecycle canvas |
 | T02 layout | Integrato, ownership rilasciata | `/root/t02_layout` | `apps/web/src/shell/**`, `views/**`, `app.css`; griglie e correzioni misurate |
+| T03 preparazione DB | Integrato, ownership rilasciata | `/root/t03_postgresql` | `docs/setup/postgresql.md`, `scripts/postgresql/prepare-local.psql`; istruzioni e SQL che eseguirà il maintainer |
+| T03 contratti auth | Integrato, ownership rilasciata | `/root/t03_auth_design` | `docs/auth.md`; libreria/schema/flussi browser/desktop, versioni esatte da fissare prima del codice |
+| T03 integrazione | Preparazione consegnata | Coordinatore | Stato/piano/decisioni, `.env.example`, GitHub, contratto configurazione e revisione comandi |
 
-Tre fronti paralleli con percorsi disgiunti; un solo autore per dipendenze/config condivise e integrazione. T03–T16 non avviati. Skill usata: `.agents/skills/nexus-coordination/SKILL.md`.
+Due fronti paralleli con percorsi disgiunti; nessun agente installa o crea PostgreSQL e nessuna migrazione è applicata. T04–T16 non avviati. Skill usata: `.agents/skills/nexus-coordination/SKILL.md`.
 
 ## Evidenze tecniche
 
@@ -36,16 +39,16 @@ Tre fronti paralleli con percorsi disgiunti; un solo autore per dipendenze/confi
 | Confronto PNG | Eseguito sulle tre viste; corretto wrapping sidebar e scroll Pulse. Catture in `docs/design/captures/`; limiti in `design/t02-review.md` |
 | Packaging Windows | `pnpm package:win` passato; installer `release/win/Nexus-AI-0.2.0-win-x64.exe`, 113449222 byte, unsigned; non installato automaticamente |
 | Eseguibile Windows impacchettato | Smoke exit 0: renderer montato, bridge validato, CSP e Node non disponibile. Log GPU alla chiusura del processo nascosto, senza errore dello smoke |
-| Prova umana T02 Windows | Pendente: usare i cinque passi in `CONTRIBUTING.md`, soprattutto movimento normale/ridotto e riapertura |
+| Prova umana T02 Windows | Passata: il maintainer conferma build funzionante e UI approvata |
 | macOS/Linux | Configurazioni e icone presenti, prove native non eseguite qui. Il maintainer userà il Mac più avanti |
-| CI tre OS | Workflow presente; verificare la run effettiva dopo il push, senza dedurne l'esito dalla configurazione |
+| CI T02 tre OS | Passata sul commit `187506b`: [run 39031526123](https://github.com/AndreaZero/nexus-ai/actions/runs/39031526123). Compilazione/check/test dei runner, non prova nativa dei pacchetti Mac/Linux |
 
 Le verifiche Electron sono state eseguite fuori dal sandbox di esecuzione dopo che questo ne impediva l'avvio; nessun allentamento della sandbox del renderer o `--no-sandbox` introdotto. Screenshot QA con device scale 1 solo nel percorso `--verify-shell`, non nella normale app.
 
 ## Prossimo passo
 
-Il maintainer esegue build/verifica Windows **T02** secondo [CONTRIBUTING.md](../CONTRIBUTING.md). Registrare feedback e correggere difetti di questo task prima di T03.
+Il maintainer prepara PostgreSQL T03 seguendo [la guida](setup/postgresql.md), prima di introdurre account e persistenza. Database UTF8 e ruolo dedicati `nexus_ai_dev`, connessione `127.0.0.1:5432`, PostgreSQL 18 aggiornato o 17 aggiornato già installato. Lo script manuale non crea tabelle applicative. Comunicare solo versione server ed esito delle query; proseguire T03 dopo la preparazione locale, senza richiedere credenziali in chat.
 
-**PostgreSQL:** il maintainer creerà personalmente il DB locale quando richiesto. Non serve per T02. All'avvio di T03 definire libreria auth/schema, poi comunicargli versione supportata e istruzioni per database/utente dedicati e configurazione locale; non chiedere password nella chat.
+**Verifiche della preparazione T03:** rilevato client `psql 18.1` già installato; versione server non interrogata. Revisionati comandi e riferimenti ufficiali, senza installazioni, connessioni, creazione ruoli/DB o migrazioni. Nessuna dipendenza applicativa modificata e nessuna nuova build richiesta per questa consegna documentale. L'app continua a mostrare `not_connected` se `DATABASE_URL` è impostata: è il comportamento T01, non una prova PostgreSQL.
 
 Hosting/email, runtime Codex, GitHub del prodotto, storage esterno e credenziali di firma saranno trattati nei rispettivi task. Nessun servizio a pagamento creato o chiave AI richiesta. Il repository del codice è [AndreaZero/nexus-ai](https://github.com/AndreaZero/nexus-ai).

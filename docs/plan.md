@@ -41,17 +41,17 @@ Fronti possibili dopo i contratti: desktop/build; backend/bootstrap; renderer/bo
 
 ### T02 — Sistema visivo e shell definitiva
 
-**Stato:** [consegnato, in attesa di verifica utente — issue #2](https://github.com/AndreaZero/nexus-ai/issues/2). **Dipendenze:** T01 accettato e via del maintainer con multiagenti. **Ownership:** fronti UI, effetti e layout integrati; ownership rilasciate, coordinatore responsabile della consegna.
+**Stato:** [accettato dal maintainer su Windows — issue #2](https://github.com/AndreaZero/nexus-ai/issues/2), build funzionante e UI approvata. **Dipendenze:** T01 accettato e via del maintainer con multiagenti. **Ownership:** fronti UI, effetti e layout integrati; ownership rilasciate.
 
 Trasferire token CSS, font e licenze; costruire logo, sidebar con pianeta/orbite, header, ricerca e tab, card, badge, avatar, pulsanti, progressi e donut. Impostare layout distinti delle tre viste e rotte future con stati vuoti reali. Effetti ambientali e reduced motion fanno parte del task, non di un generico polish futuro. Le feature ancora assenti non espongono pulsanti finti.
 
 **Uscita:** frame riconoscibile e proporzioni delle PNG a 1586 × 992, focus/tastiera e finestra ridotta utilizzabili. Controllo visuale una volta su frame e componenti, correggendo differenze materiali. **Build utente:** verificare shell, sidebar, resize, movimento normale/ridotto.
 
-**Evidenza T02:** token e font locali, tre griglie, effetti procedurali, primitive, navigazione e impostazioni integrate nella stessa app. Check statici e 16 test passati; renderer reale catturato a 1586 × 992 e 960 × 800, con verifica focus ricerca e preferenza movimento ridotto. Rettangoli e differenze residue in [confronto T02](design/t02-review.md). Le PNG contengono dati di progetto; la shell consegnata mantiene stati vuoti finché le capacità reali non arrivano. Accettazione visiva e movimento dal vivo a cura del maintainer. PostgreSQL non serve qui.
+**Evidenza T02:** token e font locali, tre griglie, effetti procedurali, primitive, navigazione e impostazioni integrate nella stessa app. Check statici e 16 test passati; renderer reale catturato a 1586 × 992 e 960 × 800, con verifica focus ricerca e preferenza movimento ridotto. Rettangoli e differenze residue in [confronto T02](design/t02-review.md). Le PNG contengono dati di progetto; la shell consegnata mantiene stati vuoti finché le capacità reali non arrivano. Il maintainer ha confermato build Windows funzionante e UI approvata; CI del commit `187506b` passata sui tre runner. PostgreSQL non serve per T02.
 
 ### T03 — Identità Nexus e accesso
 
-**Dipendenze:** T01–T02. **Ownership:** backend auth/dati, renderer onboarding, desktop integrazione browser; schema auth con un autore.
+**Stato:** [avviato — issue #3](https://github.com/AndreaZero/nexus-ai/issues/3), prima consegna di preparazione PostgreSQL richiesta dal maintainer, prima di introdurre account/persistenza. **Dipendenze:** T01–T02 accettati. **Ownership:** preparazione DB e contratto auth su fronti separati; coordinatore per configurazione e integrazione. In implementazione: backend auth/dati, renderer onboarding, desktop integrazione browser; schema auth con un autore.
 
 Prima dell'implementazione della persistenza avvisare il maintainer: creerà personalmente PostgreSQL locale. Comunicare versione supportata, database/utente dedicati e variabili richieste dopo aver definito schema e libreria auth; non richiedere credenziali in chat.
 

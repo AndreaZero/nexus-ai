@@ -6,7 +6,7 @@ App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello svilu
 
 ## Stato del progetto
 
-**T02 consegnato, in attesa di verifica visiva del maintainer.** T01 è accettato su Windows. Le shell Overview, Client & Team Pulse e AI Session riprendono griglie, palette, font, pianeta e particelle delle reference. Navigazione, tab, ricerca delle pagine e preferenza movimento ridotto sono operative; i dati di progetto arriveranno nei task successivi. Packaging macOS/Linux configurato, prove native ancora da eseguire sui rispettivi sistemi. [Confronto visivo T02](docs/design/t02-review.md).
+**T01 e T02 accettati dal maintainer su Windows; T03 avviato.** La prima consegna T03 prepara PostgreSQL locale e il contratto auth prima di introdurre account/persistenza: [preparazione database](docs/setup/postgresql.md). Le shell Overview, Client & Team Pulse e AI Session riprendono griglie, palette, font, pianeta e particelle delle reference. I dati di progetto arriveranno nei task successivi. Packaging macOS/Linux configurato, prove native ancora da eseguire sui rispettivi sistemi. [Confronto visivo T02](docs/design/t02-review.md).
 
 Da questa cartella, con Node 22.19+ della serie 22 o Node 24 e pnpm 10.32.1:
 
@@ -28,7 +28,7 @@ pnpm package:win
 - [Regole agenti](AGENTS.md)
 - [Skill di coordinamento](.agents/skills/nexus-coordination/SKILL.md)
 - [Contribuire e verificare le build](CONTRIBUTING.md)
-- [Task T02 e verifica utente](https://github.com/AndreaZero/nexus-ai/issues/2)
+- [Task T03 — identità e persistenza](https://github.com/AndreaZero/nexus-ai/issues/3)
 
 ## Metodo
 

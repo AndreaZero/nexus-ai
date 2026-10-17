@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01 è accettato su Windows; T02 è consegnato per verifica visiva. I domini successivi restano pianificati. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
+La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T01 e T02 sono accettati su Windows. T03 parte dalla preparazione PostgreSQL richiesta dal maintainer, prima di introdurre account e persistenza. Stato corrente in `status.md`, setup/build in `../CONTRIBUTING.md`.
 
 | Documento | Uso |
 | --- | --- |
@@ -18,5 +18,7 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [Token CSS](design/tokens.css) | Base dei valori trasferiti al package UI in T02 |
 | [Registro asset](design/assets.md) | Origine, hash, elementi da costruire e criteri di accettazione |
 | [Confronto T02](design/t02-review.md) | Catture reali della shell, geometria verificata e differenze residue |
+| [PostgreSQL locale](setup/postgresql.md) | Database/ruolo dedicati, script manuale, configurazione e verifica prima della persistenza |
+| [Contratto auth T03](auth.md) | Better Auth/Drizzle, accesso web e desktop, email, confini e criteri di verifica |
 
 Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.

@@ -1,0 +1,64 @@
+-- Provisioning locale T03: eseguire manualmente con psql, non con pgAdmin Query Tool.
+-- Non usare --single-transaction/-1: CREATE DATABASE richiede autocommit.
+\set ON_ERROR_STOP on
+\set AUTOCOMMIT on
+
+DO $preflight$
+BEGIN
+  IF current_database() <> 'postgres' THEN
+    RAISE EXCEPTION 'Connettersi al database amministrativo postgres.';
+  END IF;
+  IF NOT (SELECT rolsuper FROM pg_roles WHERE rolname = current_user) THEN
+    RAISE EXCEPTION 'Eseguire come amministratore PostgreSQL locale (normalmente postgres).';
+  END IF;
+  IF current_setting('server_version_num')::integer / 10000 NOT IN (17, 18) THEN
+    RAISE EXCEPTION 'Questa preparazione richiede PostgreSQL 18 oppure 17 aggiornato.';
+  END IF;
+  IF current_setting('server_encoding') <> 'UTF8' THEN
+    RAISE EXCEPTION 'Il cluster amministrativo deve usare UTF8; verificare la configurazione prima di procedere.';
+  END IF;
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'nexus_ai_dev') THEN
+    RAISE EXCEPTION 'Il ruolo nexus_ai_dev esiste: nessuna modifica eseguita. Verificarlo manualmente.';
+  END IF;
+  IF EXISTS (SELECT FROM pg_database WHERE datname = 'nexus_ai_dev') THEN
+    RAISE EXCEPTION 'Il database nexus_ai_dev esiste: nessuna modifica eseguita. Verificarlo manualmente.';
+  END IF;
+END;
+$preflight$;
+
+CREATE ROLE nexus_ai_dev WITH
+  LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+
+-- Impostazione limitata a questa connessione amministrativa, non globale.
+SET password_encryption = 'scram-sha-256';
+\echo 'Scegli ora una password dedicata per nexus_ai_dev e confermala al secondo prompt.'
+\password nexus_ai_dev
+
+DO $password_check$
+BEGIN
+  IF NOT EXISTS (
+    SELECT FROM pg_authid WHERE rolname = 'nexus_ai_dev' AND rolpassword IS NOT NULL
+  ) THEN
+    RAISE EXCEPTION 'Password non impostata. Il ruolo esiste, il database non e stato creato: completare manualmente senza rilanciare lo script.';
+  END IF;
+END;
+$password_check$;
+
+CREATE DATABASE nexus_ai_dev
+  OWNER nexus_ai_dev
+  ENCODING 'UTF8'
+  TEMPLATE template0;
+
+REVOKE CONNECT, TEMPORARY ON DATABASE nexus_ai_dev FROM PUBLIC;
+\echo 'Riconnessione amministrativa al nuovo DB: se richiesto, reinserisci la password di postgres.'
+\connect nexus_ai_dev
+ALTER SCHEMA public OWNER TO nexus_ai_dev;
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+
+\echo 'Preparazione completata. Nessuna tabella o migrazione applicativa creata.'
+SELECT current_database() AS database,
+       pg_get_userbyid(datdba) AS owner,
+       pg_encoding_to_char(encoding) AS encoding
+FROM pg_database
+WHERE datname = current_database();
+\echo 'Verificare ora il login nexus_ai_dev seguendo docs/setup/postgresql.md.'

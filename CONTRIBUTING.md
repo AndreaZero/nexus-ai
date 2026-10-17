@@ -65,6 +65,10 @@ pnpm start:server
 
 `Invoke-RestMethod http://127.0.0.1:3001/health` deve restituire `service: nexus-server`, `status: ok`, `database: not_configured` e `codex: local_only`. È liveness HTTP, non una verifica di servizi ancora assenti. URL remoti del renderer richiedono HTTPS; HTTP è ammesso solo per loopback. Nessun segreto deve avere prefisso `VITE_`, perché questi valori sono pubblici nel bundle.
 
+## Preparazione PostgreSQL T03
+
+T02 è accettato dal maintainer. Prima di introdurre account e persistenza, preparare PostgreSQL secondo [la guida locale](docs/setup/postgresql.md): PostgreSQL 18 aggiornato (17 aggiornato se già installato), database UTF8 `nexus_ai_dev` e ruolo dedicato omonimo, connessione `127.0.0.1:5432`. Lo [script psql](scripts/postgresql/prepare-local.psql) è destinato all'esecuzione manuale del maintainer; chiede la password, non crea tabelle e non viene eseguito dall'avvio dell'app. Conservare `DATABASE_URL` solo nel proprio `.env` ignorato da Git. Il contratto della successiva implementazione è in [auth T03](docs/auth.md).
+
 ## macOS, Linux e configurazione
 
 Sul relativo sistema: `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm test`, quindi `pnpm package:mac` o `pnpm package:linux`. macOS richiede gli strumenti nativi Apple per packaging ed eventuale firma; il maintainer eseguirà la prova sul proprio Mac. Su Linux il sistema deve offrire una sessione grafica e le librerie runtime Electron; l'esecuzione AppImage può richiedere FUSE 2 o l'opzione standard `--appimage-extract-and-run`. Registrare distribuzione/architettura provate. Non usare `--no-sandbox` per aggirare problemi del sistema.

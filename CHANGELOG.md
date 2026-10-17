@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### 2026-10-17 — T03: preparazione PostgreSQL e contratto auth
+
+- Ricevuta accettazione Windows T02: build funzionante e UI approvata. Chiusa issue #2 e avviata issue #3 con multiagenti.
+- Preparati guida PostgreSQL locale e script psql manuale per ruolo/database UTF8 dedicati, password interattiva e verifiche in sola lettura. Il maintainer crea personalmente il database.
+- Definito il contratto per Better Auth, Drizzle/PostgreSQL, accesso browser/desktop e verifica/reset email; nessuna implementazione account/pool o migrazione introdotta in questa preparazione.
+- Aggiornati esempio `DATABASE_URL`, piano, stato e prerequisiti. Rilevato il solo client psql 18.1 installato, senza connettersi al server né modificarlo.
+
 ### 2026-10-17 — T02: sistema visivo e shell
 
 - Integrati con tre agenti token, componenti, logo e icone originali, font locali Inter/JetBrains Mono con licenze OFL e icone native Windows/macOS/Linux.

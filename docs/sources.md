@@ -35,3 +35,11 @@ Il lettore ha restituito cinque turni con messaggi utente, senza ulteriori pagin
 - [Better Auth](https://better-auth.com/docs/introduction) e [integrazione Electron](https://better-auth.com/docs/integrations/electron): candidata scelta per l'identità Nexus e accesso via browser desktop.
 
 Queste fonti supportano la fattibilità della proposta, non sostituiscono la verifica della versione che sarà fissata nel lockfile. Il runtime Codex adottato dovrà produrre il proprio schema. Nessun modello, prezzo, quota o diritto di accesso è hardcoded dai mockup.
+
+## Preparazione T03
+
+Il maintainer ha confermato T02 Windows funzionante e UI approvata, autorizzando T03 con multiagenti e chiedendo i prerequisiti PostgreSQL prima di introdurre account/persistenza. Il database locale sarà creato personalmente dal maintainer.
+
+- [Policy versioni PostgreSQL](https://www.postgresql.org/support/versioning/): 18.6 e 17.11 risultano minor correnti alla consultazione del 17 ottobre 2026; scegliere la minor aggiornata della major supportata.
+- [CREATE ROLE](https://www.postgresql.org/docs/18/sql-createrole.html), [CREATE DATABASE](https://www.postgresql.org/docs/18/sql-createdatabase.html) e [psql](https://www.postgresql.org/docs/18/app-psql.html): ruolo dedicato, creazione DB fuori transazione e password interattiva.
+- [Adapter Drizzle Better Auth](https://better-auth.com/docs/adapters/drizzle), [integrazione Fastify](https://better-auth.com/docs/integrations/fastify) e [Electron](https://better-auth.com/docs/integrations/electron): base del contratto in `auth.md`. Le pagine correnti sono fonti di progettazione, non prova della versione futura del lockfile o di un flusso già funzionante.

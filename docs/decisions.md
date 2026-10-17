@@ -16,12 +16,14 @@ Stato iniziale al 17 ottobre 2026. Le scelte tecniche qui proposte sono modifica
 | D10 | Default scelto per la richiesta open source | Repository pubblico `AndreaZero/nexus-ai`, licenza MIT e documentazione di lavoro in italiano, codice e identificatori in inglese |
 | D11 | Richiesta utente | Una tranche attiva, fronti paralleli disgiunti, integrazione unica, controlli mirati e build manuali del maintainer |
 | D12 | Proposta operativa | Cliente vede solo proiezioni esplicitamente pubblicate; approvazione deliverable separata dall'esecuzione Codex; solo driver locale controlla il proprio runtime |
+| D13 | Preparazione T03 adottata | PostgreSQL locale 18 aggiornato, alternativa 17 aggiornata già installata; database UTF8 e ruolo dedicati `nexus_ai_dev`, host `127.0.0.1:5432`. Il maintainer crea personalmente il DB vuoto; script manuale con password interattiva, nessuna tabella o migrazione all'avvio dell'app |
 
 ## Da concretizzare al momento opportuno
 
 - **T01 implementato:** versioni effettive fissate nel lockfile e riepilogate in `CONTRIBUTING.md`; app ID `io.github.andreazero.nexusai`. Packaging NSIS x64, DMG arm64/x64 e AppImage x64; Windows generato/verificato, altre prove native da registrare.
 - **T05–T07:** versione Codex compatibile, modalità di credenziali disponibili sui tre OS, isolamento configurazione e comportamento delle approvazioni sul runtime installato. Verifica come parte dell'integrazione definitiva, senza un'app dimostrativa separata.
 - **T03/T16:** URL server, servizio email per verifica/reset/inviti e provider PostgreSQL/object storage. Preparare configurazione self-host senza impegnare servizi a pagamento non richiesti.
+- **T03 avviato:** [preparazione PostgreSQL](setup/postgresql.md) e [contratto auth](auth.md). Better Auth + adapter Drizzle/PostgreSQL e integrazione Electron ufficiale sono il percorso selezionato; dipendenze/versioni esatte e API vengono fissate nella successiva implementazione, dopo preparazione DB. Nessun account o pool implementato da questa sola decisione.
 - **T12/T16:** account GitHub App/OAuth, segreti, domini, firma e notarizzazione delle build richiedono credenziali/configurazioni reali del maintainer quando si arriva al relativo task.
 
 Le dipendenze esterne vengono segnalate per il task interessato senza sospendere il resto dello sviluppo indipendente. T01 è stato avviato al via esplicito del maintainer e consegnato per la sua verifica.

@@ -45,6 +45,6 @@ La preferenza di sistema `prefers-reduced-motion` e quella Nexus fermano il movi
 - Avatars, miniature deploy, feed, milestone e output saranno alimentati dalle funzionalità reali T04–T14. Gli spazi strutturali e i componenti sono già presenti. I pulsanti futuri sono disabilitati e motivati.
 - La ricerca dell'header naviga tra pagine; ricerca nei dati e notifiche persistenti sono T14. Rotte di progetto senza dati mostrano un pannello vuoto reale.
 - Logo, icone, pianeta, font e animazioni sono ricostruzioni originali documentate nel [registro asset](assets.md). La forma dettagliata del globo e le traiettorie non sono asset originali estratti dalle PNG.
-- L'accettazione visiva del maintainer è pendente. Mac/Linux condividono il renderer ma richiedono ancora verifica nativa; nessuna equivalenza di rendering tra OS viene dedotta dalla prova Windows.
+- Il maintainer ha accettato la build Windows T02 e approvato la UI prima dell'avvio T03. Mac/Linux condividono il renderer ma richiedono ancora verifica nativa; nessuna equivalenza di rendering tra OS viene dedotta dalla prova Windows.
 
 I passi di build e verifica manuale sono in [CONTRIBUTING.md](../../CONTRIBUTING.md). I contenuti completi delle tre viste restano nei task T06–T10, l'accettazione complessiva in T15.
