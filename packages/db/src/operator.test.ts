@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { operatorTarget, parseOperatorCommand, resolvePostgresTool } from './operator.js';
+import { operatorTarget, parseOperatorCommand, resolvePostgresTool, assertPostgresCustomArchive } from './operator.js';
 import { readSchemaReadiness, migrationDirectory } from './readiness.js';
 import { readMigrationFiles } from 'drizzle-orm/migrator';
 import type { DatabaseBoundary } from './index.js';
-import { mkdtemp, writeFile, chmod, rm, symlink, rmdir, realpath } from 'node:fs/promises';
+import { mkdtemp, writeFile, chmod, rm, symlink, rmdir, realpath, mkdir } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -14,6 +14,32 @@ test('operator requires explicit matching database confirmation and files', () =
   assert.throws(() => operatorTarget('postgres://a:secret@127.0.0.1/other', command));
   assert.throws(() => operatorTarget('postgres://a:secret@remote.example/nexus_ai_dev', command));
   assert.throws(() => operatorTarget('postgres://a:secret@127.0.0.1/nexus_ai_dev?options=unsafe', command));
+});
+
+test('tool resolution preserves a trusted wrapper alias basename after validating its canonical target', { skip: process.platform === 'win32' }, async () => {
+  const directory = await realpath(await mkdtemp(path.join(os.tmpdir(), 'nexus-operator-wrapper-')));
+  const tools = path.join(directory, 'bin');
+  const wrapper = path.join(directory, 'pg_wrapper');
+  try {
+    await mkdir(tools);
+    await writeFile(wrapper, 'controlled wrapper fixture, never executed'); await chmod(wrapper, 0o700);
+    const alias = path.join(tools, 'pg_dump'); await symlink(wrapper, alias);
+    assert.equal(await resolvePostgresTool('pg_dump', { PATH: tools }, [process.cwd()]), alias);
+    await assert.rejects(resolvePostgresTool('pg_dump', { PATH: tools }, [directory]));
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('archive verification refuses successful tools that produce empty or non-custom output', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'nexus-operator-archive-'));
+  const filename = path.join(directory, 'archive.dump');
+  try {
+    for (const contents of ['', 'PGDMP', 'not a database archive']) {
+      await writeFile(filename, contents);
+      await assert.rejects(assertPostgresCustomArchive(filename));
+    }
+    await writeFile(filename, Buffer.from('PGDMP\x01\x10\x00'));
+    await assertPostgresCustomArchive(filename);
+  } finally { await rm(filename, { force: true }); await rmdir(directory); }
 });
 
 test('readiness detects missing, pending, historical tampering and extra migrations without DDL', async () => {

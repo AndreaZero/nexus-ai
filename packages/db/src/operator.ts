@@ -49,15 +49,28 @@ export async function resolvePostgresTool(binary: 'pg_dump' | 'pg_restore', envi
   for (const entry of pathValue.split(delimiter)) {
     if (!isAbsolute(entry)) continue;
     try {
-      const candidate = join(entry, executable);
+      const candidate = join(await realpath(entry), executable);
       if (forbidden.some(directory => within(candidate, directory))) continue;
       const canonical = await realpath(candidate);
       if (forbidden.some(directory => within(canonical, directory)) || !(await stat(canonical)).isFile()) continue;
       await access(canonical, constants.X_OK);
-      return canonical;
+      // Debian's pg_dump/pg_restore aliases dispatch by basename through pg_wrapper.
+      // Validate the canonical target, then retain the trusted absolute alias name.
+      return candidate;
     } catch { /* Try the next explicit absolute PATH directory. */ }
   }
   throw new Error('A trusted PostgreSQL executable outside the workspace is required on PATH.');
+}
+
+export async function assertPostgresCustomArchive(filename: string): Promise<void> {
+  const handle = await open(filename, 'r');
+  try {
+    const magic = Buffer.alloc(5);
+    const { bytesRead } = await handle.read(magic, 0, magic.length, 0);
+    if (bytesRead !== magic.length || magic.toString('ascii') !== 'PGDMP' || (await handle.stat()).size <= magic.length) {
+      throw new Error('A nonempty PostgreSQL custom archive is required.');
+    }
+  } finally { await handle.close(); }
 }
 
 async function postgresTool(binary: 'pg_dump' | 'pg_restore', args: readonly string[], environment: NodeJS.ProcessEnv, input?: NodeJS.ReadableStream, output?: NodeJS.WritableStream): Promise<void> {
@@ -94,12 +107,16 @@ export async function runDatabaseOperator(command: OperatorCommand, environment:
       } else if (command.operation === 'backup') {
         if (!command.file) throw new Error('Backup file required.');
         const handle = await open(command.file, 'wx', 0o600);
-        try { await postgresTool('pg_dump', ['--format=custom', '--no-owner', '--no-privileges', '--dbname', target.database], target.environment, undefined, handle.createWriteStream()); }
+        try {
+          await postgresTool('pg_dump', ['--format=custom', '--no-owner', '--no-privileges', '--dbname', target.database], target.environment, undefined, handle.createWriteStream());
+          await assertPostgresCustomArchive(command.file);
+        }
         catch (error) { await handle.close().catch(() => undefined); await unlink(command.file).catch(() => undefined); throw error; }
       } else {
         if (!command.file) throw new Error('Trusted archive file required.');
         const stat = await lstat(command.file);
         if (!stat.isFile() || stat.isSymbolicLink() || stat.size === 0) throw new Error('Restore requires a regular nonempty archive.');
+        await assertPostgresCustomArchive(command.file);
         const objects = await client.query<{ empty: boolean }>(`SELECT NOT EXISTS (
           SELECT 1 FROM pg_namespace n WHERE n.nspname NOT IN ('public','information_schema') AND n.nspname !~ '^pg_'
           UNION ALL SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public'

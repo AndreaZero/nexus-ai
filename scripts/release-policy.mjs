@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 const platforms = {
   win32: { directory: 'win', flag: '--win', target: 'nsis', extension: 'exe' },
   darwin: { directory: 'mac', flag: '--mac', target: 'dmg', extension: 'dmg' },
@@ -44,7 +46,20 @@ export function releasePolicy(platform, architecture, mode, environment = {}) {
       ...(mode === 'signed' ? { type: 'distribution' } : {}),
     };
   }
-  return { ...target, platform, architecture, mode, env, config };
+  const artifactArchitecture = platform === 'linux' && architecture === 'x64' ? 'x86_64' : architecture;
+  return { ...target, platform, architecture, artifactArchitecture, mode, env, config };
+}
+
+export function windowsSignatureCommand(environment) {
+  const systemRoot = environment.SystemRoot ?? environment.SYSTEMROOT ?? 'C:\\Windows';
+  if (!path.win32.isAbsolute(systemRoot)) throw new Error('Windows system directory is unavailable.');
+  const directory = path.win32.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0');
+  const env = { ...environment };
+  // pwsh can export its PowerShell7 module path to children. Windows PowerShell5
+  // must load its own Security module, never an incompatible/user-installed one.
+  for (const key of Object.keys(env)) if (key.toLowerCase() === 'psmodulepath') delete env[key];
+  env.PSModulePath = path.win32.join(directory, 'Modules');
+  return { executable: path.win32.join(directory, 'powershell.exe'), env };
 }
 
 export function assertReleaseEvidence(platform, mode, signature) {

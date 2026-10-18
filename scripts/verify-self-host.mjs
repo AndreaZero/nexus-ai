@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { mkdir, open, rm, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,7 +24,7 @@ await mkdir(output, { recursive: true });
 const envFile = path.join(privateDirectory, 'qa.env');
 const overrideFile = path.join(privateDirectory, 'compose.qa.yaml');
 const checks = [];
-let stage = 'configuration', built = false, composeStarted = false, cleanup;
+let stage = 'configuration', built = false, composeStarted = false, cleanup, lastDockerExit = null;
 const logLimit = 1024 * 1024;
 let logBytes = 0;
 const logFile = await open(path.join(privateDirectory, 'docker.log'), 'wx', 0o600);
@@ -50,6 +50,7 @@ async function docker(args, { timeout = 60_000, expected = 0 } = {}) {
   const code = await new Promise((resolve, reject) => {
     child.once('error', reject); child.once('close', resolve);
   }).finally(() => clearTimeout(timer));
+  lastDockerExit = typeof code === 'number' ? code : null;
   assert.equal(timedOut, false, `Docker stage timed out: ${stage}`);
   if (expected === 'failure') assert.notEqual(code, 0, `Expected refusal at ${stage}`);
   else assert.equal(code, expected, `Docker stage failed: ${stage}`);
@@ -149,9 +150,16 @@ try {
   const read = await (await post('/api/application', { operation: 'getSettings' }, cookie)).json(); assert.deepEqual(read.settings, save.settings);
   checks.push('Real isolated SMTP verification email, verified login and authenticated HTTP profile/preferences persistence succeed.');
 
-  enter('actual PostgreSQL custom backup and destructive guard');
+  enter('PostgreSQL tool dispatch and version');
+  const toolCode = `import assert from 'node:assert/strict';import {spawnSync}from'node:child_process';import{operatorTarget,parseOperatorCommand,resolvePostgresTool}from'./packages/db/dist/operator.js';const target=operatorTarget(process.env.DATABASE_URL,parseOperatorCommand(['backup','--confirm-database','nexus','--file','/tmp/qa.dump']));for(const name of ['pg_dump','pg_restore']){const executable=await resolvePostgresTool(name,target.environment);const result=spawnSync(executable,['--version'],{env:target.environment,stdio:['ignore','pipe','pipe'],encoding:'utf8'});assert.equal(result.status,0);assert.ok(result.stdout.includes(name+' (PostgreSQL) 18.'));}console.log('PostgreSQL18 tool dispatch confirmed.');`;
+  await execServer(['node', '--input-type=module', '-e', toolCode]);
+  enter('actual PostgreSQL custom backup');
   await execServer(['node', 'packages/db/dist/operator-cli.js', 'backup', '--confirm-database', 'nexus', '--file', '/tmp/qa.dump']);
+  const archiveCode = `import assert from 'node:assert/strict';import{open}from'node:fs/promises';const file=await open('/tmp/qa.dump','r');try{assert.ok((await file.stat()).size>100);const bytes=Buffer.alloc(5);assert.equal((await file.read(bytes,0,5,0)).bytesRead,5);assert.equal(bytes.toString(),'PGDMP');}finally{await file.close();}`;
+  await execServer(['node', '--input-type=module', '-e', archiveCode]);
+  enter('refuse restore into nonempty source database');
   await execServer(['node', 'packages/db/dist/operator-cli.js', 'restore', '--confirm-database', 'nexus', '--file', '/tmp/qa.dump'], { expected: 'failure' });
+  enter('verify source data after refused restore');
   const afterRefusal = await (await post('/api/application', { operation: 'getSettings' }, cookie)).json(); assert.deepEqual(afterRefusal.settings, save.settings);
   checks.push('Container PostgreSQL18 pg_dump creates a real custom archive; restore rejects the nonempty source database and leaves settings unchanged.');
 
@@ -165,7 +173,8 @@ try {
   assert.deepEqual(restored, { schema: 'current', users: 1, migrations: 9, preferences: 1 });
   checks.push('Actual pg_restore into a separate empty QA database restores all nine hashes, the verified user and exact saved preferences/profile.');
 } catch (error) {
-  failure = { stage, type: error instanceof Error ? error.name : 'UnknownError' };
+  failure = { stage, type: error instanceof Error ? error.name : 'UnknownError', lastDockerExit };
+  if (composeStarted) await compose(['logs', '--no-color', '--tail', '30']).catch(() => undefined);
   console.error(`Self-host QA failed at ${stage}; no credentials or Docker logs are printed.`);
   process.exitCode = 1;
 } finally {
@@ -179,11 +188,16 @@ try {
     console.error('Self-host QA cleanup failed; only the UUID-scoped QA resources may require removal.');
   }
   await logFile.close();
+  let privateDiagnostics;
+  if (failure) {
+    privateDiagnostics = `self-host-private-${id}.log`;
+    await privateFile(path.join(output, privateDiagnostics), await readFile(path.join(privateDirectory, 'docker.log')));
+  }
   if (cleanup === 'complete') {
     assert.equal(path.dirname(privateDirectory), privateParent);
     assert.match(path.basename(privateDirectory), /^[a-f0-9]{32}$/);
     await rm(privateDirectory, { recursive: true, force: true });
   }
-  await writeFile(path.join(output, 'self-host-report.json'), JSON.stringify({ task: 'T16', status: failure || cleanup !== 'complete' ? 'failed' : 'passed', checks, cleanup, ...(failure ? { failure } : {}), scope: 'Fresh UUID-owned Docker project/image/volume, loopback HTTP/SMTP, no maintainer .env, database or credentials.', observedAt: new Date().toISOString() }, null, 2));
+  await writeFile(path.join(output, 'self-host-report.json'), JSON.stringify({ task: 'T16', status: failure || cleanup !== 'complete' ? 'failed' : 'passed', checks, cleanup, ...(failure ? { failure, privateDiagnostics } : {}), scope: 'Fresh UUID-owned Docker project/image/volume, loopback HTTP/SMTP, no maintainer .env, database or credentials.', observedAt: new Date().toISOString() }, null, 2));
 }
 if (!failure && cleanup === 'complete') console.log(`Self-host QA passed (${checks.length} checks); owned resources removed.`);

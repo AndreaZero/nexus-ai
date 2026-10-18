@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertReleaseEvidence, releasePolicy } from './release-policy.mjs';
+import { assertReleaseEvidence, releasePolicy, windowsSignatureCommand } from './release-policy.mjs';
 
 test('unsigned builds remove ambient signing credentials and preserve unrelated build configuration', () => {
   const policy = releasePolicy('darwin', 'arm64', 'unsigned', { CSC_LINK: 'private', APPLE_ID: 'private', BETTER_AUTH_URL: 'https://example.invalid' });
@@ -36,4 +36,16 @@ test('native targets are bounded, Linux does not advertise a platform signature'
   assert.equal(policy.env.CSC_LINK, undefined);
   assert.equal(policy.config.forceCodeSigning, false);
   assert.equal(policy.extension, 'AppImage');
+  assert.equal(policy.artifactArchitecture, 'x86_64');
+  assert.equal(policy.architecture, 'x64');
+  assert.equal(releasePolicy('linux', 'arm64', 'unsigned').artifactArchitecture, 'arm64');
+  assert.equal(releasePolicy('win32', 'x64', 'unsigned').artifactArchitecture, 'x64');
+});
+
+test('Authenticode uses the system PowerShell executable and its own modules, regardless of the parent shell', () => {
+  const command = windowsSignatureCommand({ SystemRoot: 'C:\\Windows', PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules;C:\\private-modules', PATH: 'preserved' });
+  assert.equal(command.executable, 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe');
+  assert.equal(command.env.PSModulePath, 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Modules');
+  assert.equal(command.env.PATH, 'preserved');
+  assert.throws(() => windowsSignatureCommand({ SystemRoot: 'relative' }), /unavailable/);
 });

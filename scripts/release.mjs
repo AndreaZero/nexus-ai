@@ -5,7 +5,7 @@ import { mkdir, open, readFile, readdir, stat, writeFile } from 'node:fs/promise
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertReleaseEvidence, releasePolicy } from './release-policy.mjs';
+import { assertReleaseEvidence, releasePolicy, windowsSignatureCommand } from './release-policy.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const desktop = path.join(root, 'apps/desktop');
@@ -56,7 +56,8 @@ async function observedSignature(platform, artifact, appBundle) {
   if (platform === 'win32') {
     const script = '$ErrorActionPreference="Stop"; $s=Get-AuthenticodeSignature -LiteralPath $env:NEXUS_RELEASE_ARTIFACT; [Console]::Write($s.Status.ToString())';
     try {
-      const status = (await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { capture: true, env: { ...process.env, NEXUS_RELEASE_ARTIFACT: artifact }, timeout: 60_000 })).trim();
+      const { executable, env } = windowsSignatureCommand({ ...process.env, NEXUS_RELEASE_ARTIFACT: artifact });
+      const status = (await run(executable, ['-NoProfile', '-NonInteractive', '-Command', script], { capture: true, env, timeout: 60_000 })).trim();
       return { status: status === 'Valid' ? 'valid' : status === 'NotSigned' ? 'unsigned' : 'invalid', method: 'Get-AuthenticodeSignature', notarization: 'not_applicable' };
     } catch { return { status: 'unverified', method: 'Get-AuthenticodeSignature', notarization: 'not_applicable' }; }
   }
@@ -82,7 +83,7 @@ async function writeManifest(policy) {
   const version = packageInfo.version;
   if (!/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(version)) throw new Error('Unsupported release version.');
   const output = path.join(root, 'release', policy.directory);
-  const artifactName = `Nexus-AI-${version}-${policy.directory}-${policy.architecture}.${policy.extension}`;
+  const artifactName = `Nexus-AI-${version}-${policy.directory}-${policy.artifactArchitecture}.${policy.extension}`;
   const artifact = path.join(output, artifactName);
   if (!(await stat(artifact)).isFile()) throw new Error('The matching native installer is missing. Package this version first.');
   const unpackedDirectory = policy.platform === 'win32' ? `win${policy.architecture === 'x64' ? '' : `-${policy.architecture}`}-unpacked`
@@ -117,7 +118,7 @@ async function writeManifest(policy) {
     codex: { ...runtime, binarySha256: await sha256(runtimeBinary) },
     artifacts: [installer],
   };
-  const stem = `Nexus-AI-${version}-${policy.directory}-${policy.architecture}`;
+  const stem = `Nexus-AI-${version}-${policy.directory}-${policy.artifactArchitecture}`;
   await writeFile(path.join(output, `${stem}.manifest.json`), `${JSON.stringify(manifest, null, 2)}\n`);
   await writeFile(path.join(output, `${stem}.sha256`), `${installer.sha256}  ${installer.name}\n`);
   console.log(`Release manifest and SHA-256 written for ${policy.platform}/${policy.architecture}; observed signature: ${signature.status}.`);

@@ -48,6 +48,7 @@ mac:
 linux:
   icon: resources/icon.png
   category: Development
+  executableName: nexus-ai
   target:
     - target: AppImage
 publish: null
