@@ -47,7 +47,7 @@ Usare PostgreSQL e `.env` esistenti: T17 non introduce una migrazione. Chiudere 
 
 ```powershell
 pnpm install --frozen-lockfile
-pnpm package:win
+pnpm release:package unsigned
 ```
 
 Avviare `pnpm start:server` e l'app aggiornata. Per gli accessi/email Nexus locali mantenere una sola istanza Mailpit. In sviluppo `pnpm start:desktop` usa la build esistente.
@@ -76,3 +76,5 @@ L'esito del verificatore non sostituisce login, permessi OS e prima inferenza re
 Le catture mostrano esclusivamente fixture QA dichiarati. Account, modello e risposta di questi scenari sono controllati, separati dalle verifiche PostgreSQL/HTTP reali e dal normale avvio dell’app.
 
 Il testo consigliato invita a leggere il README senza modificare file, consentendo l’ispezione in sola lettura. Non vieta tutti i comandi, perché la lettura dei file può passare dagli strumenti readonly del runtime. Non viene cambiata la policy corrente e nessun comando parte prima dell’invio esplicito. Le catture QA del commit e26a2a6 precedono questa sola rifinitura del testo.
+
+Package Windows 0.17.0 e smoke dell’eseguibile confezionato passati sul sorgente finale f9f30d1; manifest osserva firma unsigned. La verifica del binario Codex incluso usa una home vuota e non effettua login/inferenza. PostgreSQL, account e .env sono conservati, senza migrazioni aggiuntive. Riavviare il backend prima di provare la nuova app, perché il percorso senza remoto richiede il contratto0.17.0 anche sul server.

@@ -1,8 +1,8 @@
 # Stato operativo
 
-**T17 in sviluppo — onboarding guidato autorizzato esplicitamente dal maintainer. Build Windows0.16.0 confermata; prove funzionali personali restano distinte.**
+**T17 integrata e consegnata — versione 0.17.0, in attesa di verifica manuale. Il nuovo mandato onboarding termina con questa consegna; ulteriori interventi seguono il feedback del maintainer. Build Windows 0.16.0 confermata, distinta dalla nuova 0.17.0.**
 
-## Mandato e ownership T17 prima delle deleghe
+## Mandato e ownership T17 integrate e rilasciate
 
 Nuova autorizzazione dopo l'arresto T16: implementare con multiagenti l'onboarding fino alla prima sessione Codex, mantenendo le reference. Sei passi account/workspace/project/folder/codex/session, ripresa e rimando locali per account/authority; progressi derivati da dati correnti. Nessuna inferenza, pubblicazione, scrittura file o modifica permessi automatica. Ramo client/browser senza requisiti Codex locali; inviti preservati. Nessuna migrazione o nuova dipendenza prevista.
 
@@ -28,7 +28,7 @@ Il form esistente richiedeva un URL HTTPS anche prima del primo collegamento loc
 
 Ownership aggiuntiva prima della delega: /root/onboarding_data possiede apps/server/src/onboarding-data.test.ts e scripts/verify-onboarding-data.mjs per regressioni contract/PG/HTTP su repository senza remoto; può proporre, non editare, contratti o servizi fuori questi file. Root integra schema repository location, RepositoryPage e display/use-repository UI. Test reali solo fixture proprio, nessuna lettura log di segreti, nessuna inferenza o GitHub esterno. Root possiede anche CodexSettings e auth/configuration per stato typed/setup e destinazione finale login web.
 
-## Evidenze T17 in consegna
+## Evidenze T17
 
 Implementazione **0.17.0** integrata. Guida in sei passi con account/progetti/cartelle/runtime reali, UI riusata e ramo cliente/browser; prima richiesta soltanto dopo click Send. Dopo una risposta completa osservata si conserva anche il rimando per evitare di forzare il setup al successivo avvio freddo; i check correnti non vengono autorizzati da quella preferenza. Una bozza esistente, anche fatta di soli spazi, e una conversazione già aperta restano intatte.
 
@@ -39,7 +39,11 @@ Implementazione **0.17.0** integrata. Guida in sei passi con account/progetti/ca
 - Aperte PNG1/2/3 e cinque catture effettive: account, cartella, prima sessione, client e960reduced. Sidebar/pianeta, palette navy/ciano/blu/viola, card e stepper coerenti; rail294px e nessun overflow orizzontale. Nuova composizione senza PNG dedicata, nessuna identità pixel dichiarata. Catture controllate pubbliche in docs/design/captures/t17-onboarding*.png; copy cliente finale adattato al ruolo.
 - Audit:1753file sorgente/build testuali,0corrispondenze dei valori privati cercati,0account/0workspace QA residui,1account esistente e9migrazioni conservati. Nessuna migrazione o nuova dipendenza.
 
-Il suggerimento finale è stato rifinito dopo il primo package: lettura senza modifiche, con ispezione readonly consentita, evitando un divieto generale che ostacolerebbe la lettura del README. Cambia soltanto il testo, senza alterare invio, policy o permessi; non si ripetono le suite funzionali per questo edit. Il package viene ricompilato per allinearlo al sorgente finale. Package Windows/smoke e CI0.17.0 ancora da registrare separatamente; i risultati package dei tre OS di T16 restano storici0.16.0. [Issue17](https://github.com/AndreaZero/nexus-ai/issues/17), [guida](onboarding.md), [matrice](acceptance.md). Tutti i fronti agenti sono integrati e rilasciati; root completa la distribuzione e si ferma alla consegna T17.
+Il suggerimento finale è stato rifinito dopo il primo package: lettura senza modifiche, con ispezione readonly consentita, evitando un divieto generale che ostacolerebbe la lettura del README. Cambia soltanto il testo, senza alterare invio, policy o permessi; non si ripetono le suite funzionali per questo edit. Il package viene ricompilato per allinearlo al sorgente finale. **Package Windows x64 0.17.0 riuscito**,220124864byte, dal commitf9f30d1 pulito (sourceDirty=false). Firma Authenticode osservata unsigned. SHA-256: e931e3459bed2657169c9934da332a93b09f285ee2cc176586fea4798d086b83. Manifest e checksum accanto all’installer; report .nexus/visual/t17/windows-package-report.json. Esclusa installazione automatica. **Smoke dell’eseguibile confezionato passato**: renderer/IPC e Node assente; profilo isolato. **Codex confezionato0.159.2 passato**: initialize/account anonimo/catalogo8modelli e shutdown, nessuna inferenza o credenziale personale.
+
+**CI del sorgente finale f9f30d1 passata su Windows, macOS e Linux**: installazione con lockfile, check, test e build riusciti su tutti e tre i runner. [Run 39107765517](https://github.com/AndreaZero/nexus-ai/actions/runs/39107765517). Questa verifica non esegue gli installer o il login personale sui tre sistemi.
+
+I package macOS/Linux di T16 restano evidenze storiche0.16.0; T17 non ripete i package di questi sistemi e non dichiara esecuzione GUI personale. Il database resta a 9 migrazioni, senza reset di account o .env. Le prove finali con login/permessi OS e prima risposta personali sono del maintainer. [Issue17](https://github.com/AndreaZero/nexus-ai/issues/17), [guida](onboarding.md), [matrice](acceptance.md). Tutti i fronti agenti sono integrati e rilasciati; root completa la distribuzione e si ferma alla consegna T17.
 
 ## Ownership T16 integrate e rilasciate
 

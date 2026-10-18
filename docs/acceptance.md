@@ -4,7 +4,7 @@ Base0.17.0, piano T01–T16 e onboarding T17. La matrice separa **funzionalità 
 
 | Requisito | Implementazione | Evidenze automatiche disponibili | Verifica personale/esterna distinta |
 | --- | --- | --- | --- |
-| R01 desktop multipiattaforma | Main/preload/renderer condivisi, vendor e package nativi Windows/macOS/Linux | T16: package/smoke Windows locale e Codex confezionato; CI Windows x64/macOS ARM64/Linux x64 con check/test/build, NSIS/DMG/AppImage, manifest/hash riusciti | Esecuzione finale0.16.0 sul proprio Windows e desktop Mac/Linux; firma/notarizzazione richiedono credenziali |
+| R01 desktop multipiattaforma | Main/preload/renderer condivisi, vendor e package nativi Windows/macOS/Linux | T17: package/smoke Windows 0.17.0 e Codex confezionato; CI sorgente per OS in status. T16: package NSIS/DMG/AppImage 0.16.0 sui tre OS con manifest/hash; build Windows confermata dal maintainer | Prova personale dell’onboarding 0.17.0 su Windows e desktop Mac/Linux; firma/notarizzazione richiedono credenziali |
 | R02 collaborazione | Workspace/progetti, membership, inviti e ruoli correnti | PostgreSQL/SMTP/HTTP, isolamento/revoca/concorrenza T04/T08/T11–T14 | Utenti reali e SMTP del proprio server ospitato |
 | R03 Codex personale | Solo Codex 0.159.2, login e home/keyring Nexus, API opzionale esplicita | Binario reale anonimo/handshake/catalogo e provider controllato; recovery mirato T15 | Richiesta completa, interruzione e approvazioni con account personale; nessuna inferenza avviata dai verifier |
 | R04 filesystem locale | Binding account/progetto, contesto scelto, Git e modifiche/diff | Git/filesystem effettivi isolati T05–T07/T12; canonicalizzazione e alias root T15 | Cartelle, permessi e selettori nativi Mac/Linux |

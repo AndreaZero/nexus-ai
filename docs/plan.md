@@ -197,7 +197,7 @@ Rendere setup self-host riproducibile, environment template senza segreti, migra
 
 ### T17 — Onboarding guidato fino alla prima sessione
 
-**Stato:** implementazione0.17.0 integrata, verifica/distribuzione finale in corso — [issue17](https://github.com/AndreaZero/nexus-ai/issues/17). Nuova autorizzazione esplicita dopo build Windows0.16.0 confermata. **Dipendenze:** T16. Ownership/contratti in status.md.
+**Stato:** integrata e consegnata 0.17.0, in attesa di verifica manuale — [issue17](https://github.com/AndreaZero/nexus-ai/issues/17). Check/build e suite337pass/1skip,12controlliUI e6scenariPG/HTTP, package/smoke Windows passati; risultati CI e limiti in status.md. Nuova autorizzazione esplicita dopo build Windows 0.16.0 confermata. **Dipendenze:** T16. Ownership/contratti in status.md.
 
 Guida riprendibile account Nexus → workspace → progetto → cartella locale → Codex/sandbox → prima sessione. Prerequisiti reali, dialog e servizi riusati, skip e riapertura da Overview/Settings, ramo cliente/browser e inviti. Conservare bozza/sessione, ruolo e confini locali; nessuna inferenza automatica o dato demo nel prodotto. Reference1/2/3 guidano token, card, glow, stepper e movimento ridotto; nessuna PNG dedicata a questo nuovo flusso.
 
