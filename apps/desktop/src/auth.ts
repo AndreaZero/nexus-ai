@@ -1,10 +1,12 @@
+import {requestApplication} from './application-transport.js';
+import type {ApplicationRequest,ApplicationResponse} from '@nexus-ai/contracts';
 import { app, safeStorage } from 'electron';
 import { createAuthClient, type BetterAuthClientPlugin } from 'better-auth/client';
 import { electronClient } from '@better-auth/electron/client';
 import path from 'node:path';
 import { nexusAuthStateSchema, nexusUserSchema, type CollaborationRequest, type CollaborationResponse, type NexusAuthState } from '@nexus-ai/contracts';
 import { AuthAttempt } from './auth-attempt.js';
-import { AUTH_CALLBACK_PATH, AUTH_CLIENT_ID, AUTH_SCHEME, publicServiceUrl } from './auth-config.js';
+import { AUTH_CALLBACK_PATH, AUTH_CLIENT_ID, AUTH_SCHEME, publicServiceUrl, configuredDesktopAccountEndpoints } from './auth-config.js';
 import { AuthStorageError, EncryptedAuthStorage } from './auth-storage.js';
 import { requestCollaboration } from './collaboration-transport.js';
 import { requestSessions } from './sessions-transport.js';
@@ -30,6 +32,7 @@ const signedOut = (message: string | null = null): NexusAuthState => ({
 class AccountCheckError extends Error {}
 
 export function desktopAccountEndpoints(): { server: string; web: string } {
+  const configured=configuredDesktopAccountEndpoints();if(configured)return configured;
   return {
     server: publicServiceUrl(!app.isPackaged && process.env['BETTER_AUTH_URL'] || __NEXUS_AUTH_SERVER_URL__),
     web: publicServiceUrl(!app.isPackaged && process.env['NEXUS_WEB_URL'] || __NEXUS_WEB_URL__),
@@ -270,6 +273,13 @@ export class DesktopAuth {
     const response=await requestRepositories(before.server,before.cookie,request);
     if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie)return{ok:false,code:'auth_required',message:'Your Nexus account changed.'};
     return response;
+  }
+
+  async applicationRequest(request:ApplicationRequest):Promise<ApplicationResponse>{
+    const before=await this.realtimeSession();if(!before)return{ok:false,code:'auth_required',message:'Reconnect your Nexus account.'};
+    const result=await requestApplication(before.server,before.cookie,request);
+    if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie)return{ok:false,code:'auth_required',message:'Your Nexus account changed.'};
+    return result;
   }
 
   async deploymentsRequest(request:DeploymentsRequest):Promise<DeploymentsResponse>{

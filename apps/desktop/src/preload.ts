@@ -8,6 +8,9 @@ import { pulseRequestSchema, pulseResponseSchema, type PulseRequest } from '@nex
 import { workRequestSchema, workResponseSchema, workDownloadRequestSchema, type WorkRequest, type WorkDownloadRequest } from '@nexus-ai/contracts';
 import { gitRequestSchema, gitResponseSchema, repositoriesRequestSchema, repositoriesResponseSchema, type GitRequest, type RepositoriesRequest } from '@nexus-ai/contracts';
 import {deploymentsRequestSchema,deploymentsResponseSchema,deploymentPreviewRequestSchema,environmentProbeRequestSchema,environmentProbeResponseSchema,type DeploymentsRequest,type DeploymentPreviewRequest,type EnvironmentProbeRequest} from '@nexus-ai/contracts';
+import {applicationRequestSchema,applicationResponseSchema,connectionSettingsSchema,desktopPreferencesRequestSchema,desktopPreferencesResponseSchema,type ApplicationRequest,type DesktopPreferencesRequest} from '@nexus-ai/contracts';
+
+const configuration=Object.freeze(connectionSettingsSchema.parse(ipcRenderer.sendSync(DESKTOP_IPC.configurationRead)));
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -71,6 +74,9 @@ const bridge: DesktopBridge = Object.freeze({
     async openPreview(input:DeploymentPreviewRequest){return deploymentsResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.deploymentPreview,deploymentPreviewRequestSchema.parse(input)));},
   }),
   environmentProbe:Object.freeze({async request(input:EnvironmentProbeRequest){return environmentProbeResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.environmentProbeRequest,environmentProbeRequestSchema.parse(input)));}}),
+  application:Object.freeze({async request(input:ApplicationRequest){return applicationResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.applicationRequest,applicationRequestSchema.parse(input)));}}),
+  preferences:Object.freeze({async request(input:DesktopPreferencesRequest){return desktopPreferencesResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.preferencesRequest,desktopPreferencesRequestSchema.parse(input)));}}),
+  configuration,
   codex: Object.freeze({
     async request(input: CodexRequest) {
       return codexResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.codexRequest, codexRequestSchema.parse(input)));

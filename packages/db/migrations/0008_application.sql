@@ -1,0 +1,1 @@
+CREATE TABLE user_preferences (user_id text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE, version integer NOT NULL CHECK(version>0), preferences jsonb NOT NULL CHECK(jsonb_typeof(preferences)='object'), updated_at timestamptz NOT NULL DEFAULT now());

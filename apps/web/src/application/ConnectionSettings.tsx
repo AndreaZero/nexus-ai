@@ -1,0 +1,24 @@
+import { useEffect, useState } from 'react';
+import { Button, Card, Icon } from '@nexus-ai/ui';
+import type { DesktopPreferencesResponse } from '@nexus-ai/contracts';
+import { useAccount } from '../auth/AuthProvider.js';
+import { desktopPreferencesRequest } from './client.js';
+import { Feedback } from '../collaboration/components.js';
+
+type Preferences = Extract<DesktopPreferencesResponse, { ok: true }>['preferences'];
+export function ConnectionSettings() {
+  const account = useAccount(); const desktop = Boolean(window.nexusDesktop?.preferences);
+  const [preferences, setPreferences] = useState<Preferences | null>(null); const [serverUrl, setServerUrl] = useState(''); const [webUrl, setWebUrl] = useState(''); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [confirm, setConfirm] = useState<'save' | 'reset' | null>(null); const [revision, setRevision] = useState(0);
+  const signedOut = account.state.status === 'signed_out';
+  useEffect(() => { let live = true; if (desktop) { setError(''); void desktopPreferencesRequest({ operation: 'read' }).then(value => { if (live) { setPreferences(value); setServerUrl(value.pending?.serverUrl ?? value.active.serverUrl); setWebUrl(value.pending?.webUrl ?? value.active.webUrl); } }).catch(cause => { if (live) setError(cause instanceof Error ? cause.message : 'Connection preferences are unavailable.'); }); } return () => { live = false; }; }, [desktop, revision]);
+  async function action(operation: 'saveConnection' | 'resetConnection' | 'restart') {
+    if (busy || !signedOut) return; setBusy(true); setError('');
+    try { const value = await desktopPreferencesRequest(operation === 'saveConnection' ? { operation, connection: { serverUrl: serverUrl.trim(), webUrl: webUrl.trim() } } : { operation }); setPreferences(value); setConfirm(null); setServerUrl(value.pending?.serverUrl ?? value.active.serverUrl); setWebUrl(value.pending?.webUrl ?? value.active.webUrl); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Connection change failed. Retry.'); }
+    finally { setBusy(false); }
+  }
+  return <Card title="Self-host connection" icon={<Icon name="server" />}>
+    {desktop ? <><p className="settings-note">Sign out of Nexus before changing servers. HTTPS origins are supported; HTTP is limited to loopback. A separate device profile keeps accounts, local bindings and Codex credentials isolated for each server.</p><form className="domain-form" onSubmit={event => { event.preventDefault(); setConfirm('save'); }}><label>Account server origin<input aria-label="Account server origin" type="url" required maxLength={2000} value={serverUrl} disabled={!signedOut || busy || !preferences} onChange={event => { setServerUrl(event.target.value); setConfirm(null); }} /></label><label>Web application origin<input aria-label="Web application origin" type="url" required maxLength={2000} value={webUrl} disabled={!signedOut || busy || !preferences} onChange={event => { setWebUrl(event.target.value); setConfirm(null); }} /></label><small>No credentials, path, query string or fragment. The server must allow this desktop origin and the configured web origin.</small><div className="domain-actions"><Button size="sm" disabled={!signedOut || busy || !preferences} onClick={() => setConfirm('reset')}>Restore build defaults</Button><Button type="submit" size="sm" disabled={!signedOut || busy || !preferences}>Review connection change</Button></div></form>{confirm && <div className="application-connection-confirm"><p>{confirm === 'save' ? `Use ${serverUrl} with web application ${webUrl}?` : 'Restore the server and web application configured in this build?'}</p><p>The change takes effect after an explicit restart. Sign in again on the selected server.</p><Button size="sm" disabled={!signedOut || busy} onClick={() => { void action(confirm === 'save' ? 'saveConnection' : 'resetConnection'); }}>Confirm connection change</Button><Button size="sm" disabled={busy} onClick={() => setConfirm(null)}>Cancel change</Button></div>}{preferences?.restartRequired && <p className="settings-note" role="status">Saved connection pending restart: {preferences.pending?.serverUrl}<br /><Button size="sm" variant="primary" disabled={!signedOut || busy} onClick={() => { void action('restart'); }}>Restart Nexus now</Button></p>}{!signedOut && <p className="settings-note">The current account must be signed out before editing or restarting this connection.</p>}</> : <p className="settings-note">This browser uses the server origin configured for this web build. Configure VITE_NEXUS_SERVER_URL and rebuild to change it; desktop connection preferences are managed on each device.</p>}
+    <Feedback error={error} />{desktop && !preferences && <Button size="sm" disabled={busy} onClick={() => setRevision(value => value + 1)}>Reload connection preferences</Button>}
+  </Card>;
+}

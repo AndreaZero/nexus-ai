@@ -8,13 +8,14 @@ import { useRealtime } from '../realtime/RealtimeProvider.js';
 import { attachmentType, taskStatuses } from './state.js';
 import { useWork, useWorkList, useWorkMutation } from './WorkProvider.js';
 
+import { useApplication } from '../application/ApplicationProvider.js';
 export type EditableKind = Extract<WorkKind, 'task' | 'milestone' | 'document' | 'update' | 'deliverable'>;
 interface ChosenFile { file: File; mime: string; requestId: string; uploaded: WorkAttachment | null }
 function fileBase64(file: File) { return new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onerror = () => reject(new Error('The selected file could not be read.')); reader.onload = () => resolve(String(reader.result).split(',')[1] ?? ''); reader.readAsDataURL(file); }); }
 export function WorkEditor({ kind, item, onClose, onSaved }: { kind: EditableKind; item?: WorkItem; onClose(): void; onSaved(kind: WorkKind, id: string): void }) {
-  const work = useWork(); const mutation = useWorkMutation(); const realtime = useRealtime().state;
+  const application = useApplication(); const work = useWork(); const mutation = useWorkMutation(); const realtime = useRealtime().state;
   const milestones = useWorkList('milestone'); const tasks = useWorkList('task'); const documents = useWorkList('document');
-  const [title, setTitle] = useState(item?.title ?? ''); const [body, setBody] = useState(item?.body ?? ''); const [visibility, setVisibility] = useState<'team' | 'client'>(item?.visibility ?? 'team');
+  const [title, setTitle] = useState(item?.title ?? ''); const [body, setBody] = useState(item?.body ?? ''); const [visibility, setVisibility] = useState<'team' | 'client'>(item?.visibility ?? application.preferences.defaultVisibility);
   const [status, setStatus] = useState<'todo' | 'in_progress' | 'review' | 'done'>(item?.kind === 'task' ? item.status as 'todo' | 'in_progress' | 'review' | 'done' : 'todo');
   const [assignee, setAssignee] = useState(item?.assignee?.id ?? ''); const [milestone, setMilestone] = useState(item?.milestoneId ?? ''); const [due, setDue] = useState(item?.dueAt?.slice(0, 10) ?? '');
   const [source, setSource] = useState(item?.sourceSessionId ?? ''); const [task, setTask] = useState(item?.taskId ?? ''); const [documentId, setDocument] = useState(item?.documentId ?? '');

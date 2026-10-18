@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T13 integrato; prosecuzione T14–T16 autorizzata in sequenza**. Fermarsi dopo T16. Ownership ed evidenze in docs/status.md; migrazione0007 applicata,8totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
+La fase corrente è **T14 in sviluppo; prosecuzione fino aT16 autorizzata in sequenza**. Fermarsi dopo T16. Ownership ed evidenze in docs/status.md; migrazione0008 applicata,9totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
 
 ## Prodotto e architettura
 

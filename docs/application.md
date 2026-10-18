@@ -1,0 +1,17 @@
+# Ricerca, notifiche e impostazioni
+
+La ricerca Nexus riguarda solo dati già pubblicati sul server: progetti accessibili, task, milestone, documenti, aggiornamenti, deliverable ed estratti/sessioni live condivisi. Il testo privato del runtime, i file locali e le credenziali non entrano nell’indice. Le autorizzazioni correnti e l’audience del parent vengono applicate prima del confronto, dello snippet e della paginazione. Query di almeno2caratteri, ricerca letterale, pagine fino a50risultati; nessun wildcard fornito dal chiamante.
+
+La scorciatoia Ctrl+K su Windows/Linux o Cmd+K su Mac apre il centro ricerca. Un risultato seleziona prima workspace e progetto attualmente accessibili e poi apre il dettaglio pertinente. Un accesso revocato richiede un aggiornamento; i dati precedenti non autorizzano nuove letture.
+
+Le notifiche appartengono al progetto selezionato e usano le attività autorizzate e il cursore di lettura persistente di Overview. Il cursore è monotono: segnare come lette le attività visualizzate non segna futuri eventi. I filtri e le preferenze delle categorie cambiano la presentazione, senza ampliare l’accesso ai contenuti. La sorgente è il feed trattenuto; non è una casella di email né una promessa di notifiche push del sistema operativo.
+
+Nome del profilo, categorie delle notifiche, audience proposta e modello/effort preferiti sono salvati per account sul server con versione e controllo di concorrenza. Il modello preferito si applica soltanto se presente nel catalogo Codex effettivo; non avvia inferenza o un fallback a pagamento. L’audience proposta non sostituisce l’anteprima e la conferma di pubblicazione. Cartelle e credenziali AI restano locali; la preferenza di movimento ridotto appartiene al dispositivo e rispetta sempre quella del sistema operativo.
+
+Gli endpoint self-host desktop sono origini HTTPS o HTTP su loopback, senza credenziali, path, query o fragment. Si modificano da disconnessi, con riavvio esplicito. Un server diverso usa un profilo locale distinto: account Nexus, keyring Codex e binding non vengono trasferiti a un’altra autorità. La configurazione predefinita mantiene il profilo esistente. Nel browser l’endpoint è configurato dal gestore della build/deployment web.
+
+Per provare: cercare un testo pubblicato nei messaggi e uno soltanto interno con account cliente; controllare l’assenza del secondo. Cambiare nome/preferenze, riaprire l’app e verificare il salvataggio. Ricevere un’attività da un secondo account, aprire le notifiche e segnarle come lette; un’attività successiva deve restare nuova. Configurare un endpoint self-host solo dopo aver preparato HTTPS, SMTP e database sul server di destinazione.
+
+Il renderer desktop distribuito vincola la CSP all’origine attiva e al relativo WebSocket. Il server Vite di sviluppo conserva la propria CSP di build: per una prova self-host usare la build desktop oppure allineare le variabili Vite e riavviare il server di sviluppo.
+
+VerificaT14:5testserver,10native(preferenze+CSP),7web,5scenari PostgreSQL/Mailpit/HTTP effettivi e9controlli Electron/preload con DTOcontrollati. Report/catture locali .nexus/visual/t14; fixture propri ripuliti. La persistenza server è verificata separatamente dal reload renderer; la prova UI intercetta il riavvio OS, mentre i test nativi verificano salvataggio e profili reali. Smoke Windows passato; prove native Mac/Linux e accettazione personale restano distinte.

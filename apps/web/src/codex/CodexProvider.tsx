@@ -7,6 +7,8 @@ import { useCollaboration } from '../collaboration/CollaborationProvider.js';
 import { errorMessage, localBindingRequest } from '../collaboration/client.js';
 import { codexRequest } from './client.js';
 import { CodexStartup } from './startup.js';
+import { useApplication } from '../application/ApplicationProvider.js';
+import { preferredModel } from '../application/state.js';
 
 const emptyState: CodexState = { runtime: 'stopped', version: null, expectedVersion: '0.159.2', runtimePath: null, account: null, login: null, models: [], session: null, policy: 'readOnly', notice: null };
 interface CodexContextValue {
@@ -30,6 +32,7 @@ export function CodexProvider({ children }: { children: ReactNode }) {
 }
 
 function CodexScope({ children, accountId, startup }: { children: ReactNode; accountId: string | null; startup: CodexStartup }) {
+  const application = useApplication();
   const { project } = useCollaboration();
   const projectId = project?.id;
   const repositoryId = project?.repository?.id;
@@ -53,6 +56,8 @@ function CodexScope({ children, accountId, startup }: { children: ReactNode; acc
   const bindingGeneration = useRef(0);
   const pending = useRef(0);
   const inFlight = useRef(new Map<string, Promise<boolean>>());
+  const appliedPreference = useRef<string | null>(null);
+  const manualSelection = useRef(false);
   const apply = useCallback((next: CodexState) => {
     const session = technical && next.session && next.session.projectId === projectId && next.session.repositoryId === repositoryId ? next.session : null;
     setState({ ...next, session, policy: session ? next.policy : 'readOnly' });
@@ -120,7 +125,16 @@ function CodexScope({ children, accountId, startup }: { children: ReactNode; acc
 
   const model = state.models.find(item => item.id === selection.id) ?? state.models.find(item => item.isDefault) ?? state.models[0] ?? null;
   const effort = model?.efforts.includes(selection.effort) ? selection.effort : model?.efforts.includes(model.defaultEffort) ? model.defaultEffort : null;
+  useEffect(() => {
+    if (!application.settings || !state.models.length) return;
+    const key = `${application.preferences.defaultModelId}:${application.preferences.defaultEffort}`;
+    if (key === appliedPreference.current || manualSelection.current && appliedPreference.current === null) return;
+    appliedPreference.current = key;
+    const next = preferredModel(state.models, application.preferences);
+    if (next) setSelection(next);
+  }, [application.settings, application.preferences, state.models]);
   function saveSelection(next: { id: string; effort: string }) {
+    manualSelection.current = true;
     setSelection(next);
     if (accountId) { try { window.localStorage.setItem(`nexus.codex.model.${accountId}`, JSON.stringify(next)); } catch { /* Optional selection only. */ } }
   }

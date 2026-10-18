@@ -57,6 +57,13 @@
       "when": 1792278000000,
       "tag": "0007_deployments",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1792281600000,
+      "tag": "0008_application",
+      "breakpoints": true
     }
   ]
 }

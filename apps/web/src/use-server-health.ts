@@ -7,7 +7,7 @@ type ServerConfiguration = { status: 'configured'; url: URL } | { status: 'not_c
 
 function getConfiguration(): ServerConfiguration {
   try {
-    const url = getServerUrl(import.meta.env['VITE_NEXUS_SERVER_URL'] as string | undefined, import.meta.env.DEV);
+    const url = getServerUrl(window.nexusDesktop?.configuration?.serverUrl ?? import.meta.env['VITE_NEXUS_SERVER_URL'] as string | undefined, import.meta.env.DEV);
     return url ? { status: 'configured', url } : { status: 'not_configured' };
   } catch {
     return { status: 'invalid' };

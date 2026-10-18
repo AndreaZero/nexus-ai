@@ -7,13 +7,14 @@ import { useDeployments } from './DeploymentsProvider.js';
 import { checks, pngThumbnail } from './state.js';
 import { DeploymentFailure } from './client.js';
 
+import { useApplication } from '../application/ApplicationProvider.js';
 type Editor = { kind: 'environment'; item?: DeploymentEnvironment } | { kind: 'deployment'; item?: Deployment } | { kind: 'health'; item?: HealthObservation; environmentId: string };
 export function DeploymentEditor({ editor, onClose }: { editor: Editor; onClose(): void }) {
-  const domain = useDeployments(); const item = editor.item;
+  const application = useApplication(); const domain = useDeployments(); const item = editor.item;
   const [name, setName] = useState(editor.kind === 'environment' ? editor.item?.name ?? '' : editor.kind === 'deployment' ? editor.item?.title ?? '' : '');
   const [environmentId, setEnvironment] = useState(editor.kind === 'environment' ? '' : editor.kind === 'health' ? editor.environmentId : editor.item?.environmentId ?? domain.snapshot?.environments[0]?.id ?? '');
   const [kind, setKind] = useState<DeploymentEnvironment['kind']>(editor.kind === 'environment' ? editor.item?.kind ?? 'staging' : 'staging');
-  const [visibility, setVisibility] = useState<DeploymentEnvironment['visibility']>(editor.kind === 'environment' ? editor.item?.visibility ?? 'team' : 'team');
+  const [visibility, setVisibility] = useState<DeploymentEnvironment['visibility']>(editor.kind === 'environment' ? editor.item?.visibility ?? application.preferences.defaultVisibility : 'team');
   const [previewUrl, setPreviewUrl] = useState(editor.kind === 'health' ? '' : editor.item?.previewUrl ?? '');
   const [requiredChecks, setChecks] = useState<DeploymentEnvironment['requiredChecks']>(editor.kind === 'environment' ? editor.item?.requiredChecks ?? [] : []);
   const [status, setStatus] = useState<Deployment['status']>(editor.kind === 'deployment' ? editor.item?.status ?? 'queued' : 'queued');

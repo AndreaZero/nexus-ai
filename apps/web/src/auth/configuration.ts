@@ -3,7 +3,7 @@ import { pendingInvitation } from '../collaboration/invitation.js';
 
 export function accountServerUrl(): URL | null {
   try {
-    return getServerUrl(import.meta.env['VITE_NEXUS_SERVER_URL'] as string | undefined, import.meta.env.DEV);
+    return getServerUrl(window.nexusDesktop?.configuration?.serverUrl ?? import.meta.env['VITE_NEXUS_SERVER_URL'] as string | undefined, import.meta.env.DEV);
   } catch {
     return null;
   }

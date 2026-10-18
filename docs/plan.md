@@ -167,6 +167,8 @@ Gestire ambienti e build con provider configurabile o registrazione esplicita, U
 
 ### T14 — Ricerca, notifiche e impostazioni complete
 
+**Stato:** integrata e consegnata, in attesa di verifica manuale — [issue14](https://github.com/AndreaZero/nexus-ai/issues/14). Ricerca/profile/preferences e connessione self-host effettivi; guida application.md. Mandato continuo fino aT16, verifica manuale distinta.
+
 **Dipendenze:** T13. **Ownership:** backend ricerca/notifiche; renderer settings/search; desktop preferenze.
 
 Ricerca autorizzata fra progetti accessibili, messaggi, task e documenti; shortcut piattaforma, centro notifiche e mark read persistente. Profilo, preferenze, sharing, endpoint self-host, account/runtime e reduced motion. Completare tutte le rotte della sidebar e tutti i tab, rimuovendo qualsiasi affordance rimasta senza risultato.

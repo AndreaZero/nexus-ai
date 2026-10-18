@@ -62,6 +62,7 @@ qaSession.protocol.handle('nexus', async request => {
 qaSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
 const window = new BrowserWindow({ show: false, width: 1586, height: 992, useContentSize: true, webPreferences: { preload: path.join(input.root, 'apps/desktop/dist/preload.cjs'), sandbox: true, contextIsolation: true, nodeIntegration: false, session: qaSession, backgroundThrottling: false } });
 window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+ipcMain.on(DESKTOP_IPC.configurationRead,(event,...args:unknown[])=>{const frame=event.senderFrame;event.returnValue=frame&&args.length===0&&isTrustedIpcSender({senderId:event.sender.id,mainFrame:frame===event.sender.mainFrame,url:frame.url},window.webContents.id)?{serverUrl:'http://127.0.0.1:3001',webUrl:'http://127.0.0.1:3001'}:null;});
 const external: string[] = [];
 let opened: ((url: string) => void) | undefined;
 async function openExternal(url: string) { external.push(url); opened?.(url); }

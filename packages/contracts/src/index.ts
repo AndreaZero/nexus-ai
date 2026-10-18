@@ -1,3 +1,4 @@
+import type {ApplicationRequest,ApplicationResponse,DesktopPreferencesRequest,DesktopPreferencesResponse} from './application.js';
 import { z } from 'zod';
 import type { CollaborationRequest, CollaborationResponse, LocalBindingRequest, LocalBindingResponse } from './collaboration.js';
 import type { CodexRequest, CodexResponse, CodexState } from './codex.js';
@@ -21,8 +22,12 @@ export * from './pulse.js';
 export * from './work.js';
 export * from './repositories.js';
 export * from './deployments.js';
+export * from './application.js';
 
 export const DESKTOP_IPC = {
+  applicationRequest:'nexus:application:request',
+  preferencesRequest:'nexus:preferences:request',
+  configurationRead:'nexus:configuration:read',
   getInfo: 'nexus:desktop:get-info',
   authGetState: 'nexus:auth:get-state',
   authSignIn: 'nexus:auth:sign-in',
@@ -82,6 +87,9 @@ export const desktopInfoSchema = z.object({
 export type DesktopInfo = z.infer<typeof desktopInfoSchema>;
 
 export interface DesktopBridge {
+  readonly application:{request(request:ApplicationRequest):Promise<ApplicationResponse>};
+  readonly preferences:{request(request:DesktopPreferencesRequest):Promise<DesktopPreferencesResponse>};
+  readonly configuration:{serverUrl:string;webUrl:string};
   getInfo(): Promise<DesktopInfo>;
   readonly collaboration: { request(request: CollaborationRequest): Promise<CollaborationResponse> };
   readonly localBinding: { request(request: LocalBindingRequest): Promise<LocalBindingResponse> };

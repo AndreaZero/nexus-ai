@@ -5,14 +5,16 @@ import { DomainDialog, Feedback } from '../collaboration/components.js';
 import { sessionsRequest } from './client.js';
 import { excerpt, excerptValid } from './publication.js';
 
+import { useApplication } from '../application/ApplicationProvider.js';
 function deviceId() {
   try { const existing = localStorage.getItem('nexus.device.id'); if (existing && /^[0-9a-f-]{36}$/i.test(existing)) return existing; const id = crypto.randomUUID(); localStorage.setItem('nexus.device.id', id); return id; } catch { return crypto.randomUUID(); }
 }
 export function PublishSession({ session, onClose, onPublished }: { session: CodexSession; onClose(): void; onPublished(): void }) {
+  const application = useApplication();
   // Freeze the local excerpt while the user reviews it. Streaming never changes the preview.
   const source = useRef(session.messages.map(item => ({ ...item }))).current;
   const sessionId = useRef(crypto.randomUUID()).current; const device = useRef(deviceId()).current;
-  const [title, setTitle] = useState('Session excerpt'); const [visibility, setVisibility] = useState<'team' | 'client'>('team');
+  const [title, setTitle] = useState('Session excerpt'); const [visibility, setVisibility] = useState<'team' | 'client'>(application.preferences.defaultVisibility);
   const [selection, setSelection] = useState<string[]>([]); const [review, setReview] = useState(false); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [version, setVersion] = useState(0);
   const messages = excerpt(source, selection); const valid = excerptValid(messages) && Boolean(title.trim());
   async function publish() {

@@ -25,6 +25,8 @@ La documentazione distingue **requisiti dell'utente**, **decisioni progettuali p
 | [Realtime T08](realtime.md) | Presenza, selezione/consenso live, outbox, recupero, revoca e prova a due account |
 | [Overview T09](overview.md) | Reference3, feed/filtri/link, notifiche e lettura persistente, misure locali opt-in e prova |
 | [Lavoro e consegne T11](work.md) | Board/roadmap, documenti e aggiornamenti, allegati, revisioni/feedback/approvazioni cliente |
+| [Ricerca e impostazioni T14](application.md) | Ricerca autorizzata, notifiche, profilo/preferenze e connessione self-host |
+| [Ambienti e deploy T13](deployments.md) | Registrazioni reali, health datata, preview e probe locale opt-in |
 | [Git/GitHub T12](repositories.md) | Commit/branch/sync, token cifrati, PR/review, webhook e prova manuale |
 | [Pulse T10](pulse.md) | Reference1, wave/milestone/progresso, summary UTC, outcomes e preview client con fonti reali |
 

@@ -1,6 +1,6 @@
 import chalk, { Chalk } from 'chalk';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { collaborationRequestSchema, sessionsRequestSchema, realtimeApiRequestSchema, overviewRequestSchema, pulseRequestSchema, workRequestSchema, repositoriesRequestSchema, deploymentsRequestSchema } from '@nexus-ai/contracts';
+import { collaborationRequestSchema, sessionsRequestSchema, realtimeApiRequestSchema, overviewRequestSchema, pulseRequestSchema, workRequestSchema, repositoriesRequestSchema, deploymentsRequestSchema,applicationRequestSchema } from '@nexus-ai/contracts';
 
 export type LogOutput = (line: string) => void;
 const events: Record<string, string> = {
@@ -20,7 +20,7 @@ const routes = new Set([
   '/auth/sign-up/email', '/auth/sign-out', '/auth/send-verification-email', '/auth/verify-email',
   '/auth/request-password-reset', '/auth/reset-password', '/auth/revoke-sessions',
   '/auth/electron/token', '/auth/electron/transfer-user', '/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview',
-  '/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password', '/api/pulse', '/api/work', '/api/repositories', '/api/repositories/credential', '/api/deployments',
+  '/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password', '/api/pulse', '/api/work', '/api/repositories', '/api/repositories/credential', '/api/deployments','/api/application',
 ]);
 const categories = new Set(['internal', 'configuration', 'database_authentication', 'database_unavailable',
   'database_query', 'rate_limited', 'invalid_request', 'origin_denied', 'timeout', 'email_delivery', 'unavailable']);
@@ -30,7 +30,7 @@ const knownCodes = new Set(['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAI
 const settings = new Set(['DATABASE_URL', 'BETTER_AUTH_URL', 'BETTER_AUTH_SECRET', 'NEXUS_WEB_URL',
   'SMTP_HOST', 'SMTP_PORT', 'SMTP_SECURE', 'SMTP_USER', 'SMTP_PASSWORD', 'NEXUS_EMAIL_FROM',
   'NEXUS_SERVER_HOST', 'NEXUS_SERVER_PORT', 'NEXUS_LOG_LEVEL', 'NEXUS_ALLOWED_ORIGINS']);
-const operations = new Set<string>([...collaborationRequestSchema.options, ...sessionsRequestSchema.options, ...realtimeApiRequestSchema.options, ...overviewRequestSchema.options, ...workRequestSchema.options, ...repositoriesRequestSchema.options, ...deploymentsRequestSchema.options].map(option => option.shape.operation.value).concat(pulseRequestSchema.shape.operation.value));
+const operations = new Set<string>([...collaborationRequestSchema.options, ...sessionsRequestSchema.options, ...realtimeApiRequestSchema.options, ...overviewRequestSchema.options, ...workRequestSchema.options, ...repositoriesRequestSchema.options, ...deploymentsRequestSchema.options,...applicationRequestSchema.options].map(option => option.shape.operation.value).concat(pulseRequestSchema.shape.operation.value));
 const outcomes = new Set(['invalid_request', 'auth_required', 'forbidden', 'not_found', 'conflict', 'expired',
   'email_mismatch', 'already_member', 'last_owner', 'email_unavailable', 'unavailable']);
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
@@ -121,7 +121,7 @@ export function installRequestLogging(app: FastifyInstance): void {
     const statusCode = reply.statusCode;
     const retry = Number(reply.getHeader('retry-after'));
     const endpoint = request.url.split('?', 1)[0];
-    const domain = endpoint === '/api/collaboration' ? collaborationRequestSchema.safeParse(request.body) : endpoint === '/api/sessions' ? sessionsRequestSchema.safeParse(request.body) : endpoint === '/api/realtime' ? realtimeApiRequestSchema.safeParse(request.body) : endpoint === '/api/deployments' ? deploymentsRequestSchema.safeParse(request.body) : endpoint === '/api/repositories' ? repositoriesRequestSchema.safeParse(request.body) : endpoint === '/api/work' ? workRequestSchema.safeParse(request.body) : endpoint === '/api/overview' ? overviewRequestSchema.safeParse(request.body) : endpoint === '/api/pulse' ? pulseRequestSchema.safeParse(request.body) : null;
+    const domain = endpoint === '/api/collaboration' ? collaborationRequestSchema.safeParse(request.body) : endpoint === '/api/sessions' ? sessionsRequestSchema.safeParse(request.body) : endpoint === '/api/realtime' ? realtimeApiRequestSchema.safeParse(request.body) : endpoint === '/api/application' ? applicationRequestSchema.safeParse(request.body) : endpoint === '/api/deployments' ? deploymentsRequestSchema.safeParse(request.body) : endpoint === '/api/repositories' ? repositoriesRequestSchema.safeParse(request.body) : endpoint === '/api/work' ? workRequestSchema.safeParse(request.body) : endpoint === '/api/overview' ? overviewRequestSchema.safeParse(request.body) : endpoint === '/api/pulse' ? pulseRequestSchema.safeParse(request.body) : null;
     const details = { event: 'request.completed', ...fields(request), statusCode,
       ...(domain?.success ? { operation: domain.data.operation } : {}),
       durationMs: performance.now() - (starts.get(request) ?? performance.now()),

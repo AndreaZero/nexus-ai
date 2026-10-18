@@ -133,3 +133,7 @@ packages/contracts/src/repositories.ts fissa git.request (solo main) e repositor
 Risposte snapshot contengono ambienti, pagina build, conteggio autorizzato e health calcolata con requisiti/score/observations/computedAt. Il TTL deriva dall'osservazione originale; dati mancanti/scaduti/futuri producono unknown/null. `deployment.changed` invalida realtime senza trasmettere il contenuto dell'entità. Overview proietta target deployment/deployment_environment autorizzati e Pulse conta record osservati UTC/autore.
 
 `environmentProbe.request` è solo desktop: operation observe, projectId, URL HTTP loopback esatto e consent:true. Una HEAD privata con autorizzazione prima/dopo produce local_http/status/httpStatus/latency/observedAt/expiresAt30s; nessun timer o upload. `deployments.openPreview` accetta projectId/id, non URL arbitrari: il main rilegge record/ambiente, richiede succeeded e risolve override/fallback prima della finestra isolata. Limiti e recupero in [deployments.md](deployments.md).
+
+## T14 — ricerca e preferenze
+
+/api/application e bridge application.request accettano soltanto i contratti strict application.ts. Ricerca ACL materializzata prima di match/snippet/paginazione; tipi e scope fissi, nessun percorso locale. user_preferences è per account, versione0 se assente, lock della riga user per CAS e aggiornamento atomico nome/preferenze. Le notifiche mantengono overview_read_cursor per progetto. Bridge preferences.request è locale, con configuration di sola lettura e cambio endpoint da signedout/riavvio esplicito.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0 — 18 ottobre2026
+
+Ricerca autorizzata fra progetti e dieci tipi di contenuto condiviso, compresi messaggi pubblicati; filtri, pagine e scorciatoiaCtrl/CmdK. Profilo e preferenze account persistenti con CAS, notifiche per progetto con categorie e lettura persistente, default sharing/modello dal catalogo effettivo. Impostazioni account/runtime/cartelle/movimento collegate. Endpoint self-host desktop con conferma, riavvio e profili separati per origine; CSP vincolata al server attivo. Migrazione additiva0008. Nessuna migrazione all’avvio, inferenza o servizio cloud automatico.
+
+
 ### 2026-10-18 — T13 0.13.0: ambienti, deploy e health
 
 - Ambienti con audience e check richiesti dichiarati; registrazione esplicita di build/deploy reali con SHA/branch, report, preview e thumbnail PNG scelta. CAS, ricevute idempotenti e rimozione con cascade; nessun provider o deploy esterno implicito.

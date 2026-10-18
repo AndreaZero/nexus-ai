@@ -21,7 +21,7 @@ function saveSelection(accountId: string, value: Selection) {
 interface CollaborationContextValue {
   workspaces: Workspace[]; projects: Project[]; workspace: Workspace | null; project: Project | null;
   loading: boolean; error: string; ready: boolean;
-  refresh(selection?: Selection): Promise<void>;
+  refresh(selection?: Selection, options?: { requireExact: boolean }): Promise<boolean>;
   selectWorkspace(id: string): Promise<void>;
   selectProject(id: string): void;
 }
@@ -40,14 +40,15 @@ export function CollaborationProvider({ children }: { children: ReactNode }) {
   const currentAccount = useRef(accountId);
   currentAccount.current = accountId;
 
-  const refresh = useCallback(async (preferred?: Selection) => {
-    if (!accountId) return;
+  const refresh = useCallback(async (preferred?: Selection, options?: { requireExact: boolean }) => {
+    if (!accountId) return false;
     const ticket = ++generation.current;
     const desired = preferred ?? selectionRef.current;
     setLoading(true); setError('');
     try {
       const result = await collaborationRequest({ operation: 'listWorkspaces' });
       if (result.kind !== 'workspaces') throw new Error('Invalid workspace response.');
+      if (options?.requireExact && preferred?.workspaceId && preferred.projectId && !result.items.some(item => item.id === preferred.workspaceId)) throw new Error('This workspace is no longer available. Search again.');
       const workspace = result.items.find(item => item.id === desired.workspaceId) ?? result.items[0];
       let nextProjects: Project[] = [];
       if (workspace) {
@@ -55,13 +56,17 @@ export function CollaborationProvider({ children }: { children: ReactNode }) {
         if (response.kind !== 'projects') throw new Error('Invalid project response.');
         nextProjects = response.items;
       }
-      if (ticket !== generation.current || currentAccount.current !== accountId) return;
+      if (options?.requireExact && preferred?.projectId && preferred.workspaceId && !nextProjects.some(item => item.id === preferred.projectId)) throw new Error('This project is no longer available. Search again.');
+      if (ticket !== generation.current || currentAccount.current !== accountId) return false;
       const next = { workspaceId: workspace?.id ?? null, projectId: nextProjects.find(item => item.id === desired.projectId)?.id ?? nextProjects[0]?.id ?? null };
       setWorkspaces(result.items); setProjects(nextProjects); setSelection(next); selectionRef.current = next; saveSelection(accountId, next);
+      return true;
     } catch (cause) {
-      if (ticket !== generation.current || currentAccount.current !== accountId) return;
+      if (ticket !== generation.current || currentAccount.current !== accountId) return false;
       // Do not retain data from a possibly revoked workspace when its refresh fails.
       setWorkspaces([]); setProjects([]); setSelection(emptySelection); selectionRef.current = emptySelection; setError(errorMessage(cause));
+      if (options?.requireExact && preferred?.workspaceId && preferred.projectId) throw cause;
+      return false;
     } finally { if (ticket === generation.current && currentAccount.current === accountId) setLoading(false); }
   }, [accountId]);
 

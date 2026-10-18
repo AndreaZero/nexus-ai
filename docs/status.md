@@ -1,10 +1,28 @@
 # Stato operativo
 
-**T13 integrato e consegnato, in attesa di verifica manuale; prosecuzione T14–T16 autorizzata.**
+**T14 integrata e consegnata, verifica manuale distinta; prosecuzione T15–T16 autorizzata.**
 
 ## Mandato T13–T16 del18ottobre2026
 
 Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra task e di fermarsi al termine. Si mantiene l'ordine T13→T14→T15→T16 e si integra/verifica ciascuna task prima della seguente. Questa autorizzazione sostituisce l'attesa del via dopo ogni consegna; non equivale a prove native Mac/Linux o firma/credenziali esterne disponibili. T12 manuale resta distinto dal via allo sviluppo.
+
+## Ownership T14 integrate e rilasciate
+
+| Agente | Percorsi scrivibili | Contratto e uscita |
+| --- | --- | --- |
+| /root/t14_server | apps/server/src/application*.ts, scripts/verify-application.mjs | createApplicationService(database,reportError?).execute(actor,ApplicationRequest). Ricerca ACL prima match/snippet; user_preferences CAS; test + QA PG/HTTP. Nessun app/schema/contracts |
+| /root/t14_web | apps/web/src/**, apps/web/test/t14.test.mjs | Ricerca globale e apertura crossworkspace, settings persistenti/profile/modello/sharing, centro notifiche corrente con filtri/markread; primitive reference e provider scoped |
+| /root/t14_native | apps/desktop/src/main.ts,preload.ts,auth-config.ts,preferences*.ts,application-transport.ts, apps/desktop/test/preferences*.ts | Preferenze endpoint validated signedout/restart e profili distinti per authority; bootstrap configuration sync trusted. Application IPC/transport. auth.ts root aggiunge metodo, native non edita. Smoke/harness native aggiornabili per nuove bridgekeys/configuration |
+| /root/t14_server — QA UI dopo handoff | apps/desktop/src/application-verification.ts, scripts/verify-application-ui.mjs | Electron/preload veri e DTO controllati, ricerca/settings/notifiche/connessione/reload/offline/960; root gestisce build |
+| Coordinatore | contracts/application.ts e index, DB0008/schema, auth.ts e server app/logging, versioni/docs/integration | Contratti fissati; manifest/lock/schema un solo autore. Nessun install/commit degli agenti |
+
+DB0008 user_preferences(user_id text PK FKuser cascade, version integer>=1, preferences jsonb, updated_at timestamptz). Lettura assente versione0/default, save CAS con lock user e insert/upsert incrementa versione; name stesso commit. Search tipi project/task/milestone/document/update/deliverable/shared_session/live_share/deployment/environment; solo contenuti pubblicati visibili correnti, nessun filesystem o cronologia privata Codex. Pagination50, excerpt500, titolo300; query2–200 letterale. Notifications usa dominio overview e cursore persistente esistente per progetto corrente; preferenze filtrano badge/elenco senza modificare ACL. Endpoint HTTPSorigin o HTTPloopback, no credenziali/query/path/hash, modifica signedout e restart esplicito; isolare userData per server custom mantenendo default profilo esistente. Contratti strict in application.ts; bridge application.request, preferences.request, readonly configuration.
+
+## Evidenze T14
+
+Ricerca10tipi compresi messaggi pubblicati con ACL correnti prima di match/snippet/pagine, settings/profile atomici CAS, notifiche progetto con ultimo30/categorie/readcursor persistente. Bridgeconnessione signedout+conferma+restart, profileauthoritymarker/hash e CSP esatta dell’origine attiva; preset modello soltanto se catalogovalido. Tutte le rotte sidebar hanno destinazione reale; Publish Update apre l’editor autorizzato con anteprima.
+
+Passati **5test server,6preferenze native+4CSP,7web**, typecheck/lintmirati, confini114file e buildrenderer738kB (warningchunk). **5scenari PG/Mailpit/HTTP** reali, fixture3account/2workspace rimossi; **9controlli renderer/preload** con DTOcontrollati dichiarati e healthHTTPloopback, ricerca crossworkspace/reload/CAS/notifiche/offline/signedout/960/reduced. Report/catture .nexus/visual/t14. Smoke desktopWindows passato dopo correzione CSP che decodifica le entità HTML Vite, nessun Node nelrenderer; warningGPUsoloall’uscita. Migrazione0008 applicata esplicitamente a nexus_ai_dev, **9totali**. Nessuna nuova dipendenza o inferenza personale. Installer finale T16; Mac/Linux/manualeutente non eseguiti. Tutte ownership T14 rilasciate. Guida application.md. Settings gridstretch da rifinire inT15.
 
 ## Ownership T13 integrate e rilasciate
 

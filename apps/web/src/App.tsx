@@ -34,6 +34,8 @@ import { WorkPage } from './work/WorkPages.js';
 import { CodePage } from './repositories/CodePage.js';
 import { DeploymentsProvider } from './deployments/DeploymentsProvider.js';
 import { DeploymentsPage } from './deployments/DeploymentsPage.js';
+import { ApplicationProvider } from './application/ApplicationProvider.js';
+import './application/application.css';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -47,7 +49,7 @@ const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
 
 export function App() {
   captureInvitation();
-  return <AuthProvider><CollaborationProvider><CodexProvider><RealtimeProvider><SessionProvider><OverviewProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</OverviewProvider></SessionProvider></RealtimeProvider></CodexProvider></CollaborationProvider></AuthProvider>;
+  return <AuthProvider><ApplicationProvider><CollaborationProvider><CodexProvider><RealtimeProvider><SessionProvider><OverviewProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</OverviewProvider></SessionProvider></RealtimeProvider></CodexProvider></CollaborationProvider></ApplicationProvider></AuthProvider>;
 }
 
 function ShellApp() {
