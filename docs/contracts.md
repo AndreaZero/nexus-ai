@@ -137,3 +137,9 @@ Risposte snapshot contengono ambienti, pagina build, conteggio autorizzato e hea
 ## T14 — ricerca e preferenze
 
 /api/application e bridge application.request accettano soltanto i contratti strict application.ts. Ricerca ACL materializzata prima di match/snippet/paginazione; tipi e scope fissi, nessun percorso locale. user_preferences è per account, versione0 se assente, lock della riga user per CAS e aggiornamento atomico nome/preferenze. Le notifiche mantengono overview_read_cursor per progetto. Bridge preferences.request è locale, con configuration di sola lettura e cambio endpoint da signedout/riavvio esplicito.
+
+## T17 — guida iniziale e stato osservato
+
+Il renderer ricompone API esistenti, senza nuovi canali IPC o endpoint onboarding. Repository.remoteUrl e setRepository ammettono stringa vuota per un remoto non configurato; remoteRepositoryUrlSchema resta un URL HTTPS rigoroso. Nessun token, path o credenziale viene dedotto da quel valore, né viene costruito un URL fittizio.
+
+CodexState.windowsSandbox è opzionale per compatibilità e può essere unknown/running/ready/failed/not_applicable. Il main pubblica running prima di setupStart e ready soltanto da setupCompleted.success; eventi di processi precedenti o senza setup attivo sono ignorati. CodexSession.bindingUpdatedAt opzionale contiene la data del binding effettivamente autorizzato dal main all’apertura. La guida non attribuisce una risposta precedente a una cartella appena collegata se gli stamp non corrispondono. Questi campi sono osservazioni UI, senza ampliare la policy o i permessi.

@@ -28,6 +28,7 @@ class RuntimeFixture {
   pauseCatalog: (() => Promise<void>) | undefined;
   pauseTurn: (() => Promise<void>) | undefined;
   pauseDispose: (() => Promise<void>) | undefined;
+  setupAction: (() => void) | undefined;
   count = 0;
   turnCount = 0;
   threads = new Map<string, unknown>();
@@ -55,6 +56,7 @@ class RuntimeFixture {
     }
     if (method === 'thread/read' || method === 'thread/resume') return { thread: this.threads.get(String(data?.['threadId'])) };
     if (method === 'turn/start') { await this.pauseTurn?.(); return { turn: { id: `turn-${++this.turnCount}`, status: 'inProgress', items: [], error: null } }; }
+    if (method === 'windowsSandbox/setupStart') { this.setupAction?.(); return {}; }
     return {};
   }
   client() { return this as unknown as Pick<CodexProcess, 'start' | 'request' | 'onNotification' | 'onServerRequest' | 'respond' | 'reject' | 'onExit' | 'dispose'>; }
@@ -154,6 +156,7 @@ test('session execution reauthorizes repository, validates catalog/effort and de
     assert.equal(test.runtime.calls.some(call => call.method === 'turn/start'), false);
     const result = await test.service.request(send);
     assert.equal(result.ok, true);
+    assert.equal(result.state.session?.bindingUpdatedAt, '2026-10-17T00:00:00.000Z');
     const start = test.runtime.calls.find(call => call.method === 'thread/start')!.params as Record<string, unknown>;
     assert.equal(start['cwd'], await realpath(test.folder)); assert.equal(start['sandbox'], 'read-only'); assert.equal(start['approvalPolicy'], 'on-request'); assert.equal(start['modelProvider'], 'openai');
     const turn = test.runtime.calls.find(call => call.method === 'turn/start')!.params as Record<string, unknown>;
@@ -610,5 +613,51 @@ test('approval commands with invisible control or bidi characters are denied wit
     const result = await state.service.request({ operation: 'getState' });
     assert.equal(result.state.session?.approvals.length, 1); assert.equal(result.state.session?.approvals[0]?.command, command);
     assert.equal(state.runtime.responses.length, 5); assert.ok(state.runtime.responses.every(value => (value.result as { decision: string }).decision === 'decline'));
+  } finally { await state.close(); }
+});
+
+test('Windows sandbox setup stays running after RPC acceptance until its completion notification', async () => {
+  const state = await fixture();
+  try {
+    const connected = await state.service.request({ operation: 'connect' });
+    assert.equal(connected.state.windowsSandbox, 'unknown');
+    assert.equal(state.runtime.calls.some(call => call.method === 'windowsSandbox/setupStart'), false);
+    const accepted = await state.service.request({ operation: 'setupSandbox' });
+    assert.equal(accepted.ok, true); assert.equal(accepted.state.windowsSandbox, 'running');
+    assert.equal((await state.service.request({ operation: 'setupSandbox' })).ok, false);
+    assert.equal(state.runtime.calls.filter(call => call.method === 'windowsSandbox/setupStart').length, 1);
+    state.runtime.notification({ method: 'windowsSandbox/setupCompleted', params: { success: true } });
+    assert.equal((await state.service.request({ operation: 'getState' })).state.windowsSandbox, 'ready');
+    state.setAccount({ status: 'signed_out', user: null, expiresAt: null, persistent: false, message: null });
+    state.runtime.notification({ method: 'windowsSandbox/setupCompleted', params: { success: true } });
+    assert.equal(state.snapshots.at(-1)?.windowsSandbox, 'unknown');
+  } finally { await state.close(); }
+});
+
+test('Windows sandbox completion before the setup RPC returns retains the observed terminal state', async () => {
+  const state = await fixture();
+  try {
+    await state.service.request({ operation: 'connect' });
+    state.runtime.setupAction = () => state.runtime.notification({ method: 'windowsSandbox/setupCompleted', params: { success: true } });
+    const completed = await state.service.request({ operation: 'setupSandbox' });
+    assert.equal(completed.ok, true); assert.equal(completed.state.windowsSandbox, 'ready');
+    assert.equal(completed.state.notice, 'Windows sandbox is ready.');
+  } finally { await state.close(); }
+});
+
+test('Windows sandbox reports notification and request failures and permits an explicit retry', async () => {
+  const state = await fixture();
+  try {
+    await state.service.request({ operation: 'connect' });
+    state.runtime.notification({ method: 'windowsSandbox/setupCompleted', params: { success: true } });
+    assert.equal((await state.service.request({ operation: 'getState' })).state.windowsSandbox, 'unknown');
+    await state.service.request({ operation: 'setupSandbox' });
+    state.runtime.notification({ method: 'windowsSandbox/setupCompleted', params: { success: false } });
+    assert.equal((await state.service.request({ operation: 'getState' })).state.windowsSandbox, 'failed');
+    state.runtime.setupAction = () => { throw new Error('Controlled setup failure'); };
+    const refused = await state.service.request({ operation: 'setupSandbox' });
+    assert.equal(refused.ok, false); assert.equal(refused.state.windowsSandbox, 'failed');
+    state.runtime.setupAction = undefined;
+    assert.equal((await state.service.request({ operation: 'setupSandbox' })).state.windowsSandbox, 'running');
   } finally { await state.close(); }
 });

@@ -3,7 +3,7 @@ import type { GitRequest, GitSnapshot, RepositoriesRequest, RepositorySnapshot }
 import { useRealtime } from '../realtime/RealtimeProvider.js';
 import { useAccount } from '../auth/AuthProvider.js';
 import { useCollaboration } from '../collaboration/CollaborationProvider.js';
-import { gitRequest, repositoryRequest, RepositoryFailure } from './client.js';
+import { gitRequest, repositoryRequest, RepositoryFailure, githubUrl } from './client.js';
 
 export function useRepositoryScope() {
   const { project } = useCollaboration(); const account = useAccount(); const realtime = useRealtime().state;
@@ -52,7 +52,7 @@ export function useRepositoryData() {
     catch (cause) { if (active.current && ticket === generation.current) setError(cause instanceof Error ? cause.message : 'Repository unavailable. Retry.'); return false; }
     finally { if (active.current && ticket === generation.current) setBusy(false); }
   }
-  useEffect(() => { setRemote(null); setLocal(null); setError(''); setNotice(''); setBusy(false); if (!scope.online) return; let live = true; setBusy(true); void request({ operation: 'snapshot', projectId, repositoryId, page: 1 }).catch(cause => { if (live) setError(cause instanceof Error ? cause.message : 'Repository unavailable.'); }).finally(() => { if (live) setBusy(false); }); return () => { live = false; }; }, [scope.online, projectId, repositoryId, request]);
+  useEffect(() => { setRemote(null); setLocal(null); setError(''); setNotice(''); setBusy(false); if (!scope.online || !githubUrl(scope.project?.repository?.remoteUrl)) return; let live = true; setBusy(true); void request({ operation: 'snapshot', projectId, repositoryId, page: 1 }).catch(cause => { if (live) setError(cause instanceof Error ? cause.message : 'Repository unavailable.'); }).finally(() => { if (live) setBusy(false); }); return () => { live = false; }; }, [scope.online, scope.project?.repository?.remoteUrl, projectId, repositoryId, request]);
   return { ...scope, projectId, repositoryId, remote: scope.online && !denied ? remote : null, local: scope.online && !denied ? local : null, denied, busy, error, notice, run, request, mutate, git };
 }
 export type RepositoryData = ReturnType<typeof useRepositoryData>;

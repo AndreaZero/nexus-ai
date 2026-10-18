@@ -1,6 +1,6 @@
 # Architettura
 
-Nexus AI 0.16.0 è un monorepo TypeScript con desktop Electron, renderer React comune al web e server Fastify/PostgreSQL. Il desktop esegue Codex e opera sui file locali; il server gestisce identità Nexus e dati condivisi. Windows, macOS e Linux sono target reali con package nativi separati.
+Nexus AI 0.17.0 è un monorepo TypeScript con desktop Electron, renderer React comune al web e server Fastify/PostgreSQL. Il desktop esegue Codex e opera sui file locali; il server gestisce identità Nexus e dati condivisi. Windows, macOS e Linux sono target reali con package nativi separati.
 
 ```mermaid
 flowchart LR
@@ -114,3 +114,9 @@ Il container ospita backend e renderer compilati, PostgreSQL privato e SMTP conf
 | Linux | Check/test/build sul runner nativo CI T15 | Package/esecuzione desktop e keyring/protocollo |
 
 La [CI T15 riuscita sui tre OS](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162) verifica check/test/build, non l'accettazione grafica, il login personale o un package firmato. Il workflow di distribuzione e i risultati effettivi per versione sono descritti in [release](release.md) e [status](status.md). Le prove native del maintainer restano necessarie, incluso il Mac dal proprio dispositivo.
+
+## Onboarding T17
+
+La guida renderer riusa i contesti di account, collaborazione, binding e Codex senza nuovi privilegi o polling. I prerequisiti sono derivati dalle letture correnti; il progresso locale della guida conserva soltanto passo/rimando e una receipt della prima risposta, isolati per account e origine server, con progetto/repository/dispositivo/versione del binding. La receipt non autorizza operazioni. Il completamento osservato evita di forzare nuovamente il setup a ogni avvio freddo, mentre i check di disponibilità restano correnti. Client/viewer e browser si fermano al progetto condiviso.
+
+Il repository può avere remoteUrl vuoto: remoto non configurato, senza URL fittizio o connessione GitHub. La colonna SQL esistente conserva questa assenza esplicita; gli URL presenti restano HTTPS validati. Le viste non interrogano GitHub finché manca un URL GitHub. Il setup Windows espone stato typed derivato dalla notifica ufficiale, distinto dall’accettazione della richiesta RPC; session.bindingUpdatedAt lega l’evidenza di risposta al binding aperto dal main. Nessuna nuova migrazione.

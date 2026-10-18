@@ -16,7 +16,7 @@ interface CodexContextValue {
   binding: LocalBinding | null; bindingLoading: boolean; bindingError: string;
   model: CodexModel | null; effort: string | null;
   selectModel(id: string): void; selectEffort(effort: string): void;
-  request(request: CodexRequest): Promise<boolean>; refresh(): Promise<boolean>;
+  request(request: CodexRequest): Promise<boolean>; refresh(): Promise<boolean>; refreshBinding(): Promise<void>;
 }
 const Context = createContext<CodexContextValue | null>(null);
 
@@ -108,20 +108,24 @@ function CodexScope({ children, accountId, startup }: { children: ReactNode; acc
     return () => { live.current = false; unsubscribe?.(); window.removeEventListener('focus', onFocus); };
   }, [enabled, refresh, apply, request, startup, accountId]);
 
+  const refreshBinding = useCallback(async () => {
+    if (!enabled || !projectId || !repositoryId || !technical) return;
+    const ticket = ++bindingGeneration.current;
+    setBindingLoading(true); setBindingError(''); setBinding(null);
+    try {
+      const value = await localBindingRequest({ operation: 'get', projectId, repositoryId });
+      if (live.current && ticket === bindingGeneration.current) setBinding(value);
+    } catch (cause) {
+      if (live.current && ticket === bindingGeneration.current) setBindingError(errorMessage(cause));
+    } finally { if (live.current && ticket === bindingGeneration.current) setBindingLoading(false); }
+  }, [enabled, projectId, repositoryId, technical]);
+
   useEffect(() => {
-    if (!enabled || !projectId || !repositoryId || (project?.role !== 'owner' && project?.role !== 'developer')) return;
-    const load = () => {
-      const ticket = ++bindingGeneration.current;
-      setBindingLoading(true); setBindingError(''); setBinding(null);
-      void localBindingRequest({ operation: 'get', projectId, repositoryId }).then(value => {
-        if (live.current && ticket === bindingGeneration.current) setBinding(value);
-      }).catch(cause => {
-        if (live.current && ticket === bindingGeneration.current) setBindingError(errorMessage(cause));
-      }).finally(() => { if (live.current && ticket === bindingGeneration.current) setBindingLoading(false); });
-    };
+    if (!enabled || !projectId || !repositoryId || !technical) return;
+    const load = () => { void refreshBinding(); };
     load(); window.addEventListener('focus', load); window.addEventListener('hashchange', load);
     return () => { ++bindingGeneration.current; window.removeEventListener('focus', load); window.removeEventListener('hashchange', load); };
-  }, [enabled, projectId, repositoryId, project?.role]);
+  }, [enabled, projectId, repositoryId, technical, refreshBinding]);
 
   const model = state.models.find(item => item.id === selection.id) ?? state.models.find(item => item.isDefault) ?? state.models[0] ?? null;
   const effort = model?.efforts.includes(selection.effort) ? selection.effort : model?.efforts.includes(model.defaultEffort) ? model.defaultEffort : null;
@@ -140,7 +144,7 @@ function CodexScope({ children, accountId, startup }: { children: ReactNode; acc
   }
   function selectModel(id: string) { const item = state.models.find(entry => entry.id === id); if (item) saveSelection({ id: item.id, effort: item.defaultEffort }); }
   function selectEffort(next: string) { if (model?.efforts.includes(next)) saveSelection({ id: model.id, effort: next }); }
-  return <Context.Provider value={{ state, error, busy, desktop: Boolean(window.nexusDesktop), enabled, binding, bindingLoading, bindingError, model, effort, selectModel, selectEffort, request, refresh }}>{children}</Context.Provider>;
+  return <Context.Provider value={{ state, error, busy, desktop: Boolean(window.nexusDesktop), enabled, binding, bindingLoading, bindingError, model, effort, selectModel, selectEffort, request, refresh, refreshBinding }}>{children}</Context.Provider>;
 }
 
 export function useCodex() { const context = useContext(Context); if (!context) throw new Error('Codex context is missing.'); return context; }

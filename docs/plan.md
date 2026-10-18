@@ -195,6 +195,14 @@ Rendere setup self-host riproducibile, environment template senza segreti, migra
 
 **Uscita:** matrice build esplicita Windows/macOS/Linux, documentazione installazione/upgrade verificata, requisiti R01–R16 con evidenza e nessuna feature principale ancora mancante. Una piattaforma non provata resta da verificare e impedisce di dichiarare accettazione completa di R01. Il maintainer esegue la build Mac dal proprio Mac quando disponibile. Non confondere build di sviluppo, package unsigned e release firmata.
 
+### T17 — Onboarding guidato fino alla prima sessione
+
+**Stato:** implementazione0.17.0 integrata, verifica/distribuzione finale in corso — [issue17](https://github.com/AndreaZero/nexus-ai/issues/17). Nuova autorizzazione esplicita dopo build Windows0.16.0 confermata. **Dipendenze:** T16. Ownership/contratti in status.md.
+
+Guida riprendibile account Nexus → workspace → progetto → cartella locale → Codex/sandbox → prima sessione. Prerequisiti reali, dialog e servizi riusati, skip e riapertura da Overview/Settings, ramo cliente/browser e inviti. Conservare bozza/sessione, ruolo e confini locali; nessuna inferenza automatica o dato demo nel prodotto. Reference1/2/3 guidano token, card, glow, stepper e movimento ridotto; nessuna PNG dedicata a questo nuovo flusso.
+
+**Uscita:** primo utente percorre il setup e raggiunge il composer pronto; prima risposta completa osservata conclude la guida. Stato account/progetto/cartella modificato invalida i prerequisiti; rimando e ripresa sopravvivono al reload, inviti e ruoli mantengono il proprio percorso. Test mirati e catture Electron dichiarate; maintainer verifica login e prima richiesta personale.
+
 ## Definizione di completamento per ogni task
 
 Il comportamento previsto è implementato e integrato nel flusso reale; i controlli pertinenti eseguiti hanno un risultato registrato; documentazione/stato/changelog sono aggiornati; le istruzioni per la build sono concrete e i limiti sono dichiarati. `implementato`, `controllato automaticamente`, `build provata dall'utente` e `accettato` sono evidenze distinte.

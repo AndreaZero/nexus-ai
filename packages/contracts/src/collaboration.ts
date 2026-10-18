@@ -11,11 +11,15 @@ export const collaborationScopeSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('project'), projectId: id }).strict(),
 ]);
 export const remoteRepositoryUrlSchema = z.url().max(500).refine((value) => {
-  const url = new URL(value);
-  return url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash;
+  } catch { return false; }
 }, 'Use an HTTPS repository URL without credentials, query or fragment.');
+// An empty location explicitly means local work without a configured remote.
+export const repositoryLocationSchema = z.union([z.literal(''), remoteRepositoryUrlSchema]);
 export const repositorySchema = z.object({
-  id, projectId: id, remoteUrl: remoteRepositoryUrlSchema,
+  id, projectId: id, remoteUrl: repositoryLocationSchema,
   defaultBranch: z.string().trim().min(1).max(100),
 }).strict();
 export const workspaceSchema = z.object({
@@ -60,7 +64,7 @@ export const collaborationRequestSchema = z.discriminatedUnion('operation', [
   z.object({ operation: z.literal('revokeInvitation'), invitationId: id }).strict(),
   z.object({ operation: z.literal('previewInvitation'), token: invitationToken }).strict(),
   z.object({ operation: z.literal('acceptInvitation'), token: invitationToken }).strict(),
-  z.object({ operation: z.literal('setRepository'), ...project, remoteUrl: remoteRepositoryUrlSchema, defaultBranch: z.string().trim().min(1).max(100).regex(/^[A-Za-z0-9][A-Za-z0-9._/-]*$/) }).strict(),
+  z.object({ operation: z.literal('setRepository'), ...project, remoteUrl: repositoryLocationSchema, defaultBranch: z.string().trim().min(1).max(100).regex(/^[A-Za-z0-9][A-Za-z0-9._/-]*$/) }).strict(),
 ]);
 export const collaborationErrorSchema = z.object({
   ok: z.literal(false), code: z.enum(['auth_required', 'forbidden', 'not_found', 'conflict', 'invalid_request', 'unavailable', 'email_unavailable', 'invitation_expired', 'invitation_used']),

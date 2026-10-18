@@ -1,6 +1,6 @@
 # Lavorare su Nexus AI
 
-Leggere [AGENTS.md](AGENTS.md), [stato](docs/status.md) e [piano](docs/plan.md). I task T01–T16 appartengono alla stessa base definitiva. Il mandato corrente termina dopo T16: nessuna tranche ulteriore viene avviata automaticamente. Il maintainer verifica le build native; implementazione, verifica automatica e accettazione sono registrate separatamente.
+Leggere [AGENTS.md](AGENTS.md), [stato](docs/status.md) e [piano](docs/plan.md). I task T01–T16 appartengono alla stessa base definitiva. Il mandato T17 aggiunge l’onboarding dopo la consegna T16; nessuna tranche ulteriore viene avviata automaticamente. Il maintainer verifica le build native; implementazione, verifica automatica e accettazione sono registrate separatamente.
 
 ## Setup locale
 
@@ -18,7 +18,7 @@ pnpm package:win
 
 `auth:setup` aggiunge i valori locali mancanti e genera il secret una sola volta, conservando quelli esistenti. Mailpit viene scaricato dalla release ufficiale con verifica SHA-256 e conservato in `.nexus/`, ignorata da Git. Non è un servizio SMTP pubblico: le email di verifica/reset/invito restano nell'[inbox locale](http://127.0.0.1:8025). Per inviare agli indirizzi reali serve SMTP sul server ospitato: [self-host](docs/self-host.md).
 
-## Aggiornamento e build Windows finale
+## Aggiornamento e build Windows corrente
 
 Chiudere l'app precedente e il terminale con il vecchio backend, conservando `.env`, account e database:
 
@@ -28,7 +28,7 @@ pnpm db:migrate
 pnpm package:win
 ```
 
-La versione applicativa è **0.16.0**. Su Windows x64 l'installer è `release/win/Nexus-AI-0.16.0-win-x64.exe`; il programma non installato è `release/win/win-unpacked/Nexus AI.exe`. Il packaging usa l'architettura dell'host. Senza credenziali di firma l'artefatto è unsigned; il comando non installa automaticamente il pacchetto. I risultati effettivamente ottenuti nella consegna sono in [status](docs/status.md), la procedura completa in [release](docs/release.md).
+La versione applicativa è **0.17.0**. Su Windows x64 l'installer è `release/win/Nexus-AI-0.17.0-win-x64.exe`; il programma non installato è `release/win/win-unpacked/Nexus AI.exe`. Il packaging usa l'architettura dell'host. Senza credenziali di firma l'artefatto è unsigned; il comando non installa automaticamente il pacchetto. I risultati effettivamente ottenuti nella consegna sono in [status](docs/status.md), la procedura completa in [release](docs/release.md).
 
 `db:migrate` è esplicito e limitato al database locale dedicato `nexus_ai_dev`. Le migrazioni additive arrivano a `0008_application`, **nove in totale**; su questa macchina sono già applicate e un nuovo lancio non ricrea account o dati. Il backend non migra il database all'avvio. Per un host diverso usare gli strumenti operatore e le conferme descritti in [self-host](docs/self-host.md), senza modificare la protezione del comando locale.
 

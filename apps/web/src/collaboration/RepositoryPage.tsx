@@ -15,7 +15,7 @@ export function RepositoryPage() {
   </WorkspaceGate></div>;
 }
 
-function RepositoryDetails({ project }: { project: Project }) {
+export function RepositoryDetails({ project, onBindingChange }: { project: Project; onBindingChange?(): Promise<void> | void }) {
   const data = useCollaboration();
   const repository = project.repository;
   const [remoteUrl, setRemoteUrl] = useState(repository?.remoteUrl ?? '');
@@ -45,7 +45,7 @@ function RepositoryDetails({ project }: { project: Project }) {
     event.preventDefault(); if (pending) return;
     setPending(true); setError(''); setNotice('');
     try {
-      await collaborationRequest({ operation: 'setRepository', projectId: project.id, remoteUrl, defaultBranch });
+      await collaborationRequest({ operation: 'setRepository', projectId: project.id, remoteUrl: remoteUrl.trim(), defaultBranch });
       setNotice('Repository details saved.'); await data.refresh();
     } catch (cause) { setError(errorMessage(cause)); }
     finally { setPending(false); }
@@ -54,16 +54,22 @@ function RepositoryDetails({ project }: { project: Project }) {
     if (!repository || bindingLoading) return;
     const ticket = ++generation.current;
     setBindingLoading(true); setBindingError('');
-    try { const value = await localBindingRequest({ operation, projectId: project.id, repositoryId: repository.id }); if (live.current && ticket === generation.current) setBinding(value); }
+    try {
+      const value = await localBindingRequest({ operation, projectId: project.id, repositoryId: repository.id });
+      if (live.current && ticket === generation.current) {
+        setBinding(value);
+        if (operation === 'select' || operation === 'remove') await onBindingChange?.();
+      }
+    }
     catch (cause) { if (live.current && ticket === generation.current) { setBinding(null); setBindingError(errorMessage(cause)); } }
     finally { if (live.current && ticket === generation.current) setBindingLoading(false); }
   }
 
-  return <div className="repository-grid"><Card title="Shared repository" icon={<Icon name="repos" />} action={<Badge tone={repository ? 'blue' : 'neutral'}>{repository ? 'Connected' : 'Not connected'}</Badge>}>
-    {project.capabilities.editProject ? <form className="domain-form" onSubmit={event => { void save(event); }}><label>HTTPS repository URL<input type="url" required maxLength={500} placeholder="https://github.com/your-org/your-project" autoComplete="off" value={remoteUrl} onChange={event => setRemoteUrl(event.target.value)} disabled={pending} /><small>Use HTTPS without credentials, query parameters or fragments.</small></label><label>Default branch<input required maxLength={100} autoComplete="off" value={defaultBranch} onChange={event => setDefaultBranch(event.target.value)} disabled={pending} /></label><Feedback error={error} notice={notice} /><div className="domain-form-actions"><Button variant="primary" type="submit" disabled={pending}>{pending ? 'Saving…' : 'Save repository'}</Button></div></form> : repository ? <dl className="repository-details"><div><dt>Remote URL</dt><dd>{repository.remoteUrl}</dd></div><div><dt>Default branch</dt><dd>{repository.defaultBranch}</dd></div></dl> : <EmptyPanel title="No repository connected" description="A project owner can add the shared repository URL and default branch." />}
+  return <div className="repository-grid"><Card title="Project repository" icon={<Icon name="repos" />} action={<Badge tone={repository ? 'blue' : 'neutral'}>{repository ? repository.remoteUrl ? 'Remote configured' : 'Local setup' : 'Not configured'}</Badge>}>
+    {project.capabilities.editProject ? <form className="domain-form" onSubmit={event => { void save(event); }}><label>HTTPS repository URL (optional)<input type="url" maxLength={500} placeholder="https://github.com/your-org/your-project" autoComplete="off" value={remoteUrl} onChange={event => setRemoteUrl(event.target.value)} disabled={pending} /><small>Leave blank to work locally. For a remote, use HTTPS without credentials, query parameters or fragments.</small></label><label>Default branch<input required maxLength={100} autoComplete="off" value={defaultBranch} onChange={event => setDefaultBranch(event.target.value)} disabled={pending} /></label><Feedback error={error} notice={notice} /><div className="domain-form-actions"><Button variant="primary" type="submit" disabled={pending}>{pending ? 'Saving…' : 'Save repository'}</Button></div></form> : repository ? <dl className="repository-details"><div><dt>Remote URL</dt><dd>{repository.remoteUrl || 'Not configured · local work'}</dd></div><div><dt>Default branch</dt><dd>{repository.defaultBranch}</dd></div></dl> : <EmptyPanel title="No repository connected" description="A project owner can set up the project repository with or without a remote URL." />}
     <p className="domain-note">Repository metadata is shared with technical project members. Adding a URL does not clone or upload files.</p>
   </Card><Card title="Local folder" icon={<Icon name="laptop" />} action={<Badge tone="neutral">This device only</Badge>}>
-    {!window.nexusDesktop ? <EmptyPanel title="Open the desktop app" description="Choose local folders in Nexus AI for Windows, macOS or Linux. Browser access never exposes your filesystem." /> : !repository ? <EmptyPanel title="Connect a repository first" description="Save the shared repository details before choosing its local folder." /> : <>
+    {!window.nexusDesktop ? <EmptyPanel title="Open the desktop app" description="Choose local folders in Nexus AI for Windows, macOS or Linux. Browser access never exposes your filesystem." /> : !repository ? <EmptyPanel title="Connect a repository first" description="Save the repository setup first; the remote URL is optional. Then choose its local folder." /> : <>
       {bindingLoading && <p className="domain-state" role="status">Checking local folder…</p>}
       {!bindingLoading && (binding ? <div className="local-folder"><span className="domain-symbol"><Icon name="repos" size={24} /></span><strong>{binding.label}</strong><code>{binding.rootPath}</code><small>Linked {new Date(binding.updatedAt).toLocaleString()}</small></div> : <EmptyPanel title="No local folder linked" description="Choose an existing project folder. The location stays on this device; files are not read or uploaded." />)}
       <Feedback error={bindingError} /><div className="domain-form-actions"><Button size="sm" disabled={bindingLoading} onClick={() => { void updateBinding('get'); }}>Refresh</Button>{binding && <Button size="sm" disabled={bindingLoading} onClick={() => { void updateBinding('remove'); }}>Unlink folder</Button>}<Button variant="primary" size="sm" disabled={bindingLoading} onClick={() => { void updateBinding('select'); }}>{binding ? 'Change folder' : 'Choose folder'}</Button></div>

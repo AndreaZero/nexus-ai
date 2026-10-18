@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.0 — 18 ottobre 2026
+
+Onboarding guidato in sei passi dal primo accesso alla prima risposta Codex, con riapertura da Overview/Settings, rimando e ripresa per account/server. Riusa form e contesti reali, conserva bozze e conversazioni, propone una prima richiesta senza inviarla. Percorso cliente/browser limitato al progetto condiviso e inviti preservati. Stepper, card, rail e movimento ridotto derivano dalle tre reference.
+
+Repository locale senza URL remoto obbligatorio; GitHub configurabile in seguito, nessun URL fittizio e nessuna migrazione. Corretto il rifiuto degli URL malformati senza eccezioni nel refine. Stato Windows sandbox osservato dalla notifica ufficiale; prima risposta legata alla versione del binding aperto dal main. Runtime Codex0.159.2 e permessi invariati.
+
 ## 0.16.0 — 18 ottobre 2026
 
 Distribuzione self-host con container Node/PostgreSQL, migrazioni esplicite e readiness che verifica tutti gli hash storici. Operator multipiattaforma per backup custom e ripristino su database vuoto, senza sovrascritture implicite; proxy attendibili configurati per IP/CIDR e SMTP autenticato con STARTTLS. La policy web permette il realtime soltanto sulla stessa authority HTTP/WebSocket.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card, EmptyPanel, Icon } from '@nexus-ai/ui';
 import { AppShell } from './shell/AppShell.js';
 import type { ShellRoute } from './shell/types.js';
@@ -20,7 +20,7 @@ import { ProjectsPage } from './collaboration/ProjectsPage.js';
 import { TeamPage } from './collaboration/TeamPage.js';
 import { RepositoryPage } from './collaboration/RepositoryPage.js';
 import { InvitationPage } from './collaboration/InvitationPage.js';
-import { captureInvitation } from './collaboration/invitation.js';
+import { captureInvitation, pendingInvitation } from './collaboration/invitation.js';
 import './collaboration/collaboration.css';
 import { CodexProvider } from './codex/CodexProvider.js';
 import './codex/codex.css';
@@ -36,6 +36,10 @@ import { DeploymentsProvider } from './deployments/DeploymentsProvider.js';
 import { DeploymentsPage } from './deployments/DeploymentsPage.js';
 import { ApplicationProvider } from './application/ApplicationProvider.js';
 import './application/application.css';
+import { OnboardingProvider, useOnboarding } from './onboarding/OnboardingProvider.js';
+import { OnboardingView } from './onboarding/OnboardingView.js';
+import { OnboardingSummary } from './onboarding/OnboardingSummary.js';
+import './onboarding/onboarding.css';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -49,7 +53,7 @@ const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
 
 export function App() {
   captureInvitation();
-  return <AuthProvider><ApplicationProvider><CollaborationProvider><CodexProvider><RealtimeProvider><SessionProvider><OverviewProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</OverviewProvider></SessionProvider></RealtimeProvider></CodexProvider></CollaborationProvider></ApplicationProvider></AuthProvider>;
+  return <AuthProvider><ApplicationProvider><CollaborationProvider><CodexProvider><RealtimeProvider><SessionProvider><OverviewProvider><OnboardingProvider>{!window.nexusDesktop && isAccountPath(window.location.pathname) ? <AuthRoot /> : <ShellApp />}</OnboardingProvider></OverviewProvider></SessionProvider></RealtimeProvider></CodexProvider></CollaborationProvider></ApplicationProvider></AuthProvider>;
 }
 
 function ShellApp() {
@@ -57,6 +61,15 @@ function ShellApp() {
   const [navigationVersion, setNavigationVersion] = useState(0);
   const [dialog, setDialog] = useState<'navigation' | 'notifications' | null>(null);
   const motion = useMotionPreference();
+  const onboarding = useOnboarding();
+  const initialGuide = useRef({ eligible: !window.location.hash || /^#\/?overview\/?$/.test(window.location.hash), handled: false });
+
+  useEffect(() => {
+    const entry = initialGuide.current;
+    if (!entry.eligible || entry.handled) return;
+    if (pendingInvitation() || route !== 'overview') { entry.handled = true; return; }
+    if (onboarding.autoStart) { entry.handled = true; navigate('getting-started'); }
+  }, [onboarding.autoStart, route]);
 
   useEffect(() => {
     if (!window.location.hash) window.history.replaceState(null, '', '#/overview');
@@ -77,7 +90,8 @@ function ShellApp() {
 
   const viewProps = { onNavigate: navigate, reducedMotion: motion.reducedMotion };
   const section = routes.find((entry) => entry.id === route);
-  const content = route === 'overview' ? <DeploymentsProvider><OverviewView {...viewProps} /></DeploymentsProvider>
+  const content = route === 'getting-started' ? <OnboardingView />
+    : route === 'overview' ? <><OnboardingSummary /><DeploymentsProvider><OverviewView {...viewProps} /></DeploymentsProvider></>
     : route === 'projects' ? <ProjectsPage />
     : route === 'team' ? <TeamPage />
     : route === 'tasks' ? <WorkPage section="tasks" />

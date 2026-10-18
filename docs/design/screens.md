@@ -97,7 +97,7 @@ Il pianeta e le particelle della sidebar sono presenti anche qui. Nel hero la wa
 
 | Flusso | Risultato finito |
 | --- | --- |
-| Onboarding | Accesso Nexus, workspace/progetto, cartella locale, Codex connect, riepilogo dati condivisi |
+| Onboarding — T17 | Sei passi implementati con contesti reali: account, workspace/progetto, repository locale anche senza remoto, Codex/sandbox e prima risposta; ramo cliente/browser, rimando e ripresa. Stepper derivato dalla reference2 e rail294/card dalle reference1/3; [guida e catture](../onboarding.md). |
 | Projects | Elenco, ricerca, creazione, selezione e modifica progetto; empty state utile |
 | Team/inviti | Ruoli, invito, accettazione con email verificata, revoca e lista membri |
 | Tasks/roadmap | Board completa, dettaglio task, assegnazione/commenti e milestone |

@@ -1,9 +1,10 @@
 # Documentazione Nexus AI
 
-Base applicativa **0.16.0**, piano T01–T16. Le guide descrivono i comportamenti implementati; [stato](status.md) e [accettazione](acceptance.md) distinguono controlli automatici, package, prova personale e risultati per piattaforma. Il lavoro si ferma dopo T16 come richiesto dal maintainer.
+Base applicativa **0.17.0**, base T01–T16 e onboarding T17. Le guide descrivono i comportamenti implementati; [stato](status.md) e [accettazione](acceptance.md) distinguono controlli automatici, package, prova personale e risultati per piattaforma. Dopo la consegna T16 è stato autorizzato T17, limitato al percorso iniziale guidato.
 
 | Documento | Uso |
 | --- | --- |
+| [Onboarding](onboarding.md) | Primo accesso, workspace/progetto, cartella locale, Codex e prima risposta |
 | [Contribuire](../CONTRIBUTING.md) | Setup locale, build, comandi e controlli proporzionati |
 | [Self-host](self-host.md) | Container, SMTP, HTTPS/proxy, readiness, migrazioni, backup/restore e upgrade |
 | [Release](release.md) | Package Windows/macOS/Linux, CI, checksum, firma e notarizzazione |

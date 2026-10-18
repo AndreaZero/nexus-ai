@@ -1,6 +1,7 @@
 import type { ShellRoute } from './shell/types.js';
 
 export const routes: readonly { id: ShellRoute; label: string; description: string }[] = [
+  { id: 'getting-started', label: 'Getting started', description: 'Guided setup from Nexus sign in to your first Codex conversation' },
   { id: 'overview', label: 'Overview', description: 'Project activity and current work' },
   { id: 'pulse', label: 'Client & Team Pulse', description: 'Milestones, outcomes and client updates' },
   { id: 'session', label: 'AI Session', description: 'Conversation, context and code workspace' },

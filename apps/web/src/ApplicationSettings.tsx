@@ -8,6 +8,8 @@ import { useRealtime } from './realtime/RealtimeProvider.js';
 import { PersonalSettings } from './application/PersonalSettings.js';
 import { ConnectionSettings } from './application/ConnectionSettings.js';
 import { useCodex } from './codex/CodexProvider.js';
+import { useOnboarding } from './onboarding/OnboardingProvider.js';
+import { navigate } from './routes.js';
 
 interface ApplicationSettingsProps {
   motion: ReturnType<typeof useMotionPreference>;
@@ -17,11 +19,13 @@ export function ApplicationSettings({ motion }: ApplicationSettingsProps) {
   const desktop = useDesktopInfo();
   const server = useServerHealth();
   const realtime = useRealtime(); const codex = useCodex();
+  const onboarding = useOnboarding();
   const serverTone = server.state.status === 'healthy' ? 'positive' : server.state.status === 'checking' ? 'pending' : server.state.status === 'offline' || server.state.status === 'invalid' ? 'danger' : 'neutral';
   const serverLabel = server.state.status === 'healthy' ? 'HTTP service reachable' : server.state.status === 'checking' ? 'Checking connection…' : server.state.status === 'offline' ? 'Service unavailable' : server.state.status === 'invalid' ? 'Invalid server configuration' : 'Server not configured';
 
   return <div className="settings-layout">
     <div className="settings-column">
+      <Card title="Getting started" icon={<Icon name="sparkles" />}><p className="settings-note">{onboarding.completed ? 'Your guided setup is complete. Review the connections for this project or revisit the guide.' : 'Continue the guide from your Nexus account to a connected project and your first Codex conversation.'}</p><Button size="sm" onClick={() => { onboarding.restart(); navigate('getting-started'); }}>Open setup guide</Button></Card>
       <PersonalSettings />
       <AccountCard />
       <CodexSettings />

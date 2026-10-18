@@ -43,7 +43,7 @@ export function ProjectsPage() {
   </AccountGate></div>;
 }
 
-function EntityEditor({ editor, onClose }: { editor: Editor; onClose(): void }) {
+export function EntityEditor({ editor, onClose }: { editor: Editor; onClose(): void }) {
   const data = useCollaboration();
   const [name, setName] = useState(editor.item?.name ?? '');
   const [description, setDescription] = useState(editor.kind === 'project' ? editor.item?.description ?? '' : '');

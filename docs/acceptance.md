@@ -1,6 +1,6 @@
 # Matrice di accettazione del prodotto
 
-Base0.16.0, piano T01–T16. La matrice separa **funzionalità implementate**, **controlli eseguiti** e **accettazione personale o di piattaforma**. I fixture dei verifier sono isolati dal normale avvio e non diventano dati fittizi dell'app. Il mandato di proseguire fino alla task finale autorizza lo sviluppo continuo; non certifica percorsi personali o piattaforme non provate.
+Base0.17.0, piano T01–T16 e onboarding T17. La matrice separa **funzionalità implementate**, **controlli eseguiti** e **accettazione personale o di piattaforma**. I fixture dei verifier sono isolati dal normale avvio e non diventano dati fittizi dell'app. Il mandato di proseguire fino alla task finale autorizza lo sviluppo continuo; non certifica percorsi personali o piattaforme non provate.
 
 | Requisito | Implementazione | Evidenze automatiche disponibili | Verifica personale/esterna distinta |
 | --- | --- | --- | --- |
@@ -30,4 +30,4 @@ I conteggi dei test mirati T15 non sono sommabili: il gruppo39Codex+context comp
 - [Revisione visuale e catture controllate T15](design/t15-review.md), con report delle tre reference.
 - [Setup/upgrade/backup](self-host.md) e [distribuzione nativa](release.md).
 
-Il package unsigned non equivale a una release firmata. La readiness non dimostra consegna SMTP, login Codex o salute del progetto; queste prove hanno fonti e consensi propri. Il prodotto è implementato nel perimetro previsto, ma l'accettazione completa di R01 resta aperta fino alle prove native richieste. Il lavoro autorizzato si arresta dopo la consegna T16; ulteriori interventi seguono il feedback del maintainer.
+Il package unsigned non equivale a una release firmata. La readiness non dimostra consegna SMTP, login Codex o salute del progetto; queste prove hanno fonti e consensi propri. Il prodotto è implementato nel perimetro previsto, ma l'accettazione completa di R01 resta aperta fino alle prove native richieste. Dopo la consegna T16 il maintainer ha autorizzato T17. La guida iniziale ha12controlli Electron e6scenari PG/HTTP reali passati; login/permessi OS e prima inferenza personali restano manuali. Il lavoro corrente si arresta alla consegna T17.

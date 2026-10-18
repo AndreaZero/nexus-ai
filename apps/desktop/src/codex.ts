@@ -21,7 +21,7 @@ interface Dependencies {
   readAttachments?: (userId: string, projectId: string, repositoryId: string, cwd: string, attachmentIds: string[]) => Promise<{ name: string; text: string }[]>;
   createProcess?: (options: { executable: string; home: string; clientVersion: string }) => ProcessClient;
 }
-type Context = { userId: string; projectId: string; repositoryId: string; cwd: string; key: string };
+type Context = { userId: string; projectId: string; repositoryId: string; cwd: string; key: string; bindingUpdatedAt: string };
 type PendingApproval = { view: CodexApproval; rpcId: string | number; runtime: ProcessClient; context: Context; cwd: string | null; timer: NodeJS.Timeout };
 type ErrorCode = Exclude<CodexResponse, { ok: true }>['code'];
 class RequestError extends Error {
@@ -31,7 +31,7 @@ class RequestError extends Error {
 const record = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 const text = (value: unknown, limit: number): string => typeof value === 'string' ? value.slice(0, limit) : '';
 const identifier = (value: unknown): value is string => typeof value === 'string' && value.length > 0 && value.length <= 200 && ![...value].some(character => character.charCodeAt(0) < 32);
-const emptyState = (): CodexState => ({ runtime: 'stopped', version: null, expectedVersion: '0.159.2', runtimePath: null,
+const emptyState = (platform: NodeJS.Platform): CodexState => ({ runtime: 'stopped', windowsSandbox: platform === 'win32' ? 'unknown' : 'not_applicable', version: null, expectedVersion: '0.159.2', runtimePath: null,
   account: null, login: null, models: [], session: null, policy: 'readOnly', notice: null });
 const attachmentMarker = 'NEXUS_CONTEXT_ATTACHMENT_V1\n';
 
@@ -49,7 +49,7 @@ export function codexRuntimePath(packaged: boolean, resources: string, appPath: 
 
 /** Account-bound main-process service. No RPC method, cwd, credential or provider event crosses unvalidated. */
 export class DesktopCodex {
-  private state: CodexState = emptyState();
+  private state: CodexState;
   private process: ProcessClient | undefined;
   private userId: string | undefined;
   private context: Context | undefined;
@@ -69,6 +69,7 @@ export class DesktopCodex {
   private readonly dependencies: Dependencies;
   constructor(dependencies: Dependencies) {
     this.dependencies = dependencies;
+    this.state = emptyState(dependencies.platform);
     this.threads = new CodexThreadStorage(path.join(dependencies.userData, 'codex-threads.json'));
   }
 
@@ -130,7 +131,7 @@ export class DesktopCodex {
     this.nexusUnavailable = false;
     if (this.guardTimer) clearInterval(this.guardTimer);
     this.guardTimer = undefined;
-    this.state = emptyState();
+    this.state = emptyState(this.dependencies.platform);
     this.publish(true);
     if (current) this.shutdown = this.shutdown.then(() => current.dispose()).catch(() => undefined);
   }
@@ -215,7 +216,7 @@ export class DesktopCodex {
     await this.shutdown;
     this.assertNexusEpoch(epoch);
     this.userId = userId;
-    this.state = { ...emptyState(), runtime: 'starting', runtimePath: this.dependencies.executable };
+    this.state = { ...emptyState(this.dependencies.platform), runtime: 'starting', runtimePath: this.dependencies.executable };
     this.publish(true);
     const runtime = (this.dependencies.createProcess ?? (options => new CodexProcess(options)))({
       executable: this.dependencies.executable, home: codexAccountHome(this.dependencies.userData, userId), clientVersion: this.dependencies.clientVersion,
@@ -235,7 +236,7 @@ export class DesktopCodex {
       this.context = undefined;
       if (this.guardTimer) clearInterval(this.guardTimer);
       this.guardTimer = undefined;
-      this.state = { ...emptyState(), runtime: 'error', runtimePath: this.dependencies.executable, notice: 'The local Codex runtime stopped. Reconnect to restore your session.' };
+      this.state = { ...emptyState(this.dependencies.platform), runtime: 'error', runtimePath: this.dependencies.executable, notice: 'The local Codex runtime stopped. Reconnect to restore your session.' };
       this.publish(true);
     });
     try {
@@ -317,7 +318,7 @@ export class DesktopCodex {
       cwd = await realpath(binding.rootPath);
       if (!path.isAbsolute(cwd) || !(await stat(cwd)).isDirectory()) throw new Error('Invalid directory.');
     } catch { this.clearApprovals(); this.state.policy = 'readOnly'; this.context = undefined; this.state.session = null; throw new RequestError('invalid_request', 'The linked local folder is unavailable. Choose an existing folder in Repos.'); }
-    return { userId, projectId, repositoryId, cwd, key: codexSessionKey(userId, projectId, repositoryId, cwd) };
+    return { userId, projectId, repositoryId, cwd, key: codexSessionKey(userId, projectId, repositoryId, cwd), bindingUpdatedAt: binding.updatedAt };
   }
 
   private model(value: string, effort?: string | null): CodexModel {
@@ -392,8 +393,18 @@ export class DesktopCodex {
     }
     if (request.operation === 'setupSandbox') {
       if (this.dependencies.platform !== 'win32') throw new RequestError('invalid_request', 'Sandbox setup is only required on Windows.');
-      await runtime.request('windowsSandbox/setupStart', { mode: 'unelevated', cwd: codexAccountHome(this.dependencies.userData, userId) });
-      this.state.notice = 'Windows sandbox setup started. Wait for the result before sending a request.'; this.publish(true); return;
+      if (this.state.windowsSandbox === 'running') throw new RequestError('busy', 'Windows sandbox setup is already in progress. Wait for its result.');
+      this.state.windowsSandbox = 'running';
+      this.state.notice = 'Windows sandbox setup started. Wait for the result before sending a request.'; this.publish(true);
+      try {
+        await runtime.request('windowsSandbox/setupStart', { mode: 'unelevated', cwd: codexAccountHome(this.dependencies.userData, userId) });
+        this.assertCurrent(runtime, userId); this.assertNexusEpoch(epoch);
+      } catch (error) {
+        if (this.process === runtime && this.state.windowsSandbox === 'running') this.state.windowsSandbox = 'failed';
+        throw error;
+      }
+      // Completion is an independent notification and can precede this RPC response.
+      return;
     }
     const context = await this.authorize(request.projectId, request.repositoryId);
     this.assertCurrent(runtime, userId);
@@ -488,7 +499,7 @@ export class DesktopCodex {
     await this.threads.set(context.key, thread.id);
     this.assertCurrent(runtime, context.userId);
     this.context = context;
-    this.state.session = { projectId: context.projectId, repositoryId: context.repositoryId, threadId: thread.id, turnId: null,
+    this.state.session = { projectId: context.projectId, repositoryId: context.repositoryId, threadId: thread.id, turnId: null, bindingUpdatedAt: context.bindingUpdatedAt,
       folderLabel: path.basename(context.cwd).slice(0, 500), model: model.model, status: 'idle', messages: [], activities: [], error: null,
       plan: [], planExplanation: null, usage: null, startedAt: null, approvals: [], diff: '', diffTruncated: false, fileChanges: [], testReports: [] };
     for (const turn of thread.turns.slice(-200)) this.applyTurn(turn);
@@ -605,6 +616,8 @@ export class DesktopCodex {
     }
     if (event.method === 'account/updated') { void this.request({ operation: 'refreshModels' }); return; }
     if (event.method === 'windowsSandbox/setupCompleted') {
+      if (this.dependencies.platform !== 'win32' || this.state.windowsSandbox !== 'running') return;
+      this.state.windowsSandbox = params['success'] === true ? 'ready' : 'failed';
       this.state.notice = params['success'] === true ? 'Windows sandbox is ready.' : 'Windows sandbox setup failed. Check local permissions and retry setup.';
       this.publish(true); return;
     }

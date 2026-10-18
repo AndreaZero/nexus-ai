@@ -34,6 +34,7 @@ export const codexTestReportSchema = z.object({
 }).strict();
 export const codexSessionSchema = z.object({
   projectId: id, repositoryId: id, threadId: z.string().min(1).max(200), turnId: z.string().max(200).nullable(),
+  bindingUpdatedAt: z.iso.datetime().optional(),
   folderLabel: z.string().max(500), model: z.string().max(200),
   status: z.enum(['idle', 'running', 'completed', 'interrupted', 'failed']),
   messages: z.array(codexMessageSchema).max(200), activities: z.array(codexActivitySchema).max(100),
@@ -49,6 +50,7 @@ export const codexSessionSchema = z.object({
 }).strict();
 export const codexStateSchema = z.object({
   runtime: z.enum(['stopped', 'starting', 'ready', 'missing', 'incompatible', 'error']),
+  windowsSandbox: z.enum(['unknown', 'running', 'ready', 'failed', 'not_applicable']).optional(),
   version: z.string().max(100).nullable(), expectedVersion: z.literal('0.159.2'),
   runtimePath: z.string().max(2000).nullable(),
   account: z.object({ type: z.enum(['chatgpt', 'apiKey']), email: z.string().max(254).nullable(), plan: z.string().max(100).nullable() }).strict().nullable(),

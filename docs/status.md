@@ -1,10 +1,45 @@
 # Stato operativo
 
-**T16 integrata e consegnata — versione 0.16.0. Sviluppo fermo al termine del piano, come richiesto. Accettazione manuale e prove personali restano distinte.**
+**T17 in sviluppo — onboarding guidato autorizzato esplicitamente dal maintainer. Build Windows0.16.0 confermata; prove funzionali personali restano distinte.**
+
+## Mandato e ownership T17 prima delle deleghe
+
+Nuova autorizzazione dopo l'arresto T16: implementare con multiagenti l'onboarding fino alla prima sessione Codex, mantenendo le reference. Sei passi account/workspace/project/folder/codex/session, ripresa e rimando locali per account/authority; progressi derivati da dati correnti. Nessuna inferenza, pubblicazione, scrittura file o modifica permessi automatica. Ramo client/browser senza requisiti Codex locali; inviti preservati. Nessuna migrazione o nuova dipendenza prevista.
+
+| Agente | Percorsi scrivibili | Obiettivo e contratto |
+| --- | --- | --- |
+| /root/onboarding_state | apps/web/src/onboarding/state.ts,OnboardingProvider.tsx,apps/web/test/onboarding.test.mjs | Derivazione prerequisiti/ruoli e stato locale UI soltanto, receipt prima risposta scoped account/progetto/repository/bindingstamp, storage fallibile, no autorizzazioni o segreti persistiti. Hook contract sotto; test isolamento/revoca/reset/errori. |
+| /root/onboarding_ui | apps/web/src/onboarding/OnboardingView.tsx,OnboardingSummary.tsx,onboarding.css; collaboration/ProjectsPage.tsx,RepositoryPage.tsx | Guida e riepilogo stile PNG1/2/3, riuso dialog workspace/project e RepositoryDetails esportato con callback binding. Non editare provider/state/App/shell/contracts. Focus/tastiera/960/reduced, nessuna azione automatica. |
+| /root/onboarding_qa | apps/desktop/src/onboarding-verification.ts,scripts/verify-onboarding.mjs,docs/onboarding.md | Harness Electron/preload reale con DTO controllati dichiarati, percorso signedout→setup→prima risposta simulata soloQA, reload/skip/role/invite/noautosend/nooverwrite, screenshot1586/960/reduced. Root esegue build. |
+| Coordinatore | App.tsx/routes.ts/shell/types.ts/AppShell.tsx/ApplicationSettings.tsx, codex/CodexProvider.tsx, contratti Codex e desktop/codex*.ts test, manifest/versioni/docsstatusplanchangelog | Integrazione, refreshBinding disponibile al form riusato; stato Windows sandbox osservabile da notifica ufficiale, QA mirata/build/smoke e consegna. Un autore per confini. |
+
+Hook fisso useOnboarding(): steps readonly {id,title,description,complete,available}[], stepId (account/workspace/project/folder/codex/session), selectStep(id),next(),back(),completed,dismissed,storageAvailable,autoStart,mode(developer/observer/browser),dismiss(),restart(). Provider usa contesti esistenti e nessuna fetch supplementare. autoStart suggerisce solo UI; root gestisce routing una volta al bootstrap senza interferire inviti/deep link. Receipt locale per prima risposta completa non autorizza nulla ed è valida solo nel binding corrente. Finché caricamento/errore/revoca, prerequisiti non diventano verdi da storage.
+
+Contratti aggiuntivi coordinatore: CodexState.windowsSandbox opzionale enum unknown/running/ready/failed/not_applicable, osservato in main da setupCompleted (setup richiesta accettata non equivale successo). CodexContext.refreshBinding():Promise<void>. RepositoryDetails({project,onBindingChange?}) esportato e callback dopo select/remove; EntityEditor esportato per dialog creazione. Ultimo passo usa sessione/bozza esistenti: suggerimento solo se bozza vuota, invio esplicito nel composer, nessun reset automatico di conversazioni/permessi.
+
 
 ## Mandato T13–T16 del18ottobre2026
 
 Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra task e di fermarsi al termine. Si mantiene l'ordine T13→T14→T15→T16 e si integra/verifica ciascuna task prima della seguente. Questa autorizzazione sostituisce l'attesa del via dopo ogni consegna; non equivale a prove native Mac/Linux o firma/credenziali esterne disponibili. T12 manuale resta distinto dal via allo sviluppo.
+
+## Integrazione T17: repository locale senza remoto
+
+Il form esistente richiedeva un URL HTTPS anche prima del primo collegamento locale. Per rendere GitHub effettivamente facoltativo nel nuovo flusso, il metadato remoteUrl ammette stringa vuota come remoto non configurato; è una assenza esplicita, non un URL fittizio. La colonna SQL già accetta questo valore: nessuna migrazione. Gli URL non vuoti mantengono tutte le verifiche HTTPS/credenziali. I controlli GitHub non vengono avviati senza URL GitHub; Git e Codex locali mantengono ruolo/binding.
+
+Ownership aggiuntiva prima della delega: /root/onboarding_data possiede apps/server/src/onboarding-data.test.ts e scripts/verify-onboarding-data.mjs per regressioni contract/PG/HTTP su repository senza remoto; può proporre, non editare, contratti o servizi fuori questi file. Root integra schema repository location, RepositoryPage e display/use-repository UI. Test reali solo fixture proprio, nessuna lettura log di segreti, nessuna inferenza o GitHub esterno. Root possiede anche CodexSettings e auth/configuration per stato typed/setup e destinazione finale login web.
+
+## Evidenze T17 in consegna
+
+Implementazione **0.17.0** integrata. Guida in sei passi con account/progetti/cartelle/runtime reali, UI riusata e ramo cliente/browser; prima richiesta soltanto dopo click Send. Dopo una risposta completa osservata si conserva anche il rimando per evitare di forzare il setup al successivo avvio freddo; i check correnti non vengono autorizzati da quella preferenza. Una bozza esistente, anche fatta di soli spazi, e una conversazione già aperta restano intatte.
+
+- **Check passato**: typecheck/lint e120confini renderer. Primo controllo corretto per il tipo dei tab dopo l’aggiunta della nuova route; nessun errore residuo. Build completa passata, renderer761.62kB (warningchunk non bloccante). Dopo la rifinitura del solo copy cliente, typecheck/lint web mirati passati; il package ricompila i bundle finali.
+- **Suite generale passata:337test e1skip POSIX su Windows**,338casi totali:14bridge,9DB(8pass/1skip),71web,112server,125desktop,7script. I10test derivazione onboarding,3contratto e31DesktopCodex sono sottoinsiemi, non conteggi aggiuntivi.
+- **Electron/preload produzione:12controlli passati e11catture**, DTO controllati dichiarati per account/browsertransfer, selezione cartella, catalogo, sandbox e risposta; nessuna credenziale/inferenza personale. Coperti bootstrap, form, remoto opzionale, skip/ripresa, bozza, noautosend/cambio policy, receipt senza transcript, nuovo binding con vecchia sessione, invito/cliente, tastiera/960/reduced. Le correzioni dell’harness hanno riguardato locator dopo avanzamento e osservazione characterData; il difetto URL effettivo è stato corretto in produzione prima del pass finale. Report .nexus/visual/t17/onboarding-report.json.
+- **PostgreSQL/SMTP/HTTP reali:6scenari passati**, senza DDL o GitHub esterno: due account propri verificati, metadato remoto vuoto persistente dopo restart server isolato, salvataggi ripetuti e aggiunta HTTPS sullo stesso ID, URL invalidi400 senza mutazioni, invito client e repository redatto/negato. Fixture ed email proprie eliminate; account/workspace esistenti e intero journal/hash invariati. Report onboarding-data-report.json.
+- Aperte PNG1/2/3 e cinque catture effettive: account, cartella, prima sessione, client e960reduced. Sidebar/pianeta, palette navy/ciano/blu/viola, card e stepper coerenti; rail294px e nessun overflow orizzontale. Nuova composizione senza PNG dedicata, nessuna identità pixel dichiarata. Catture controllate pubbliche in docs/design/captures/t17-onboarding*.png; copy cliente finale adattato al ruolo.
+- Audit:1753file sorgente/build testuali,0corrispondenze dei valori privati cercati,0account/0workspace QA residui,1account esistente e9migrazioni conservati. Nessuna migrazione o nuova dipendenza.
+
+Package Windows/smoke e CI0.17.0 ancora da registrare separatamente; i risultati package dei tre OS di T16 restano storici0.16.0. [Issue17](https://github.com/AndreaZero/nexus-ai/issues/17), [guida](onboarding.md), [matrice](acceptance.md). Tutti i fronti agenti sono integrati e rilasciati; root completa la distribuzione e si ferma alla consegna T17.
 
 ## Ownership T16 integrate e rilasciate
 
