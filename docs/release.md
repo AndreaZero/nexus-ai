@@ -40,7 +40,7 @@ Le opzioni applicate seguono [electron-builder v26 macOS](https://www.electron.b
 
 ## CI e pubblicazione
 
-Il workflow `Workspace checks` controlla ogni push/PR su Windows/macOS/Linux. La run [39099306162](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162) ha superato check/test/build dopo T15; non è una prova dell'installer T16 o dell'esecuzione personale sui tre sistemi.
+Il workflow `Workspace checks` controlla ogni push/PR su Windows/macOS/Linux. La run [39100475642](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475642) ha superato check/test/build sul commit08679f4. La pipeline [39100475946](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475946) ha prodotto effettivamente NSIS Windows x64 unsigned, DMG macOS ARM64 ad-hoc e AppImage Linux x64 con manifest e hash. Questi package CI sono distinti dall’esecuzione GUI personale e dalla distribuzione firmata/notarizzata.
 
 `Native desktop packages` è attivabile manualmente da Actions oppure con tag `v*`. Il dispatch offre unsigned/signed; i tag usano sempre unsigned. Ogni job installa il lockfile, esegue check/test, build e packaging sul proprio host, poi conserva installer/manifest/hash come artifact14giorni. Mac usa l'architettura effettiva del runner, registrata nel manifest; una build Intel e una Apple Silicon si producono su host distinti.
 

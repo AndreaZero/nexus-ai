@@ -1,12 +1,12 @@
 # Stato operativo
 
-**T16 in sviluppo, task finale; T15 integrata nel commit1a19ac7. Arresto al termine richiesto dal maintainer.**
+**T16 integrata e consegnata — versione 0.16.0. Sviluppo fermo al termine del piano, come richiesto. Accettazione manuale e prove personali restano distinte.**
 
 ## Mandato T13–T16 del18ottobre2026
 
 Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra task e di fermarsi al termine. Si mantiene l'ordine T13→T14→T15→T16 e si integra/verifica ciascuna task prima della seguente. Questa autorizzazione sostituisce l'attesa del via dopo ogni consegna; non equivale a prove native Mac/Linux o firma/credenziali esterne disponibili. T12 manuale resta distinto dal via allo sviluppo.
 
-## Ownership T16 prima delle deleghe
+## Ownership T16 integrate e rilasciate
 
 | Agente | Percorsi scrivibili | Contratto/uscita |
 | --- | --- | --- |
@@ -18,15 +18,53 @@ Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra t
 
 Contratto readinessResponseSchema in contracts/operations.ts: GET/ready readonly, statusready/not_ready; checks.database, schema(current/pending/mismatch/unavailable), accounts/emailconfigured, timestamp. Factoryserver readOperationalReadiness(database,config,version) restituisce DTO. DB readiness controlla journal/hash migrazioni senza eseguireDDL. Config trustedProxies readonlystring[] default[] validIP/CIDRespliciti; mainFastify rootintegra. Operator produzione richiede --confirm-database nomeesatto, restore soltanto databasevuoto nooverwriteimplicit; backupsegreti separati, PGpasswordchildenvnonargv/log. QA pg_dump/pg_restore solo schemaQAproprio nella nexus_ai_dev (ruolononCREATEDB), nessunrestorepublic. Compose singleinstance+PGprivate+SMTPconfig esterna/optionalMailpitdev, TLSreverseproxy esplicito, secretstemplate nonvalori privati. Rootmanifestsseparati e nessun install/commit agenti.
 
-## Evidenze T16 in integrazione finale
+## Evidenze T16
 
-Versione applicazione **0.16.0**, Codex **0.159.2**, nove migrazioni senza modifiche allo schema applicativo durante T16. Implementati container server senza Electron/Codex, PostgreSQL privato, Mailpit solo nel profilo development, proxy IP/CIDR espliciti e SMTP autenticato con STARTTLS. GET /ready è readonly: confronta tutta la cronologia/hash delle migrazioni, separando schema pending/mismatch dalla semplice liveness /health.
+Versione applicazione **0.16.0**, Codex **0.159.2**, nove migrazioni. T16 non aggiunge tabelle o migrazioni applicative. Sono implementati container server senza Electron/Codex, PostgreSQL privato, Mailpit nel solo profilo development, proxy attendibili espliciti e STARTTLS per SMTP autenticato. La readiness confronta tutta la cronologia delle migrazioni senza DDL; migrate, backup e restore restano azioni esplicite dell'operatore.
 
-Operator migrate/backup/restore con conferma esatta del database, lock condiviso, archivio custom nuovo e restore solo su database vuoto; nessun DROP/CLEAN o password negli argomenti. Il test PostgreSQL18 reale ha superato **5 verifiche** su schema temporaneo proprio, inclusi dump/restore effettivi e rifiuto overwrite/restore sul DB applicativo. Account e journal esistenti conservati; report privato .nexus/visual/t16/operations-report.json.
+### Controlli del sorgente
 
-**pnpm check passato** (typecheck, lint e confini di116file). **pnpm test passato:318 test**,14bridge/7DB/61web/108server/122desktop/6script; un ulteriore test CSP mirato passato dopo la correzione concreta per ws/wss, con build e lint server passati. Questa ripetizione limitata verifica il nuovo difetto; non sono state eseguite inferenze personali. La CI T15 [39099306162](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162) ha passato check/test/build su tutti e tre gli OS.
+- **pnpm check passato**: typecheck, lint e confini di 116 file.
+- **pnpm test passato: 318 test** nella suite generale iniziale: 14 bridge, 7 DB, 61 web, 108 server, 122 desktop, 6 script. Dopo difetti concreti, controlli mirati passati: CSP HTTP/ws/wss; 9 test DB (8 passati, 1 symlink POSIX saltato su Windows); 5 test release. Questi gruppi sovrapposti non sono sommabili.
+- **CI finale check/test/build riuscita sui tre OS**, commit08679f4: [run39100475642](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475642). La CI esegue anche il caso wrapper POSIX su macOS/Linux.
 
-Packaging finale, prova container completa e matrice CI installer in completamento: i risultati saranno registrati separatamente da installazione GUI, firma e accettazione del maintainer. Guida [self-host](self-host.md), [release](release.md) e matrice [R01–R16](acceptance.md).
+### PostgreSQL e container effettivi
+
+La verifica PostgreSQL18 locale ha superato **5 controlli** con schema temporaneo proprio: cronologia/hash, pg_dump custom, rifiuto overwrite e restore sul DB applicativo non vuoto, pg_restore effettivo dello schema QA e account/journal invariati. Report privato: .nexus/visual/t16/operations-report.json.
+
+La verifica **Docker reale ha superato 6 scenari**: build dal lockfile; avvio fresco con503/pending senza DDL; migrazione esplicita di nove hash e200/current; ruolo DB non amministrativo e CSP HTTP/WebSocket esatta; registrazione, email Mailpit, verifica, login e preferenze persistenti; backup custom e ripristino completo su un database QA vuoto con utente, nome e preferenze esatti. Restore sul DB sorgente rifiutato con dati invariati. Progetto, volumi, immagine e segreti UUID propri rimossi. Report privato: .nexus/visual/t16/self-host-report.json, cleanup completo.
+
+Le due ripetizioni Docker hanno corretto difetti confermati: rete Mailpit interna senza accesso HTTP dalla porta pubblicata e dispatch Debian pg_wrapper perso eseguendo direttamente il target del symlink. Ora il resolver controlla il target canonico conservando il nome del tool; backup e restore rifiutano archivi vuoti/nonPGDMP anche dopo exit0. Nessuna ripetizione senza una causa concreta.
+
+### Package Windows locale
+
+Installer **Nexus-AI-0.16.0-win-x64.exe**,220117999 byte; versione letta da app.asar e runtime Codex realmente confezionato. Sorgente del package: commit84234a1, checkout pulito e sourceDirty=false. Le correzioni successive riguardano operator server e tooling release/Linux, senza modifiche a main/preload/renderer Windows confezionati.
+
+SHA-256: 13b62b35d0a937fc38b2d89f39032b9f863ef0eb940082c218d0f47d83af54a4.
+
+Smoke dell'eseguibile confezionato passato: renderer montato, IPC validato e Node assente nel renderer; profilo QA isolato. Runtime confezionato passato: initialize/account/catalogo effettivi, home vuota,8modelli, nessuna credenziale o inferenza personale. Installer generato, non installato automaticamente.
+
+La firma osservata indipendentemente sullo stesso hash è **NotSigned**. Il manifest originale conserva la provenienza e il primo stato unverified: PowerShell7 ereditava un PSModulePath incompatibile con Security5. L'helper corretto usa Windows PowerShell di sistema e moduli propri; il report windows-signature-report.json registra la nuova osservazione senza cambiare il commit attribuito al package. Report aggregato: .nexus/visual/t16/windows-package-report.json.
+
+### Matrice installer CI
+
+**Tutti i job riusciti** sul commit08679f4: [run39100475946](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475946). Ogni job ha eseguito install frozen, check, test, build, packaging nativo, manifest/hash e upload. Artefatti conservati per14giorni; le dimensioni ZIP GitHub non sono le dimensioni degli installer.
+
+| Sistema/architettura CI | Package effettivo | Firma osservata | Artifact |
+| --- | --- | --- | --- |
+| Windows x64 | NSIS .exe | unsigned | [Windows](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475946/artifacts/12126591011) |
+| macOS ARM64 | DMG | ad_hoc, non notarizzata | [macOS](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475946/artifacts/12125874796) |
+| Linux x64 | AppImage, suffisso x86_64 | not_applicable | [Linux](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475946/artifacts/12126118688) |
+
+Report privati native-ci-report.json e native-artifacts-report.json in .nexus/visual/t16. Queste sono build/package sui runner nativi, senza esecuzione GUI personale sui sistemi del maintainer.
+
+La prima run39100176870 ha prodotto Windows e macOS, ma ha rilevato i difetti Linux executableName scoped e suffisso AppImage x86_64 nel manifest. Correzioni pubblicate in08679f4; pipeline ripetuta per questi difetti e per la verifica firma Windows corretta. Non sono stati acquistati certificati, usate credenziali personali o pubblicate Release automatiche.
+
+### Conservazione dati e limiti
+
+Audit finale:1742 file sorgente/build testuali,0 corrispondenze dei valori privati cercati,0 account/0 workspace QA residui,1 account esistente e9 migrazioni conservati. Configurazione .env preservata. Le prove usano fixture dichiarati e risorse proprie, senza dati simulati nel normale avvio.
+
+Guide [self-host](self-host.md), [release](release.md), matrice [R01–R16](acceptance.md). Package e CI non certificano installazione GUI, Gatekeeper/SmartScreen, filesystem/keyring e callback personali su Mac/Linux, firma sviluppatore, TLS/SMTP pubblici o accettazione estetica umana. Il maintainer proverà il Mac dal proprio dispositivo. T16 conclude il mandato; nessuna T17 o ulteriore attività automatica dell'agente.
 
 ## Ownership T15 integrate e rilasciate
 

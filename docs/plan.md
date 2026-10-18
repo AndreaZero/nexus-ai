@@ -187,7 +187,7 @@ Confrontare tutte le PNG sul viewport originale, correggere differenze di layout
 
 ### T16 — Distribuzione, self-host e completamento
 
-**Stato:** implementazione0.16.0 integrata, verifiche finali in corso — [issue16](https://github.com/AndreaZero/nexus-ai/issues/16). È l’ultima task del piano; arresto al termine richiesto dal maintainer. Prove di packaging, operazioni e accettazione distinte in [status.md](status.md).
+**Stato:** integrata e consegnata, versione0.16.0; in attesa di verifica manuale — [issue16](https://github.com/AndreaZero/nexus-ai/issues/16). Check/test/build e installer nativi dei tre OS passati in CI; package/smoke Windows e sei scenari Docker reali passati. È l’ultima task del piano: sviluppo fermo come richiesto. Evidenze e accettazione distinte in [status.md](status.md).
 
 **Dipendenze:** T15. **Ownership:** coordinatore release/docs; backend deploy/migrazioni; desktop packaging OS.
 

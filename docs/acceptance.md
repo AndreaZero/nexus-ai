@@ -4,7 +4,7 @@ Base0.16.0, piano T01–T16. La matrice separa **funzionalità implementate**, *
 
 | Requisito | Implementazione | Evidenze automatiche disponibili | Verifica personale/esterna distinta |
 | --- | --- | --- | --- |
-| R01 desktop multipiattaforma | Main/preload/renderer condivisi, vendor e package nativi Windows/macOS/Linux | Package/smoke Windows storici; CI T15 check/test/build passati sui tre OS; evidenze release finale in status | Esecuzione finale0.16.0 sul proprio Windows e desktop Mac/Linux; firma/notarizzazione richiedono credenziali |
+| R01 desktop multipiattaforma | Main/preload/renderer condivisi, vendor e package nativi Windows/macOS/Linux | T16: package/smoke Windows locale e Codex confezionato; CI Windows x64/macOS ARM64/Linux x64 con check/test/build, NSIS/DMG/AppImage, manifest/hash riusciti | Esecuzione finale0.16.0 sul proprio Windows e desktop Mac/Linux; firma/notarizzazione richiedono credenziali |
 | R02 collaborazione | Workspace/progetti, membership, inviti e ruoli correnti | PostgreSQL/SMTP/HTTP, isolamento/revoca/concorrenza T04/T08/T11–T14 | Utenti reali e SMTP del proprio server ospitato |
 | R03 Codex personale | Solo Codex 0.159.2, login e home/keyring Nexus, API opzionale esplicita | Binario reale anonimo/handshake/catalogo e provider controllato; recovery mirato T15 | Richiesta completa, interruzione e approvazioni con account personale; nessuna inferenza avviata dai verifier |
 | R04 filesystem locale | Binding account/progetto, contesto scelto, Git e modifiche/diff | Git/filesystem effettivi isolati T05–T07/T12; canonicalizzazione e alias root T15 | Cartelle, permessi e selettori nativi Mac/Linux |
@@ -19,14 +19,14 @@ Base0.16.0, piano T01–T16. La matrice separa **funzionalità implementate**, *
 | R13 ricerca/settings |10 tipi pubblicati con ACL prima del match, profilo/preferenze CAS, notifiche/cursore e endpoint isolati | T14:5 test server+10 native+7 web;5 scenari PG/HTTP e9UI | Ricerca sui propri dati, riavvio e configurazione del proprio host |
 | R14 reference | Tre composizioni1586×992, pianeta/particelle/wave e riduzione movimento | T15:14 controlli/17 catture, geometrie e testi lunghi,960 px; tre catture pubbliche controllate | Confronto estetico umano e movimento/GPU/font sul dispositivo; nessuna identità pixel dichiarata |
 | R15 recupero/accessibilità | Focus/dialog/tastiera, vuoti/offline/auth, boundary React e recupero crash esplicito | T15:6 controlli boundary,5processo con2crash QA;28 Codex/14 bridge e39Codex+context dopo fix concreto | Tecnologie assistive, sessione personale e percorsi di recupero su altre piattaforme |
-| R16 open source/manutenzione | GitHub MIT, regole/skill, guide, container, migrazioni/backup/restore, CI/package/checksum | Revisioni per task; verifiche operative/finali e risultati release elencati in status | Host reale, SMTP/TLS/segreti, backup esterni, ripristino e aggiornamento operativo del proprio servizio |
+| R16 open source/manutenzione | GitHub MIT, regole/skill, guide, container, migrazioni/backup/restore, CI/package/checksum | T16:5 verifiche PG locale,6 scenari Docker reali con SMTP/persistenza e restore completo su DB vuoto; package CI dei tre OS, evidenze in status | Host reale, SMTP/TLS/segreti, backup esterni, ripristino e aggiornamento operativo del proprio servizio |
 
 I conteggi dei test mirati T15 non sono sommabili: il gruppo39Codex+context comprende verifiche ripetute dopo il fix di canonicalizzazione;28 Codex/14 bridge descrivono una precedente verifica motivata di recovery. Analogamente, le suite finali sono registrate separatamente in status, senza sommare esecuzioni ripetute.
 
 ## Evidenze consultabili
 
 - [Stato finale e risultati effettivi per versione](status.md), [piano](plan.md) e [changelog](../CHANGELOG.md).
-- [CI T15 riuscita su Windows/macOS/Linux](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162): check/test/build nativi in CI, distinti da package e prova desktop.
+- [CI T16 riuscita su Windows/macOS/Linux](https://github.com/AndreaZero/nexus-ai/actions/runs/39100475946): check/test/build e package nativi con manifest/hash, distinti dalla prova GUI personale.
 - [Revisione visuale e catture controllate T15](design/t15-review.md), con report delle tre reference.
 - [Setup/upgrade/backup](self-host.md) e [distribuzione nativa](release.md).
 

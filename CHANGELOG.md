@@ -4,7 +4,7 @@
 
 Distribuzione self-host con container Node/PostgreSQL, migrazioni esplicite e readiness che verifica tutti gli hash storici. Operator multipiattaforma per backup custom e ripristino su database vuoto, senza sovrascritture implicite; proxy attendibili configurati per IP/CIDR e SMTP autenticato con STARTTLS. La policy web permette il realtime soltanto sulla stessa authority HTTP/WebSocket.
 
-Packaging nativo Windows/macOS/Linux con manifest della versione confezionata, hash SHA-256 e risultato osservato della firma. Percorsi unsigned e signed separati, notarizzazione Mac subordinata alle credenziali, workflow GitHub per installer nativi e guide di installazione, upgrade e recupero. Nessuna nuova migrazione applicativa: nove in totale. Prove, limiti e accettazione personale sono distinti in docs/status.md e docs/acceptance.md.
+Packaging nativo Windows/macOS/Linux con manifest della versione confezionata, hash SHA-256 e risultato osservato della firma. Percorsi unsigned e signed separati, notarizzazione Mac subordinata alle credenziali, workflow GitHub per installer nativi e guide di installazione, upgrade e recupero. Nessuna nuova migrazione applicativa: nove in totale. Verificati i package nativi dei tre OS in CI, lo smoke Windows e sei scenari Docker reali, incluso restore completo su database vuoto. Corretti dispatch Debian pg_wrapper, validazione degli archivi, naming AppImage e osservazione Authenticode da PowerShell7. Prove, limiti e accettazione personale sono distinti in docs/status.md e docs/acceptance.md.
 
 ## 0.15.0 — 18 ottobre2026
 
