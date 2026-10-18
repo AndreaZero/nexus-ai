@@ -1,6 +1,6 @@
 {
   "name": "nexus-ai",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -41,7 +41,10 @@
     "verify:pulse": "node scripts/verify-pulse.mjs",
     "verify:work": "node scripts/verify-work.mjs",
     "verify:repositories": "node scripts/verify-repositories.mjs",
-    "verify:repository-ui": "node scripts/verify-repository-ui.mjs"
+    "verify:repository-ui": "node scripts/verify-repository-ui.mjs",
+    "verify:deployments": "node scripts/verify-deployments.mjs",
+    "verify:deployment-ui": "node scripts/verify-deployment-ui.mjs",
+    "verify:preview": "node scripts/verify-preview.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

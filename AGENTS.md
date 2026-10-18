@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T12 consegnato, in attesa di verifica utente**. Build Windows T11 accettata; app/contratti/DB0.12.0, migrazione0006 applicata (7totali). Ownership rilasciate e prove in docs/status.md, workflow/token/limiti in docs/repositories.md. T13 non avviato. Preservare shell/reference1/2/3, runtime Codex0.159.2/schema generato, auth0.9.1/no429, account e configurazione. Nessuna lettura credenziali di altre app o inferenza personale automatica; non stampare .env/segreti, nessuna migrazione all’avvio.
+La fase corrente è **T13 integrato; prosecuzione T14–T16 autorizzata in sequenza**. Fermarsi dopo T16. Ownership ed evidenze in docs/status.md; migrazione0007 applicata,8totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
 
 ## Prodotto e architettura
 

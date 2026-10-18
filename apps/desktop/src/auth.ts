@@ -12,6 +12,8 @@ import { requestOverview } from './overview-transport.js';
 import { requestPulse } from './pulse-transport.js';
 import { requestWork } from './work-transport.js';
 import { requestRepositories, requestGitCredential } from './repository-transport.js';
+import {requestDeployments} from './deployment-transport.js';
+import type {DeploymentsRequest,DeploymentsResponse} from '@nexus-ai/contracts';
 import type { RepositoriesRequest, RepositoriesResponse } from '@nexus-ai/contracts';
 import type { WorkRequest, WorkResponse } from '@nexus-ai/contracts';
 import { type PulseRequest, type PulseResponse } from '@nexus-ai/contracts';
@@ -268,6 +270,20 @@ export class DesktopAuth {
     const response=await requestRepositories(before.server,before.cookie,request);
     if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie)return{ok:false,code:'auth_required',message:'Your Nexus account changed.'};
     return response;
+  }
+
+  async deploymentsRequest(request:DeploymentsRequest):Promise<DeploymentsResponse>{
+    const before=await this.realtimeSession();if(!before)return{ok:false,code:'auth_required',message:'Reconnect your Nexus account.'};
+    const value=await requestDeployments(before.server,before.cookie,request);
+    if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie)return{ok:false,code:'auth_required',message:'Your Nexus account changed.'};
+    return value;
+  }
+
+  async authorizeProject(projectId:string):Promise<{userId:string}|null>{
+    const before=await this.realtimeSession();if(!before)return null;
+    const value=await requestCollaboration(before.server,before.cookie,{operation:'getProject',projectId});
+    if(this.state.status!=='signed_in'||this.state.user?.id!==before.userId||this.client.getCookie()!==before.cookie||!value.ok||value.kind!=='project'||value.item.id!==projectId||!['owner','developer'].includes(value.item.role))return null;
+    return{userId:before.userId};
   }
 
   async authorizeGit(projectId:string,repositoryId:string):Promise<{userId:string;remoteUrl:string}|null>{

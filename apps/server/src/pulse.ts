@@ -74,6 +74,7 @@ async function snapshot(db: Client, actor: Actor, request: PulseRequest): Promis
   const dailyWork = await readWorkActivity(db, request.projectId, team, { start: day.day_start, end: day.day_end, actorId: request.scope === 'mine' ? actor.id : null });
   // Observed GitHub commits, deduplicated by repository/external SHA; never extrapolate unobserved history.
   const repositoryCounts=team?(await db.query<{commits:string;comments:string;available:boolean}>(`SELECT EXISTS(SELECT 1 FROM repository_sync s JOIN repository r ON r.id=s.repository_id WHERE r.project_id=$1 AND s.snapshot->'pages'->'1'->>'observedAt' IS NOT NULL) AS available,count(*) FILTER(WHERE kind='commit')::text AS commits,count(*) FILTER(WHERE kind='review')::text AS comments FROM repository_activity WHERE project_id=$1 AND occurred_at >= $2 AND occurred_at < $3 AND ($4::boolean OR actor_id=$5)`,[request.projectId,day.day_start,day.day_end,request.scope==='project',actor.id])).rows[0]:null;
+  const deploymentCounts=(await db.query<{configured:boolean;count:string}>(`SELECT EXISTS(SELECT 1 FROM deployment_environment WHERE project_id=$1 AND ($2::boolean OR visibility='client')) AS configured,count(d.id)::text AS count FROM project_deployment d JOIN deployment_environment e ON e.id=d.environment_id AND e.project_id=d.project_id WHERE d.project_id=$1 AND ($2::boolean OR e.visibility='client') AND d.observed_at >= $3 AND d.observed_at < $4 AND ($5::boolean OR d.created_by=$6)`,[request.projectId,team,day.day_start,day.day_end,request.scope==='project',actor.id])).rows[0];
   return { ok: true, snapshot: {
     projectId: request.projectId, audience: team ? 'team' : 'client', overview: overview.snapshot,
     milestones: milestones.map(row => {
@@ -82,7 +83,7 @@ async function snapshot(db: Client, actor: Actor, request: PulseRequest): Promis
         state: value.total > 0 && value.completed === value.total ? 'completed' : value.completed > 0 || value.inProgress > 0 ? 'in_progress' : 'planned', progress: value };
     }), milestoneCount, progress: progress(counts),
     summary: { dayStart: day.day_start.toISOString(), dayEnd: day.day_end.toISOString(), scope: request.scope,
-      tasksUpdated: Number(counts.tasks_updated), sharedUpdates: sharedUpdates + dailyWork.length, sharedSource: 'retained_entities', commits: repositoryCounts?.available?Number(repositoryCounts.commits):null, comments: dailyWork.filter(item => item.category === 'comments').length+Number(repositoryCounts?.comments??0), buildsDeploys: null },
+      tasksUpdated: Number(counts.tasks_updated), sharedUpdates: sharedUpdates + dailyWork.length, sharedSource: 'retained_entities', commits: repositoryCounts?.available?Number(repositoryCounts.commits):null, comments: dailyWork.filter(item => item.category === 'comments').length+Number(repositoryCounts?.comments??0), buildsDeploys: deploymentCounts?.configured?Number(deploymentCounts.count):null },
     outcomes,
   } };
 }

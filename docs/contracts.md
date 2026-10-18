@@ -125,3 +125,11 @@ Prima dell'upload escludere auth store, env, chiavi, path home e output riconosc
 ## T12 — Git e GitHub
 
 packages/contracts/src/repositories.ts fissa git.request (solo main) e repositories.request (server/bridge), snapshotId/fileIds opachi, autore/commit espliciti e scope progetto/repository. resolveActivity legge la provenienza autorizzata dei link feed; createPull/review usano requestId durevole e headSha. Endpoint main-only credential non è esportato nel bridge; webhook raw separato. Nuovo repository.changed invalida WS senza esporre contenuti. Contratti strict, risposte correlate e unknown separato da zero; [workflow e limiti](repositories.md).
+
+## T13 — Ambienti, deployment e osservazioni
+
+`packages/contracts/src/deployments.ts` definisce `deployments.request`/`POST /api/deployments`: snapshot(view auto/client, offset/limit), readDeployment, save/deleteEnvironment, save/deleteDeployment, saveObservation. Mutazioni con requestId UUID, expectedVersion0 solo creazione e CAS per aggiornamento/rimozione; ricevute per progetto/account con hash del payload e replay soltanto dopo verifica dei permessi correnti. URL senza credenziali/query/fragment, fonte `manual`, versioni e date esplicite. Audience ereditata dall'ambiente corrente in query, conteggi e feed; il server non interroga i link.
+
+Risposte snapshot contengono ambienti, pagina build, conteggio autorizzato e health calcolata con requisiti/score/observations/computedAt. Il TTL deriva dall'osservazione originale; dati mancanti/scaduti/futuri producono unknown/null. `deployment.changed` invalida realtime senza trasmettere il contenuto dell'entità. Overview proietta target deployment/deployment_environment autorizzati e Pulse conta record osservati UTC/autore.
+
+`environmentProbe.request` è solo desktop: operation observe, projectId, URL HTTP loopback esatto e consent:true. Una HEAD privata con autorizzazione prima/dopo produce local_http/status/httpStatus/latency/observedAt/expiresAt30s; nessun timer o upload. `deployments.openPreview` accetta projectId/id, non URL arbitrari: il main rilegge record/ambiente, richiede succeeded e risolve override/fallback prima della finestra isolata. Limiti e recupero in [deployments.md](deployments.md).

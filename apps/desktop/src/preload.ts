@@ -7,6 +7,7 @@ import { overviewRequestSchema, overviewResponseSchema, telemetryRequestSchema, 
 import { pulseRequestSchema, pulseResponseSchema, type PulseRequest } from '@nexus-ai/contracts';
 import { workRequestSchema, workResponseSchema, workDownloadRequestSchema, type WorkRequest, type WorkDownloadRequest } from '@nexus-ai/contracts';
 import { gitRequestSchema, gitResponseSchema, repositoriesRequestSchema, repositoriesResponseSchema, type GitRequest, type RepositoriesRequest } from '@nexus-ai/contracts';
+import {deploymentsRequestSchema,deploymentsResponseSchema,deploymentPreviewRequestSchema,environmentProbeRequestSchema,environmentProbeResponseSchema,type DeploymentsRequest,type DeploymentPreviewRequest,type EnvironmentProbeRequest} from '@nexus-ai/contracts';
 
 const bridge: DesktopBridge = Object.freeze({
   async getInfo() {
@@ -65,6 +66,11 @@ const bridge: DesktopBridge = Object.freeze({
   repositories: Object.freeze({
     async request(input:RepositoriesRequest){return repositoriesResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.repositoriesRequest,repositoriesRequestSchema.parse(input)));},
   }),
+  deployments:Object.freeze({
+    async request(input:DeploymentsRequest){return deploymentsResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.deploymentsRequest,deploymentsRequestSchema.parse(input)));},
+    async openPreview(input:DeploymentPreviewRequest){return deploymentsResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.deploymentPreview,deploymentPreviewRequestSchema.parse(input)));},
+  }),
+  environmentProbe:Object.freeze({async request(input:EnvironmentProbeRequest){return environmentProbeResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.environmentProbeRequest,environmentProbeRequestSchema.parse(input)));}}),
   codex: Object.freeze({
     async request(input: CodexRequest) {
       return codexResponseSchema.parse(await ipcRenderer.invoke(DESKTOP_IPC.codexRequest, codexRequestSchema.parse(input)));

@@ -32,6 +32,8 @@ import { OverviewProvider } from './overview/OverviewProvider.js';
 import './overview/overview.css';
 import { WorkPage } from './work/WorkPages.js';
 import { CodePage } from './repositories/CodePage.js';
+import { DeploymentsProvider } from './deployments/DeploymentsProvider.js';
+import { DeploymentsPage } from './deployments/DeploymentsPage.js';
 
 const sectionDescriptions: Partial<Record<ShellRoute, string>> = {
   projects: 'No projects are connected to this workspace.',
@@ -73,13 +75,14 @@ function ShellApp() {
 
   const viewProps = { onNavigate: navigate, reducedMotion: motion.reducedMotion };
   const section = routes.find((entry) => entry.id === route);
-  const content = route === 'overview' ? <OverviewView {...viewProps} />
+  const content = route === 'overview' ? <DeploymentsProvider><OverviewView {...viewProps} /></DeploymentsProvider>
     : route === 'projects' ? <ProjectsPage />
     : route === 'team' ? <TeamPage />
     : route === 'tasks' ? <WorkPage section="tasks" />
     : route === 'docs' ? <WorkPage section="docs" />
     : route === 'repos' ? <RepositoryPage />
     : route === 'code' ? <CodePage />
+    : route === 'deployments' ? <DeploymentsPage />
     : route === 'invitations' ? <InvitationPage />
     : route === 'pulse' || route === 'portal' ? <PulseView {...viewProps} />
     : route === 'session' ? <SessionView {...viewProps} />

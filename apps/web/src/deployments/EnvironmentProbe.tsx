@@ -1,0 +1,23 @@
+import { useEffect, useRef, useState } from 'react';
+import type { EnvironmentProbeResponse } from '@nexus-ai/contracts';
+import { Button, Icon } from '@nexus-ai/ui';
+import { useCollaboration } from '../collaboration/CollaborationProvider.js';
+import { useRealtime } from '../realtime/RealtimeProvider.js';
+import { probeEnvironment } from './client.js';
+import { DomainDialog } from '../collaboration/components.js';
+type Observation = Extract<EnvironmentProbeResponse, { ok: true }>['observation'];
+export function EnvironmentProbe() {
+  const { project } = useCollaboration(); const realtime = useRealtime().state; const [url, setUrl] = useState(''); const [consent, setConsent] = useState(false); const [observation, setObservation] = useState<Observation | null>(null); const [busy, setBusy] = useState(false); const [error, setError] = useState(''); const [expired, setExpired] = useState(false); const [open, setOpen] = useState(false); const generation = useRef(0);
+  const enabled = Boolean(window.nexusDesktop?.environmentProbe && project && realtime.projectId === project.id && realtime.connection === 'online' && (project.role === 'owner' || project.role === 'developer'));
+  useEffect(() => { ++generation.current; setObservation(null); setConsent(false); setBusy(false); setError(''); setOpen(false); }, [project?.id, project?.role, enabled]);
+  useEffect(() => { if (!observation) return; const timer = setTimeout(() => setExpired(true), Math.max(0, Date.parse(observation.expiresAt) - Date.now())); return () => clearTimeout(timer); }, [observation]);
+  async function observe() { if (!enabled || !project || busy || !consent) return; setBusy(true); setError(''); setObservation(null); const ticket = ++generation.current; const endpoint = url.trim();
+    try { const parsed = new URL(endpoint); if (parsed.protocol !== 'http:' || !['localhost','127.0.0.1','[::1]'].includes(parsed.hostname)) throw new Error('Enter an HTTP loopback URL for this device.'); const result = await probeEnvironment({ operation: 'observe', projectId: project.id, consent: true, url: endpoint }); if (ticket !== generation.current) return; setExpired(Date.parse(result.expiresAt) <= Date.now()); setObservation(result); }
+    catch (cause) { if (ticket === generation.current) setError(cause instanceof Error ? cause.message : 'Local HTTP observation unavailable.'); }
+    finally { if (ticket === generation.current) { setBusy(false); setConsent(false); } }
+  }
+  const fresh = observation && !expired && Date.parse(observation.expiresAt) > Date.now();
+  const status = observation ? fresh ? observation.status === 'reachable' ? `HTTP ${observation.httpStatus} observed` : 'Endpoint unreachable' : 'Expired · unknown' : 'Not observed';
+  function close() { if (!busy) { setOpen(false); setConsent(false); } }
+  return <><section className="environment-row environment-probe" aria-label="Private local HTTP observation"><span><Icon name="globe" size={15} /></span><div><strong>Local HTTP</strong><small title={observation ? `Source: local HTTP · observed ${observation.observedAt} · expires ${observation.expiresAt}` : 'Private one-time observation, never automatic'}>{status}</small></div>{enabled && <button type="button" className="text-link" aria-label="Open local HTTP observation" onClick={() => setOpen(true)}>Observe</button>}</section>{open && enabled && <DomainDialog title="Local HTTP observation" onClose={close} busy={busy}><div className="domain-form environment-probe-form"><p className="domain-note">Private to this device. One HTTP request, no page content read or uploaded. Expires after 30 seconds.</p><label htmlFor="local-probe-url">HTTP loopback URL<input id="local-probe-url" type="url" placeholder="http://127.0.0.1:5173" value={url} maxLength={2000} disabled={busy} onChange={event => { ++generation.current; setUrl(event.target.value); setObservation(null); setConsent(false); }} /></label><label className="probe-consent"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} />Allow this single HTTP request</label><div className="domain-form-actions"><Button disabled={busy} onClick={close}>Close observation</Button><Button size="sm" disabled={!consent || !url.trim() || busy} onClick={() => { void observe(); }}>{busy ? 'Observing…' : 'Observe HTTP once'}</Button></div>{observation && <div className="probe-observation"><strong>{status}</strong><small>Source: local HTTP · {Math.round(observation.latencyMs)} ms<br />Observed {new Date(observation.observedAt).toLocaleTimeString()} · expires {new Date(observation.expiresAt).toLocaleTimeString()}</small></div>}{error && <p role="alert">{error}</p>}</div></DomainDialog>}</>;
+}

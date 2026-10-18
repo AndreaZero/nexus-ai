@@ -11,10 +11,12 @@ import { WorkEditor } from '../work/WorkEditor.js';
 import { PulseDeliverables, PulseFeedback, PulseWorkOutcomes } from '../work/PulseWork.js';
 import { workHref } from '../work/state.js';
 import { PulseProvider, usePulse } from '../pulse/PulseProvider.js';
-import { PulseDialogs, MilestoneRow, PulseSummary, PulseSessions, PulseWorking, PulsePreview, PulsePresence, PulseRail } from '../pulse/PulsePanels.js';
+import { PulseDialogs, MilestoneRow, PulseSummary, PulseSessions, PulseWorking, PulsePresence, PulseRail } from '../pulse/PulsePanels.js';
 import type { PulseDialog } from '../pulse/PulsePanels.js';
 import { activityHref } from '../overview/state.js';
 import '../pulse/pulse.css';
+import { DeploymentsProvider } from '../deployments/DeploymentsProvider.js';
+import { DeploymentPreviewCard } from '../deployments/DeploymentPanels.js';
 
 export function PulseView(props: WorkspaceViewProps) {
   const account = useAccount(); const { project } = useCollaboration(); const { state } = useRealtime();
@@ -24,7 +26,7 @@ export function PulseView(props: WorkspaceViewProps) {
 }
 function PulseScope({ projectId, technical, ...props }: WorkspaceViewProps & { projectId: string | null; technical: boolean }) {
   const [view, setView] = useState<'auto' | 'client'>('auto');
-  return <WorkProvider view={technical ? view : 'client'}><PulseProvider key={view} projectId={projectId} view={technical ? view : 'client'}><PulseContent {...props} technical={technical} preview={technical && view === 'client'} setPreview={value => setView(value ? 'client' : 'auto')} /></PulseProvider></WorkProvider>;
+  return <WorkProvider view={technical ? view : 'client'}><DeploymentsProvider view={technical ? view : 'client'}><PulseProvider key={view} projectId={projectId} view={technical ? view : 'client'}><PulseContent {...props} technical={technical} preview={technical && view === 'client'} setPreview={value => setView(value ? 'client' : 'auto')} /></PulseProvider></DeploymentsProvider></WorkProvider>;
 }
 function PulseContent({ onNavigate, reducedMotion, technical, preview, setPreview }: WorkspaceViewProps & { technical: boolean; preview: boolean; setPreview(value: boolean): void }) {
   const pulse = usePulse(); const snapshot = pulse.snapshot;
@@ -51,7 +53,7 @@ function PulseContent({ onNavigate, reducedMotion, technical, preview, setPrevie
       </section>
       <div className="pulse-middle"><Card title="Milestone Progress" className="milestone-card" action={<button type="button" className="text-link" onClick={() => { window.location.hash = '/tasks?kind=milestone' + (preview ? '&view=client' : ''); }}>View Roadmap</button>} bodyClassName="pulse-milestone-list">{milestones.length ? milestones.slice(0, 5).map((item, index) => <MilestoneRow key={item.id} item={item} index={index} active={current?.id === item.id} onSelect={() => openMilestone(item.id)} />) : <EmptyPanel compact icon={<Icon name="tasks" size={22} />} title={snapshot ? 'No milestones defined' : 'Progress unavailable'} description="Progress is calculated from visible linked tasks." />}</Card><PulseSummary /><PulseSessions onNavigate={onNavigate} /></div>
       <div className="pulse-work-row">{localAllowed ? <PulseWorking onNavigate={onNavigate} reducedMotion={reducedMotion} /> : <Card title="What you're working on now" className="working-card" action={<Badge tone="neutral">{preview ? 'Client preview' : 'Shared view'}</Badge>}><EmptyPanel compact title="Local work stays on its device" description="Open an authorized shared session to read selected messages." /><button type="button" className="text-link" onClick={liveWork}>View shared work<Icon name="arrow-right" size={13} /></button></Card>}<PulseWorkOutcomes onExcerpts={() => setDialog('outcomes')} /><PulseDeliverables /></div>
-      <div className="pulse-bottom">{localAllowed ? <PulsePreview onNavigate={onNavigate} /> : <Card title="Deploy Previews" className="pulse-deploy-card"><EmptyPanel compact icon={<Icon name="globe" size={20} />} title="No published deployment" description="Shared deployment integration is not configured." /></Card>}<PulseFeedback /><PulsePresence onAll={() => setDialog('availability')} /></div>
+      <div className="pulse-bottom"><DeploymentPreviewCard pulse allowLocal={Boolean(localAllowed)} /><PulseFeedback /><PulsePresence onAll={() => setDialog('availability')} /></div>
     </div>
     <PulseRail technical={technical} onTeam={() => onNavigate('team')} onViewers={() => setDialog('viewers')} />
     {controlsHost ? createPortal(controls, controlsHost) : controls}

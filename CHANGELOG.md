@@ -1,5 +1,12 @@
 # Changelog
 
+### 2026-10-18 — T13 0.13.0: ambienti, deploy e health
+
+- Ambienti con audience e check richiesti dichiarati; registrazione esplicita di build/deploy reali con SHA/branch, report, preview e thumbnail PNG scelta. CAS, ricevute idempotenti e rimozione con cascade; nessun provider o deploy esterno implicito.
+- Health da osservazioni manuali con fonte, osservazione/scadenza e regola esplicita: unknown per requisiti mancanti/scaduti, stato e score soltanto da dati correnti. Probe desktop opt-in: singola HEAD loopback, consenso ogni richiesta, autorizzazione prima/dopo e scadenza30s; nessuna pubblicazione automatica.
+- Card Overview/Pulse e Environment Status seguono reference1/2/3, feed coalescente e conteggi UTC reali; preview mediante ID in finestra desktop isolata. Shell, pianeta e particelle preservati, offline/ruoli/reduced motion inclusi.
+- Migrazione additiva0007,8totali e account reale conservato; nessuna dipendenza nuova o modifica Codex0.159.2/auth0.9.1. Passati8test server,8probe,8web,6scenari PG/HTTP,13controlli UI, build e smoke Windows. Guida docs/deployments.md e limiti in docs/status.md; package finale T16, nessuna build nativa Mac/Linux o accettazione manuale anticipata. Prosecuzione T14–T16 autorizzata, arresto dopo T16.
+
 ### 2026-10-18 — T12: Git, GitHub, PR e review
 
 - Accettata la build Windows T11; integrati tre fronti paralleli Git desktop, GitHub server e UI. Code con diff/history, commit selettivo autore/messaggio/preview, branch e fetch/pullFF/push espliciti, nessuna sovrascrittura di staged/conflict o force implicito.

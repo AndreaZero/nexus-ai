@@ -24,6 +24,9 @@ import { createWorkService } from './work.js';
 import { workRequestSchema, workResponseSchema } from '@nexus-ai/contracts';
 import { repositoriesRequestSchema, repositoriesResponseSchema, repositoryScopeSchema } from '@nexus-ai/contracts';
 import { createRepositoriesService } from './repositories.js';
+import {deploymentsRequestSchema,deploymentsResponseSchema} from '@nexus-ai/contracts';
+import {createDeploymentsService} from './deployments.js';
+import {installDomainApi} from './domain-api.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -62,6 +65,13 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const work = createWorkService(database, error => app.log.error({event: 'work.failure', ...errorDiagnostic(error)}));
   const repositories=createRepositoriesService(database,config.auth.secret,error=>app.log.error({event:'repositories.failure',...errorDiagnostic(error)}));
   const repositoriesBudget=createRealtimeBudget();
+  const deployments=createDeploymentsService(database,error=>app.log.error({event:'request.error',...errorDiagnostic(error)}));
+  installDomainApi(app,{path:'/api/deployments',origins:realtimeOrigins,request:deploymentsRequestSchema,response:deploymentsResponseSchema,execute:deployments.execute,
+    async authenticate(request,reply){
+      if(!auth)return null;const headers=fromNodeHeaders(request.headers);headers.set(AUTH_CLIENT_IP_HEADER,request.ip);for(const name of ['x-forwarded-for','x-real-ip','forwarded'])headers.delete(name);
+      const result=await auth.api.getSession({headers,query:{disableCookieCache:true},returnHeaders:true});const cookies=result.headers.getSetCookie();if(cookies.length)reply.header('Set-Cookie',cookies);
+      const current=result.response;if(!current?.user.emailVerified||current.session.expiresAt.getTime()<=Date.now())return null;return{id:current.user.id,email:current.user.email};
+    }});
   const overview = createOverviewService(database, error => app.log.error({ event: 'overview.failure', ...errorDiagnostic(error) }));
   const pulse = createPulseService(database, error => app.log.error({ event: 'pulse.failure', ...errorDiagnostic(error) }));
   const realtimeSocket = installRealtimeSocket(app, {
@@ -84,7 +94,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   });
 
   app.setErrorHandler((error, request, reply) => {
-    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview', '/api/pulse', '/api/work', '/api/repositories','/api/repositories/credential'].includes(request.url.split('?')[0] ?? '');
+    const isCollaboration = ['/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview', '/api/pulse', '/api/work', '/api/repositories','/api/repositories/credential','/api/deployments'].includes(request.url.split('?')[0] ?? '');
     if (isCollaboration) { reply.header('Cache-Control', 'no-store'); reply.header('Referrer-Policy', 'no-referrer'); }
     if (error instanceof OriginNotAllowedError) {
       if (isCollaboration) return reply.code(403).send({ ok: false, code: 'forbidden', message: 'Origine della richiesta non consentita.' });
@@ -106,7 +116,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   await app.register(cors, {
     delegator(request, callback) {
       const requestPath = request.url.split('?')[0];
-      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime' || requestPath === '/api/overview' || requestPath === '/api/pulse' || requestPath === '/api/work' || requestPath === '/api/repositories' || requestPath === '/api/repositories/credential';
+      const isAuth = requestPath?.startsWith('/auth/') || requestPath === '/api/collaboration' || requestPath === '/api/sessions' || requestPath === '/api/realtime' || requestPath === '/api/overview' || requestPath === '/api/pulse' || requestPath === '/api/work' || requestPath === '/api/repositories' || requestPath === '/api/repositories/credential' || requestPath === '/api/deployments';
       const origin = request.headers.origin;
       const allowed = isAuth
         ? origin === config.auth.webURL || origin === new URL(config.auth.baseURL).origin || origin === DESKTOP_AUTH_ORIGIN
@@ -192,7 +202,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     return healthResponseSchema.parse({
       schemaVersion: 1,
       service: 'nexus-server',
-      version: '0.12.0',
+      version: '0.13.0',
       status: 'ok',
       database: await database.check(),
       codex: 'local_only',

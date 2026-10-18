@@ -4,7 +4,7 @@ import type { DatabaseBoundary } from '@nexus-ai/db';
 export type RealtimeDatabase = Pick<NonNullable<DatabaseBoundary['pool']>, 'query'>;
 
 /** Caller holds the project/container locks and commits the mutation and event together. */
-export async function appendRealtimeEvent(db: RealtimeDatabase, projectId: string, actorId: string, kind: 'session.changed' | 'live.changed' | 'work.changed' | 'repository.changed', entityId: string): Promise<string> {
+export async function appendRealtimeEvent(db: RealtimeDatabase, projectId: string, actorId: string, kind: 'session.changed' | 'live.changed' | 'work.changed' | 'repository.changed' | 'deployment.changed', entityId: string): Promise<string> {
   const cursor = (await db.query<{ sequence: string }>(`INSERT INTO project_realtime_cursor (project_id, sequence) VALUES ($1, 1)
     ON CONFLICT (project_id) DO UPDATE SET sequence = project_realtime_cursor.sequence + 1 RETURNING sequence::text`, [projectId])).rows[0];
   if (!cursor) throw new Error('Realtime cursor unavailable');

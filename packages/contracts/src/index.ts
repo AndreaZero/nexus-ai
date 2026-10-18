@@ -9,6 +9,7 @@ import type { OverviewRequest, OverviewResponse, TelemetryRequest, TelemetryResp
 import type { PulseRequest, PulseResponse } from './pulse.js';
 import type { WorkRequest, WorkResponse, WorkDownloadRequest } from './work.js';
 import type { GitRequest, GitResponse, RepositoriesRequest, RepositoriesResponse } from './repositories.js';
+import type { DeploymentsRequest,DeploymentsResponse,DeploymentPreviewRequest,EnvironmentProbeRequest,EnvironmentProbeResponse } from './deployments.js';
 export * from './collaboration.js';
 export * from './codex.js';
 export * from './context.js';
@@ -19,6 +20,7 @@ export * from './overview.js';
 export * from './pulse.js';
 export * from './work.js';
 export * from './repositories.js';
+export * from './deployments.js';
 
 export const DESKTOP_IPC = {
   getInfo: 'nexus:desktop:get-info',
@@ -43,6 +45,9 @@ export const DESKTOP_IPC = {
   workDownload: 'nexus:work:download',
   gitRequest: 'nexus:git:request',
   repositoriesRequest: 'nexus:repositories:request',
+  deploymentsRequest:'nexus:deployments:request',
+  deploymentPreview:'nexus:deployments:preview',
+  environmentProbeRequest:'nexus:environment:probe',
 } as const;
 
 export const nexusUserSchema = z.object({
@@ -90,6 +95,8 @@ export interface DesktopBridge {
   readonly work: { request(request: WorkRequest): Promise<WorkResponse>; download(request: WorkDownloadRequest): Promise<WorkResponse> };
   readonly git: { request(request: GitRequest): Promise<GitResponse> };
   readonly repositories: { request(request: RepositoriesRequest): Promise<RepositoriesResponse> };
+  readonly deployments:{request(request:DeploymentsRequest):Promise<DeploymentsResponse>;openPreview(request:DeploymentPreviewRequest):Promise<DeploymentsResponse>};
+  readonly environmentProbe:{request(request:EnvironmentProbeRequest):Promise<EnvironmentProbeResponse>};
   readonly codex: {
     request(request: CodexRequest): Promise<CodexResponse>;
     onStateChanged(callback: (state: CodexState) => void): () => void;

@@ -157,6 +157,8 @@ Completare branch/stato/commit con operazioni esplicite, link GitHub, autenticaz
 
 ### T13 — Ambienti, deploy e health
 
+**Stato:** integrato/consegnato0.13.0, in attesa di verifica manuale. Migrazione0007 applicata (8totali), test mirati8server+8probe+8web,6scenari PG/HTTP,13controlli UI e smoke Windows passati; [evidenze](status.md) e [workflow](deployments.md). Nessun installer intermedio o deploy remoto; package finale T16. Il mandato del maintainer autorizza T14–T16 in sequenza senza attesa intermedia; accettazione nativa e personale resta distinta.
+
 **Dipendenze:** T12. **Ownership:** backend adapter/stato; renderer deploy/preview; desktop probe locali.
 
 Gestire ambienti e build con provider configurabile o registrazione esplicita, URL reali, thumbnail e apertura isolata. Probe di ambiente opt-in; build/test/coverage/performance/security con fonte, ultima osservazione e stato unknown/stale. Health aggregata solo con regola dichiarata e dettaglio delle componenti. Nessun deploy di infrastruttura esterna senza la relativa configurazione del maintainer.

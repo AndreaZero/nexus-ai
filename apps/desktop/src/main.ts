@@ -16,6 +16,9 @@ import { DesktopCodex, codexRuntimePath } from './codex.js';
 import { DesktopContext } from './context.js';
 import { DesktopWorkspace } from './workspace.js';
 import { DesktopGit } from './git.js';
+import {DesktopEnvironmentProbe} from './environment-probe.js';
+import {openDeploymentPreview,closeDeploymentPreviews} from './deployment-preview.js';
+import {deploymentsRequestSchema,deploymentsResponseSchema,deploymentPreviewRequestSchema,environmentProbeRequestSchema,environmentProbeResponseSchema,type DeploymentsResponse} from '@nexus-ai/contracts';
 import { gitRequestSchema, gitResponseSchema, repositoriesRequestSchema, repositoriesResponseSchema } from '@nexus-ai/contracts';
 import { DesktopRealtime } from './realtime.js';
 import { DesktopTelemetry } from './telemetry.js';
@@ -45,6 +48,7 @@ let desktopCodex: DesktopCodex | undefined;
 let desktopContext: DesktopContext | undefined;
 let desktopWorkspace: DesktopWorkspace | undefined;
 let desktopGit: DesktopGit | undefined;
+let environmentProbe:DesktopEnvironmentProbe|undefined;
 let desktopRealtime: DesktopRealtime | undefined;
 let desktopTelemetry: DesktopTelemetry | undefined;
 
@@ -170,6 +174,8 @@ async function initialize() {
     desktopContext?.nexusStateChanged(state);
     desktopWorkspace?.nexusStateChanged(state);
     desktopGit?.nexusStateChanged(state);
+    environmentProbe?.nexusStateChanged(state);
+    if(state.status!=='signed_in')closeDeploymentPreviews();
     const window = mainWindow;
     if (window && !window.isDestroyed() && isTrustedIpcSender({
       senderId: window.webContents.id,
@@ -213,6 +219,19 @@ async function initialize() {
 
   desktopWorkspace = new DesktopWorkspace({ auth: desktopAuth, bindings: bindingStorage, openExternal: url => shell.openExternal(url) });
   desktopGit=new DesktopGit({authorize:(projectId,repositoryId)=>desktopAuth!.authorizeGit(projectId,repositoryId),credential:(projectId,repositoryId)=>desktopAuth!.gitCredential(projectId,repositoryId),bindings:bindingStorage,workspace:desktopWorkspace});
+  environmentProbe=new DesktopEnvironmentProbe({authorize:projectId=>desktopAuth!.authorizeProject(projectId)});
+  ipcMain.handle(DESKTOP_IPC.environmentProbeRequest,(event,...args:unknown[])=>{requireTrustedCaller(event,args,1);return environmentProbe!.request(environmentProbeRequestSchema.parse(args[0])).then(value=>environmentProbeResponseSchema.parse(value));});
+  ipcMain.handle(DESKTOP_IPC.deploymentsRequest,(event,...args:unknown[])=>{requireTrustedCaller(event,args,1);return desktopAuth!.deploymentsRequest(deploymentsRequestSchema.parse(args[0])).then(value=>deploymentsResponseSchema.parse(value));});
+  ipcMain.handle(DESKTOP_IPC.deploymentPreview,async(event,...args:unknown[]):Promise<DeploymentsResponse>=>{
+    requireTrustedCaller(event,args,1);const request=deploymentPreviewRequestSchema.parse(args[0]);
+    const result=await desktopAuth!.deploymentsRequest({operation:'readDeployment',...request,view:'auto'});
+    if(!result.ok||result.kind!=='deployment')return result;
+    const current=await desktopAuth!.deploymentsRequest({operation:'snapshot',projectId:request.projectId,view:'auto',offset:0,limit:1});
+    if(!current.ok||current.kind!=='snapshot')return current;
+    const previewUrl=result.item.previewUrl??current.snapshot.environments.find(environment=>environment.id===result.item.environmentId)?.previewUrl;
+    if(result.item.status!=='succeeded'||!previewUrl)return{ok:false,code:'invalid_request',message:'This deployment has no successful published preview.'};
+    try{await openDeploymentPreview(previewUrl);return result;}catch{return{ok:false,code:'unavailable',message:'Project preview unavailable. Check its URL and connection.'};}
+  });
   ipcMain.handle(DESKTOP_IPC.gitRequest,(event,...args:unknown[])=>{
     requireTrustedCaller(event,args,1);
     return desktopGit!.request(gitRequestSchema.parse(args[0])).then(result=>gitResponseSchema.parse(result));
@@ -402,6 +421,7 @@ async function initialize() {
         pulseKeys: Object.keys(window.nexusDesktop.pulse),
         workKeys:Object.keys(window.nexusDesktop.work),
         gitKeys:Object.keys(window.nexusDesktop.git), repositoriesKeys:Object.keys(window.nexusDesktop.repositories),
+        deploymentKeys:Object.keys(window.nexusDesktop.deployments), probeKeys:Object.keys(window.nexusDesktop.environmentProbe),
         gitState:await window.nexusDesktop.git.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9'}),
         repositoriesState:await window.nexusDesktop.repositories.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',page:1}),
         workState:await window.nexusDesktop.work.request({operation:'list',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',kind:'task'}),
@@ -427,6 +447,9 @@ async function initialize() {
           window.nexusDesktop.work.download({projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',id:'02f71f6e-69b1-49b7-b6d8-df89167070b9',path:'C:/arbitrary'}),
         window.nexusDesktop.git.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',command:'arbitrary'}),
           window.nexusDesktop.repositories.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',repositoryId:'02f71f6e-69b1-49b7-b6d8-df89167070b9',page:1,token:'arbitrary'}),
+        window.nexusDesktop.deployments.request({operation:'snapshot',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',url:'https://invalid.example'}),
+          window.nexusDesktop.deployments.openPreview({projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',id:'02f71f6e-69b1-49b7-b6d8-df89167070b9',url:'http://127.0.0.1'}),
+          window.nexusDesktop.environmentProbe.request({operation:'observe',projectId:'d309dd11-6d7e-4bc1-bd49-292bc50c2f74',url:'http://127.0.0.1',consent:false}),
         ].map(promise=>promise.then(()=>false,()=>true))),
         requireType: typeof window.require,
         processType: typeof window.process,
@@ -450,11 +473,12 @@ async function initialize() {
       const pulseState = pulseResponseSchema.parse(check['pulseState']);
       const gitState=gitResponseSchema.parse(check['gitState']);const repositoriesState=repositoriesResponseSchema.parse(check['repositoriesState']);
       if (check['requireType'] !== 'undefined' || check['processType'] !== 'undefined' ||
+          JSON.stringify(check['deploymentKeys']) !== '["request","openPreview"]' || JSON.stringify(check['probeKeys']) !== '["request"]' ||
           JSON.stringify(check['gitKeys']) !== '["request"]' || gitState.ok || !['auth_required','forbidden','unavailable'].includes(gitState.code) ||
           JSON.stringify(check['repositoriesKeys']) !== '["request"]' || repositoriesState.ok || !['auth_required','unavailable'].includes(repositoriesState.code) ||
-          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","work","git","repositories","codex","auth"]' ||
+          !check['mounted'] || !check['csp'] || JSON.stringify(check['bridgeKeys']) !== '["getInfo","collaboration","localBinding","context","sessions","workspace","realtime","overview","telemetry","pulse","work","git","repositories","deployments","environmentProbe","codex","auth"]' ||
           JSON.stringify(check['collaborationKeys']) !== '["request"]' || JSON.stringify(check['localBindingKeys']) !== '["request"]' ||
-          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
+          JSON.stringify(check['invalidRequestsDenied']) !== '[true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true]' || collaborationState.ok || collaborationState.code !== 'auth_required' ||
           JSON.stringify(check['overviewKeys']) !== '["request"]' || overviewState.ok || !['auth_required', 'unavailable'].includes(overviewState.code) ||
           JSON.stringify(check['telemetryKeys']) !== '["request"]' || telemetryState.ok || !['auth_required', 'unavailable'].includes(telemetryState.code) ||
           JSON.stringify(check['workKeys']) !== '["request","download"]' || workState.ok || !['auth_required','unavailable'].includes(workState.code) ||

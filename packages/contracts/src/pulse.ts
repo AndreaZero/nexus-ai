@@ -22,7 +22,7 @@ export const pulseSnapshotSchema = z.object({
   summary: z.object({
     dayStart: z.iso.datetime(), dayEnd: z.iso.datetime(), scope: z.enum(['project', 'mine']),
     tasksUpdated: count, sharedUpdates: count, sharedSource: z.literal('retained_entities'),
-    commits: z.number().int().nonnegative().nullable(), comments: count.nullable(), buildsDeploys: z.null(),
+    commits: z.number().int().nonnegative().nullable(), comments: count.nullable(), buildsDeploys: count.nullable(),
   }).strict(),
   outcomes: z.array(sharedSessionSchema).max(20),
 }).strict();

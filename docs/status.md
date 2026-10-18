@@ -1,5 +1,46 @@
 # Stato operativo
 
+**T13 integrato e consegnato, in attesa di verifica manuale; prosecuzione T14–T16 autorizzata.**
+
+## Mandato T13–T16 del18ottobre2026
+
+Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra task e di fermarsi al termine. Si mantiene l'ordine T13→T14→T15→T16 e si integra/verifica ciascuna task prima della seguente. Questa autorizzazione sostituisce l'attesa del via dopo ogni consegna; non equivale a prove native Mac/Linux o firma/credenziali esterne disponibili. T12 manuale resta distinto dal via allo sviluppo.
+
+## Ownership T13 integrate e rilasciate
+
+| Agente | Percorsi assegnati | Obiettivo/contratto/stato |
+| --- | --- | --- |
+| /root/t13_server — integrato/rilasciato | apps/server/src/deployments.ts, deployments-health.ts, deployments.test.ts | Ambienti/build/health manuali, CAS/ricevute, scadenza, validazione PNG e invalidazione atomica; 8 test mirati |
+| /root/t13_web — integrato/rilasciato | apps/web/src/** e apps/web/test/t13.test.mjs | Deployments, card reference1/3, Environment Status reference2, provider scoped, file/preview espliciti e health; 8 test mirati |
+| /root/t13_probe — integrato/rilasciato | apps/desktop/src/environment-probe.ts e apps/desktop/test/environment-probe.test.ts | Una HEAD loopback per consenso, nessun polling o upload, autorizzazione prima/dopo, scadenza30s; 8 test mirati |
+| /root/t13_server — QA integrata/rilasciata | scripts/verify-deployments.mjs | 6 scenari PostgreSQL/Mailpit/HTTP reali, cleanup fixture propri, report .nexus/visual/t13 |
+| /root/t13_probe — QA UI integrata/rilasciata | apps/desktop/src/deployment-verification.ts e scripts/verify-deployment-ui.mjs | 13 controlli Electron/preload, una HEAD loopback effettiva, DTO condivisi controllati dichiarati e catture reference |
+| /root/t13_server — documentazione integrata/rilasciata | status/plan/changelog, guida deployments, append architecture/contracts/design screens | Chiusura documentale T13; nessun cambio alla fase successiva |
+| Coordinatore — integrato | contratti,DB0007,main/preload/auth/routes,feed/Pulse,QA/versioni | Integrazione sequenziale, migrazione esplicita, build/smoke e documentazione; unico autore manifest/lock/schema |
+
+DB0007: deployment_environment(id,project_id,name,kind,visibility,preview_url,required_checks jsonb,version,created_by,created_at,updated_at); project_deployment(id,project_id,environment_id,title,status,commit_sha,branch,build_url,preview_url,notes,thumbnail,version,created_by,observed_at,created_at,updated_at); health_observation(id,project_id,environment_id,check_name,status,value double precision nullable,unit,summary,source_url,version,created_by,observed_at,expires_at,created_at,updated_at, UNIQUE(environment_id,check_name)); deployment_receipt(project_id,actor_id,request_id,payload_hash,response jsonb,created_at). Tutti UUIDtext/FK progetti/account; ambienti30, deployment1000progetto e pagine100, ricevute100k, thumbnailPNG256KiB max1280x720 e quota10MiBprogetto. Audience sul parentenvironment corrente; client/viewer solo client. Nessuna fetch server di URL progetto. Manual provider definitivo ammesso dal piano, fonteesplicita. Mutation appende invalidazione con entityId idambiente/deploy; feed root proietta entità correnti. Native probe solo driver attivo, privata/temporanea, no upload implicito. Preview desktop in BrowserWindow separata senza preload, sandbox/noNode/partition effimera, apertura esplicita daID autorizzato.
+
+## Evidenze T13 e consegna
+
+| Ambito | Esito |
+| --- | --- |
+| Implementazione | Ambienti con audience e requisiti health dichiarati; build/deploy manuali con URL/SHA/branch, thumbnail scelta e anteprima di pubblicazione. Editor CAS, ricevute idempotenti, lettura dettaglio e paginazione. Nessuna infrastruttura esterna creata |
+| Persistenza | Migrazione additiva0007 applicata esplicitamente al solo nexus_ai_dev, **8 migrazioni**. Conservato **1 account reale**, configurazione e progetti; fixture QA rimossi, nessuna migrazione all'avvio |
+| Sicurezza/health | Ruoli e visibilità del parent correnti in ogni query, ricevuta e feed. PNG256KiB/max1280×720 con firma/chunk/CRC e quota10MiB. URL senza credenziali/query/fragment; server senza fetch. Health unknown se requisito assente/scaduto/futuro; pass/required soltanto con tutte le osservazioni correnti |
+| Proiezioni | deployment.changed invalida WS senza contenuti. Feed coalescente autorizzato, card Overview/Pulse dallo stesso dominio e conteggio Build & deploys per osservazione UTC/autore; nessuna metrica di provider inventata |
+| Probe locale | Una HEAD HTTP loopback soltanto dopo consenso, timeout5s, nessun redirect/body/cookie/DNS remoto. Autorizzazione prima/dopo, invalidazione al cambio account e osservazione privata scaduta dopo30s |
+| Statici/test/build | Typecheck ed ESLint mirati passati; **8 test server + 8 probe + 8 web** passati. Build renderer passata con warning chunk circa715kB, controllo confini108file passato. Nessuna nuova dipendenza o modifica allo schema Codex |
+| PostgreSQL/HTTP | Verifier **6 scenari passati** con account verificati, PG/Mailpit/HTTP effettivi: ruoli/CAS/ricevute/audience, PNG/quote, health/scadenza/futuro, Pulse UTC/Mine, feed/pagine, narrowing/revoca e cascade. Report deployments-report.json in .nexus/visual/t13 |
+| UI/IPC | **13 controlli passati** con renderer e preload effettivi, DTO condivisi controllati dichiarati e una HEAD loopback reale. Empty/editor/pubblicazione PNG/CAS, Overview/Pulse/Sessione,960px/reduced motion/offline/cliente/scadenza; catture e report nella stessa directory |
+| Reference | PNG1/2/3 originali aperte; shell, palette, pianeta/wave e primitive preservati. Card health/preview della reference3, preview reference1 ed Environment Status reference2 collegate ai dati reali. La pagina Deployments estende le primitive senza una PNG dedicata; nessuna identità pixel dichiarata |
+| Preview/smoke | Main apre preview mediante ID autorizzato in finestra isolata; smoke desktop Windows passato. Il QA UI intercetta la finestra OS e verifica la chiamata ID-only; verifica aggiuntiva Electron reale passata: Node/preload e cookie Nexus assenti, partizione effimera, popup negati e chiusura finestra. Separata dai13controlli |
+| Versioni/piattaforme | App/contratti/DB **0.13.0**, UI0.3.0,bridge0.5.0,Codex0.159.2 e auth0.9.1 invariati. Nessun installer intermedio: packaging finale previsto T16. Build manuale del maintainer e prove native macOS/Linux non eseguite |
+
+Workflow e verifica manuale in [deployments.md](deployments.md). T13 è integrato e consegnato, con accettazione manuale distinta. Il mandato cumulativo consente al coordinatore di avviare T14 dopo l'integrazione; fermarsi dopo T16.
+
+
+## Archivio T12
+
 Aggiornato: **18 ottobre 2026**. **T12 consegnato, in attesa di verifica utente** — [issue12](https://github.com/AndreaZero/nexus-ai/issues/12). Build Windows T11 accettata, issue11 chiusa. T12 completa Git locale e GitHub (commit, branch, fetch/push espliciti, PR/review, sincronizzazione e webhook); T13–T16 restano successivi. Nessun cambio al runtime Codex o alle policy account.
 
 ## Ownership T12 integrate/rilasciate e contratto
