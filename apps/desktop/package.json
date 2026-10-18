@@ -1,6 +1,6 @@
 {
   "name": "@nexus-ai/desktop",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "private": true,
   "description": "Nexus AI desktop for Windows, macOS and Linux",
   "author": "Nexus AI contributors",

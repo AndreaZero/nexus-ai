@@ -5,3 +5,23 @@
 @media(max-width:1100px){.repo-diff-grid{grid-template-columns:minmax(220px,.5fr) minmax(0,1fr)}.repo-context-grid{grid-template-columns:1fr 1fr}.repo-context-grid>div:last-child{grid-column:1/-1;border:0;padding-left:0}}@media(max-width:760px){.repo-diff-grid,.repo-context-grid,.repo-author-grid{grid-template-columns:1fr}.repo-context-grid>div+div{padding-left:0;border-left:0}.repo-tabs{gap:13px}.repo-tabs>button{font-size:11px}}@media(prefers-reduced-motion:reduce){.repo-tabs>button{transition:none}}[data-reduced-motion=true] .repo-tabs>button{transition:none}
 
 .repo-diff-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px;color:#7692af;font:10px var(--font-sans,Inter,sans-serif);border-bottom:1px solid #142d40}.repo-diff .session-diff,.repo-diff .diff-pane{max-height:520px}.repo-pull-detail .repo-diff .session-diff,.repo-pull-detail .repo-diff .diff-pane{max-height:240px}
+
+/* Long repository names and file paths stay inside their own work area. */
+.repo-code-page>*,.repo-diff-grid>*,.repo-code-page [role=tabpanel],.repo-context-grid>div,.repo-author-grid>label{min-width:0}
+.repo-context-grid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.85fr)}
+.repo-context-grid span,.repo-context-grid strong,.repo-action-preview strong,.repo-pull-heading h3{overflow-wrap:anywhere;min-width:0}
+.repo-context-grid strong>.nexus-icon{flex-shrink:0}
+.repo-tabs{overflow-x:auto;scrollbar-width:thin;min-width:0}
+.repo-tabs>button{flex-shrink:0;white-space:nowrap}
+.repo-file-list{overscroll-behavior:contain}
+.repo-file-list>div{gap:6px}
+.repo-file-list .repo-additions,.repo-file-list .repo-deletions{flex-shrink:0}
+.repo-pull-list>button{min-width:0}
+.repo-pull-list>button>.nexus-badge{flex-shrink:0}
+.repo-diff-toolbar{flex-wrap:wrap}
+.repo-diff-toolbar>span{min-width:0;overflow-wrap:anywhere}
+.repo-selected-files,.repo-action-preview,.repo-body,.repo-history,.repo-diff{overscroll-behavior:contain}
+.repo-diff :is(.session-diff,.diff-pane):focus-visible{outline:2px solid #00b7ff;outline-offset:-3px}
+@media(max-width:1100px){.repo-context-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:960px){.repo-diff-grid{grid-template-columns:minmax(0,1fr)}.repo-file-list{max-height:240px}}
+@media(max-width:760px){.repo-context-grid{grid-template-columns:minmax(0,1fr)}.repo-pull-heading{align-items:flex-start}.repo-pull-list>button{flex-wrap:wrap}.repo-pull-list>button>span:nth-child(2){flex-basis:calc(100% - 50px)}}

@@ -4,6 +4,20 @@
 
 Riprodurre le PNG in `examples/design/` come composizione finale del prodotto: stessa gerarchia, densità, proporzioni, bordi, luci, particelle e dettagli. Le tre schermate sono viste dello stesso sistema, non temi alternativi. La verifica primaria avviene a **1586 × 992 CSS px, zoom 100%, device scale 1**, confrontando lo screenshot dell'area contenuto con la PNG. La cornice nativa del sistema operativo resta fuori dal confronto.
 
+### Contenuti e controlli raggiungibili — T18
+
+Conservare la composizione di riferimento, adattando il contenuto reale anche a 1280×720 e 960×640. Essere sotto la piega è accettabile quando lo scorrimento rende raggiungibili contenuto e azioni; tagliare un controllo con overflow nascosto o rimuoverlo al breakpoint non lo è.
+
+- Le colonne di lavoro usano minmax(0,1fr) e gli elementi flex/grid contenenti testo possono restringersi. Titoli/percorsi troncati mantengono il testo completo accessibile; descrizioni, errori e moduli vanno a capo.
+- Header e toolbar crescono quando le azioni richiedono una seconda riga. Il selettore progetto e quello workspace rimangono disponibili anche nella sidebar compatta; nelle finestre basse la navigazione laterale può scorrere.
+- Le card di riferimento mantengono le proporzioni. Liste e pannelli di codice/output hanno scorrimento locale senza schiacciare le righe; la pagina può crescere verticalmente per conservare uno spazio di lavoro leggibile. La sessione segue l’altezza effettiva dell’header: il composer resta visibile, mentre messaggi e contesto scorrono. Sotto 700px di altezza il payoff decorativo della sidebar si nasconde per evitare sovrapposizioni alla navigazione.
+- Allegati, split diff, approvazioni e risultati non spariscono a finestre ridotte. I controlli possono andare a capo, impilarsi o scorrere; l'overflow orizzontale resta confinato a tab, diff o liste dedicate.
+- Dialoghi contenuti nel viewport, azioni finali raggiungibili e focus visibile. Escape e chiusura ripristinano il focus; fare click nel padding interno non chiude il dialogo. I moduli iniziano dal primo campo abilitato.
+
+La verifica usa il renderer/preload di produzione con fixture lunghe dichiarate e controlla geometrie, scorrimento reale e hit test dei controlli. Nessuna metrica di lavoro simulata entra nel prodotto. Risultati e limiti in [status](../status.md).
+
+Catture controllate T18: [Sessione a 960×640](captures/t18-session-960.png), con composer visibile e selettori compatti, e [Pulse a 1280×720](captures/t18-pulse-1280.png), con rail sotto il contenuto. Account, modello, risposta e record mostrati sono fixture QA esplicite; non rappresentano inferenza o attività personale.
+
 Le misure seguenti sono ricostruite dalle immagini e arrotondate: tolleranza iniziale 2–4 px sugli ancoraggi principali, poi correzione visiva. La tolleranza non è un permesso per omettere componenti. Font, stati interattivi, movimento e adattamenti responsive sono specifiche progettuali inferite; una PNG non ne dimostra il comportamento originale.
 
 ## Identità
@@ -93,6 +107,6 @@ Le icone di navigazione appartengono a una famiglia outline coerente da 1.5–1.
 
 ## Adattamento viewport
 
-Il desktop di riferimento resta la priorità. Sotto ≈1440 px la colonna destra si riduce senza comprimere codice e testi sotto la soglia leggibile; sotto ≈1200 passa sotto il contenuto. Sotto ≈1024 la sidebar diventa rail compatto o drawer; la sessione alterna chat/contesto/codice tramite tab. Sul web stretto le card diventano una colonna, il feed resta completo e il diff può passare a unified con scroll orizzontale locale. Non scalare l'intera app con `transform: scale()`.
+Il desktop di riferimento resta la priorità. Sotto ≈1440 px la colonna destra si riduce senza comprimere codice e testi sotto la soglia leggibile; sotto 1366px Overview e Pulse la spostano sotto il contenuto per mantenere leggibili KPI, label e azioni. Sotto ≈1024 la sidebar diventa rail compatto o drawer; la sessione alterna chat/contesto/codice tramite tab. Sul web stretto le card diventano una colonna, il feed resta completo e il diff può passare a unified con scroll orizzontale locale. Non scalare l'intera app con `transform: scale()`.
 
 Questi breakpoint sono un'estensione progettuale, non una proprietà verificabile delle PNG. Layout specifici e coordinate sono in [`screens.md`](screens.md); movimento in [`motion.md`](motion.md); asset in [`assets.md`](assets.md).

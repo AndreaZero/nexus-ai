@@ -87,3 +87,18 @@
 @media(max-width:1300px){.project-heading h1{max-width:390px}.project-heading-copy p{max-width:440px}.domain-page-heading{align-items:flex-start}.domain-actions{justify-content:flex-end}}
 @media(max-width:1050px){.repository-grid{grid-template-columns:1fr}.member-row{flex-wrap:wrap}.member-actions{width:100%;margin-left:49px}.domain-page-heading{flex-wrap:wrap}.project-heading h1{max-width:350px}}
 @media(max-width:650px){.domain-page-heading h2{font-size:21px}.domain-actions{justify-content:flex-start}.domain-scope{width:100%}.domain-scope select{max-width:100%}.member-actions{margin-left:0;gap:5px}.member-actions select{width:95px}.domain-dialog{padding:17px}.project-heading h1{max-width:180px}.project-heading-copy p{max-width:220px}.invitation-row{flex-wrap:wrap}.invitation-row>div{flex-basis:70%}}
+
+/* Let long project/member content yield space to the controls instead of widening the page. */
+.domain-page-heading>div{min-width:0}
+.domain-page-heading p,.domain-note{overflow-wrap:anywhere}
+.domain-scope{max-width:100%}
+.domain-scope select{width:100%;min-width:0}
+.project-card-actions,.member-actions{flex-wrap:wrap}
+.member-actions{min-width:0;max-width:100%}
+.project-properties dd{min-width:0;overflow-wrap:anywhere;text-align:right}
+.domain-form label{min-width:0}
+.domain-search{max-width:100%}
+.local-folder{min-width:0}
+.local-folder .domain-actions{justify-content:center}
+@media(max-width:1050px){.member-actions{width:calc(100% - 49px)}.domain-page-heading{gap:14px}.domain-scope{min-width:min(230px,100%)}}
+@media(max-width:650px){.member-actions{width:100%}.invitation-row{gap:9px}}

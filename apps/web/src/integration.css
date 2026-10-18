@@ -1,22 +1,28 @@
-.navigation-dialog { width: min(550px, calc(100vw - 32px)); max-height: min(680px, calc(100vh - 80px)); margin: 12vh auto 0; padding: 0; color: var(--nexus-text-primary); background: #08131f; border: 1px solid var(--nexus-border-strong); border-radius: 12px; box-shadow: 0 24px 100px #000b, 0 0 36px #0076ff13; }
+.navigation-dialog { width: min(550px, calc(100vw - 32px)); max-height: min(680px, calc(100dvh - 32px)); margin: auto; padding: 0; color: var(--nexus-text-primary); background: #08131f; border: 1px solid var(--nexus-border-strong); border-radius: 12px; box-shadow: 0 24px 100px #000b, 0 0 36px #0076ff13; overflow: auto; scrollbar-width: thin; scrollbar-color: #254b65 transparent; overscroll-behavior: contain; }
 .navigation-dialog::backdrop { background: #01060ccc; backdrop-filter: blur(5px); }
 .navigation-dialog__inner { padding: 18px; }
-.navigation-dialog__heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.navigation-dialog__heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .navigation-dialog h2 { margin: 0; font-size: 15px; font-weight: 600; }
-.icon-control { display: inline-flex; align-items: center; justify-content: center; padding: 5px; border: 0; background: transparent; color: var(--nexus-text-muted); cursor: pointer; }
+.icon-control { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; min-width: 28px; min-height: 28px; padding: 5px; border: 0; border-radius: 5px; background: transparent; color: var(--nexus-text-muted); cursor: pointer; }
 .icon-control:hover { color: var(--nexus-accent-cyan); }
 .navigation-dialog__search { display: flex; align-items: center; gap: 10px; margin: 16px 0 10px; padding: 11px 12px; border: 1px solid var(--nexus-border-strong); border-radius: 6px; color: var(--nexus-accent-cyan); background: var(--nexus-bg-app); }
 .navigation-dialog__search input { width: 100%; color: var(--nexus-text-primary); background: transparent; border: 0; outline: 0; font: inherit; font-size: 13px; }
 .navigation-dialog__search:focus-within { border-color: var(--nexus-accent-cyan); }
-.navigation-dialog__results { max-height: 410px; overflow: auto; }
+.navigation-dialog__results { max-height: min(410px, 44dvh); overflow: auto; min-width: 0; scroll-padding-block: 5px; scrollbar-width: thin; scrollbar-color: #254b65 transparent; }
 .navigation-result { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; padding: 10px 12px; text-align: left; border: 0; border-radius: 6px; color: var(--nexus-text-secondary); background: transparent; cursor: pointer; }
 .navigation-result:hover, .navigation-result:focus-visible { background: var(--nexus-bg-selected); color: var(--nexus-text-primary); }
+.navigation-result > span { min-width: 0; overflow-wrap: anywhere; }
 .navigation-result strong { display: block; font-size: 13px; font-weight: 500; }
 .navigation-result small { display: block; margin-top: 4px; color: var(--nexus-text-muted); font-size: 11px; }
-.navigation-dialog__footer { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid var(--nexus-border-subtle); padding-top: 12px; margin-top: 12px; color: var(--nexus-text-muted); font-size: 10px; }
+.navigation-dialog__footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--nexus-border-subtle); padding-top: 12px; margin-top: 12px; color: var(--nexus-text-muted); font-size: 10px; }
 .navigation-dialog__footer kbd { font: inherit; }
 .notification-dialog { width: min(400px, calc(100vw - 32px)); }
 .settings-layout, .route-empty-layout { display: grid; gap: 14px; padding: 12px 17px 20px; }
+/* The conversation frame follows the actual header height, including wrapped actions. */
+.workspace-main:has(> .workspace-header--session) { height: 100dvh; display: flex; flex-direction: column; }
+.workspace-header--session { flex-shrink: 0; }
+.workspace-content--session { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.workspace-content--session > .route-content { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .settings-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 .settings-column { display: grid; gap: 14px; align-content: start; min-width: 0; }
 .settings-layout .nexus-card { min-height: 215px; }

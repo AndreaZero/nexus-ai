@@ -58,7 +58,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
   const database = createDatabaseBoundary(config.database);
   app.get('/ready',async(_request,reply)=>{
     reply.header('Cache-Control','no-store');
-    const result=readinessResponseSchema.parse(await readOperationalReadiness(database,config,'0.17.0'));
+    const result=readinessResponseSchema.parse(await readOperationalReadiness(database,config,'0.17.1'));
     return reply.code(result.status==='ready'?200:503).send(result);
   });
   const mail = config.auth.mail ? createEmailSender(config.auth.mail) : null;
@@ -219,7 +219,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     return healthResponseSchema.parse({
       schemaVersion: 1,
       service: 'nexus-server',
-      version: '0.17.0',
+      version: '0.17.1',
       status: 'ok',
       database: await database.check(),
       codex: 'local_only',

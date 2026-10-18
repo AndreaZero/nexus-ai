@@ -1,6 +1,6 @@
 # Architettura
 
-Nexus AI 0.17.0 è un monorepo TypeScript con desktop Electron, renderer React comune al web e server Fastify/PostgreSQL. Il desktop esegue Codex e opera sui file locali; il server gestisce identità Nexus e dati condivisi. Windows, macOS e Linux sono target reali con package nativi separati.
+Nexus AI 0.17.1 è un monorepo TypeScript con desktop Electron, renderer React comune al web e server Fastify/PostgreSQL. Il desktop esegue Codex e opera sui file locali; il server gestisce identità Nexus e dati condivisi. Windows, macOS e Linux sono target reali con package nativi separati.
 
 ```mermaid
 flowchart LR

@@ -2,7 +2,7 @@
 
 Workspace open source per sviluppare con **Codex locale** e condividere il lavoro con colleghi e clienti. Desktop Windows, macOS e Linux; renderer web comune e server Nexus per account, progetti, cronologia pubblicata e collaborazione.
 
-La base **0.17.0** comprende il piano T01–T16 e l’onboarding guidato T17: sessioni, contesto, diff e approvazioni locali; realtime e presenza; task, roadmap, documenti e consegne; Git/GitHub; ambienti e health; ricerca, notifiche e impostazioni. L'interfaccia segue le [tre reference](examples/design/). Le animazioni sono ricostruzioni documentate e i pannelli si popolano soltanto con dati effettivi.
+La base **0.17.1** comprende il piano T01–T16, l’onboarding guidato T17 e il polish UI/UX T18: sessioni, contesto, diff e approvazioni locali; realtime e presenza; task, roadmap, documenti e consegne; Git/GitHub; ambienti e health; ricerca, notifiche e impostazioni. L'interfaccia segue le [tre reference](examples/design/) con contenuti e controlli adattabili alle finestre ridotte. Le animazioni sono ricostruzioni documentate e i pannelli si popolano soltanto con dati effettivi.
 
 L'implementazione e l'accettazione restano distinte: risultati automatici e package effettivamente prodotti sono nello [stato](docs/status.md), prove personali e native residue nella [matrice R01–R16](docs/acceptance.md). Dopo T16 il maintainer ha autorizzato T17, la guida dal primo accesso alla prima sessione. Ulteriori task richiedono un nuovo via. Il server ospitabile non viene distribuito automaticamente su un servizio esterno.
 
@@ -16,7 +16,7 @@ pnpm db:migrate
 pnpm package:win
 ```
 
-Installer in `release/win/Nexus-AI-0.17.0-win-x64.exe` su Windows x64. In assenza di credenziali di firma il package è **unsigned**. Le migrazioni sono esplicite; il DB locale aggiornato contiene nove migrazioni fino a `0008_application`. Per un nuovo clone seguire il [setup completo](CONTRIBUTING.md#setup-locale).
+Installer in `release/win/Nexus-AI-0.17.1-win-x64.exe` su Windows x64. In assenza di credenziali di firma il package è **unsigned**. Le migrazioni sono esplicite; il DB locale aggiornato contiene nove migrazioni fino a `0008_application`. Per un nuovo clone seguire il [setup completo](CONTRIBUTING.md#setup-locale).
 
 Avviare in terminali separati, senza duplicare Mailpit se è già attivo:
 

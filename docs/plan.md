@@ -203,6 +203,14 @@ Guida riprendibile account Nexus → workspace → progetto → cartella locale 
 
 **Uscita:** primo utente percorre il setup e raggiunge il composer pronto; prima risposta completa osservata conclude la guida. Stato account/progetto/cartella modificato invalida i prerequisiti; rimando e ripresa sopravvivono al reload, inviti e ruoli mantengono il proprio percorso. Test mirati e catture Electron dichiarate; maintainer verifica login e prima richiesta personale.
 
+### T18 — Polish mirato di layout e controlli
+
+**Stato:** integrazione 0.17.1 e verifica visuale in corso, dopo autorizzazione del maintainer. **Dipendenze:** T17; ownership in status.md.
+
+Correggere componenti tagliati e azioni poco raggiungibili senza ridisegnare la shell. Layout flessibili per testi lunghi, header e toolbar, navigazione laterale nelle finestre basse, dialoghi e moduli. Conservare palette, card, pianeta, particelle e composizione delle reference. Nessuna modifica ai servizi di dominio o ai confini runtime/server.
+
+**Uscita:** dieci pagine principali senza overflow orizzontale del documento a 1586×992, 1280×720 e 960×640; azioni principali raggiungibili tramite vero scorrimento, tastiera e dialoghi. Verifiche automatiche e prova manuale restano distinte. Fermarsi alla consegna.
+
 ## Definizione di completamento per ogni task
 
 Il comportamento previsto è implementato e integrato nel flusso reale; i controlli pertinenti eseguiti hanno un risultato registrato; documentazione/stato/changelog sono aggiornati; le istruzioni per la build sono concrete e i limiti sono dichiarati. `implementato`, `controllato automaticamente`, `build provata dall'utente` e `accettato` sono evidenze distinte.

@@ -28,7 +28,7 @@ pnpm db:migrate
 pnpm package:win
 ```
 
-La versione applicativa è **0.17.0**. Su Windows x64 l'installer è `release/win/Nexus-AI-0.17.0-win-x64.exe`; il programma non installato è `release/win/win-unpacked/Nexus AI.exe`. Il packaging usa l'architettura dell'host. Senza credenziali di firma l'artefatto è unsigned; il comando non installa automaticamente il pacchetto. I risultati effettivamente ottenuti nella consegna sono in [status](docs/status.md), la procedura completa in [release](docs/release.md).
+La versione applicativa è **0.17.1**. Su Windows x64 l'installer è `release/win/Nexus-AI-0.17.1-win-x64.exe`; il programma non installato è `release/win/win-unpacked/Nexus AI.exe`. Il packaging usa l'architettura dell'host. Senza credenziali di firma l'artefatto è unsigned; il comando non installa automaticamente il pacchetto. I risultati effettivamente ottenuti nella consegna sono in [status](docs/status.md), la procedura completa in [release](docs/release.md).
 
 `db:migrate` è esplicito e limitato al database locale dedicato `nexus_ai_dev`. Le migrazioni additive arrivano a `0008_application`, **nove in totale**; su questa macchina sono già applicate e un nuovo lancio non ricrea account o dati. Il backend non migra il database all'avvio. Per un host diverso usare gli strumenti operatore e le conferme descritti in [self-host](docs/self-host.md), senza modificare la protezione del comando locale.
 

@@ -24,3 +24,70 @@
 .session-diff--split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);overflow:hidden}.diff-pane{overflow:auto;min-width:0;overscroll-behavior:contain}.diff-pane+.diff-pane{border-left:1px solid #294055}.diff-pane-label{position:sticky;top:0;left:0;background:#07131f;color:#739bbd;padding-left:35px;font-size:10px;z-index:1}.session-diff--split .diff-cell{overflow:visible;min-width:max-content;border-right:0}.session-diff--split .diff-cell code{min-width:max-content}.session-diff--split .diff-line-number{position:sticky;left:0;background:#071725}.session-diff--split .diff-line--add .diff-line-number{background:#083c2b}.session-diff--split .diff-line--delete .diff-line-number{background:#3a1b2a}
 .workspace-heading-actions{display:flex;align-items:center;gap:5px;flex-shrink:0}.workspace-heading-actions>.nexus-button{min-height:23px;padding:3px 6px}.code-workspace>.code-output{height:130px;min-height:130px;max-height:130px;overflow:hidden}.code-output>.output-body{height:99px;min-height:0;overflow:hidden;padding:4px 7px;align-items:stretch}.code-output .session-output-stream{max-height:none;min-height:0}.code-output .test-results-empty{min-height:0;overflow:auto}.code-output .test-results-observed{padding:3px 7px;gap:1px;align-content:start;font-size:10px;line-height:12px}.code-output .test-results-observed small{font-size:10px;line-height:12px}.code-output .test-results-observed dl>div{margin-top:1px;font-size:10px;line-height:12px}.session-diff{font-size:11px;line-height:16px}.repository-card-body{padding-bottom:5px!important}.repository-card .repository-empty{padding-bottom:5px;gap:7px}.repository-card .branch-empty{padding-top:5px;gap:8px}.repository-card .branch-empty>div{gap:1px}.repository-card .session-observed-at{padding-top:2px;line-height:11px}.repository-card .nexus-card__header{min-height:33px;padding-top:7px;padding-bottom:5px}.repository-card .repository-empty>div{min-width:0}.repository-card .repository-empty strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(max-width:640px){.workspace-heading-actions{gap:3px}.workspace-heading-actions>.nexus-button{padding:3px 4px}.code-output>.output-body{grid-template-columns:minmax(0,1fr)}}
+
+/* Keep the reference's two work areas while allowing their content to scroll. */
+.session-layout{grid-template-columns:repeat(2,minmax(0,1fr));flex:1;min-height:0;height:auto}
+/* Reserve 330px for readable diff/output, and let context scroll at short heights. */
+.session-right{grid-template-rows:clamp(160px,calc(100% - 339px),490px) minmax(330px,1fr);overflow:auto}
+.session-mobile-tabs{flex-shrink:0}
+.session-layout .codex-transcript{min-height:80px;max-height:none}
+.session-context{min-height:0;overflow:auto;overscroll-behavior:contain}
+.session-context>.nexus-tabs{position:sticky;top:0;z-index:2;background:#061019}
+.context-files-stack>.nexus-card,.environment-card,.related-tasks-card{display:grid;grid-template-rows:auto minmax(0,1fr);min-height:0}
+.context-files-stack>.nexus-card>.nexus-card__body,.environment-card>.nexus-card__body,.related-tasks-card>.nexus-card__body{min-height:0;overflow:auto;overscroll-behavior:contain}
+.attached-files-card>.nexus-card__body{height:auto;display:block}
+.session-attached-files{height:auto;min-height:100%;padding-top:3px}
+.session-layout .attached-files-card button{display:inline-flex;font-size:10px!important;min-height:27px!important}
+.session-attached-files .icon-control{flex:0 0 27px;justify-content:center}
+.repository-card .repository-empty{gap:7px;flex-wrap:wrap}
+.repository-card .repository-empty>div:not(.repo-toolbar){flex:1;min-width:80px}
+.repository-card .repository-empty>.repo-toolbar{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.repository-card .repo-toolbar .nexus-button{min-height:27px;padding:4px 6px}
+.session-layout .branch-empty>div{flex:1;min-width:0}
+.session-layout .branch-empty strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.session-layout .branch-empty>.nexus-badge{display:inline-flex;flex-shrink:0;margin-left:auto}
+.session-layout .environment-row small{max-width:none;white-space:normal;overflow-wrap:anywhere}
+.session-layout .environment-row>span{flex-shrink:0}
+.session-task-rows{max-height:none;height:auto;min-height:100%}
+.session-info-panel{height:auto;min-height:0;max-height:calc(100% - 45px)}
+.session-composer{flex-shrink:0;min-width:0}
+.session-composer .codex-model-controls{min-width:0;flex-basis:220px}
+.session-composer .codex-model-controls label{flex:1;min-width:100px}
+.session-composer .codex-model-controls select{width:100%;min-width:0;text-overflow:ellipsis}
+.session-composer .composer-input>textarea{resize:vertical;scroll-margin-block:16px}
+.session-composer .codex-input-hint{display:block;overflow-wrap:anywhere}
+.session-layout .codex-session-error,.session-layout .codex-notice{overflow-wrap:anywhere;max-height:140px;overflow:auto;flex-shrink:0}
+.code-workspace-heading{min-height:38px;height:auto;flex-wrap:wrap;row-gap:3px}
+.code-workspace-heading>.nexus-tabs{flex:1 1 280px}
+.workspace-heading-actions{flex-wrap:wrap;margin-left:auto;padding-block:4px}
+.code-workspace .split-view-button{display:flex;min-height:27px}
+.code-workspace .workspace-heading-actions>.nexus-button{min-width:27px;min-height:27px}
+.code-primary-panel{min-width:0}
+.session-file-preview{flex:1;min-height:90px;height:auto;overscroll-behavior:contain}
+.session-command-output header{flex-wrap:wrap}
+.session-command-output header strong{flex:1;min-width:0}
+.session-output-stream{scrollbar-gutter:stable}
+.session-runtime-plan header,.execution-request>header,.approval-file-changes header{flex-wrap:wrap}
+.session-publish-body .domain-actions,.execution-approvals .domain-actions,.session-preview-config .domain-actions{flex-wrap:wrap}
+.session-layout :is(.session-context,.session-info-panel,.session-file-preview,.session-command-output,.session-test-reports,.session-preview-config,.session-output-stream,.session-diff,.diff-pane):focus-visible{outline:2px solid #00b7ff;outline-offset:-3px}
+@media(max-width:1023px){
+  .session-conversation{flex:1;min-height:0}
+  .session-right{gap:9px;flex:1;min-height:0}
+  .session-context{flex:1;min-height:0;max-height:none}
+  .session-info-panel{max-height:560px}
+  .code-workspace{flex:1;min-height:330px}
+}
+@media(max-width:767px){
+  .code-workspace>.code-output{height:auto;min-height:180px;max-height:260px}
+  .code-output>.output-body{height:auto;max-height:225px;grid-template-columns:minmax(0,1fr)}
+  .code-output .session-output-stream{min-height:65px;max-height:110px}
+  .code-output .test-results-empty{display:grid;max-height:100px}
+}
+@media(max-width:640px){
+  .session-layout .environment-card{min-height:240px;height:auto}
+  .session-layout .environment-card-body{grid-template-columns:minmax(0,1fr)}
+  .session-layout .environment-row small{font-size:10px}
+  .session-runtime-plan li{flex-wrap:wrap}
+  .session-runtime-plan li strong{flex:1;min-width:0}
+  .session-runtime-plan li small{display:block;margin-left:28px;font-size:10px}
+}

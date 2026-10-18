@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T17 consegnata, versione 0.17.0: in attesa della prova manuale del maintainer**. Onboarding integrato da primo accesso a prima risposta, con ramo cliente/browser e dati reali. Fermarsi qui; non avviare altri task senza nuovo via. Ownership ed evidenze in docs/status.md; migrazione 0008 applicata, 9 totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
+La fase corrente è **T18 — polish UI/UX autorizzato dal maintainer dopo T17**. Correggere componenti tagliati e rendere controlli/menu accessibili mantenendo layout e stile. Nessuna nuova feature di dominio; fermarsi alla consegna. T17 resta consegnata 0.17.0 con prova manuale distinta. Ownership ed evidenze in docs/status.md; migrazione 0008 applicata, 9 totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
 
 ## Prodotto e architettura
 

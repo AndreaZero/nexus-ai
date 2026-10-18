@@ -1,6 +1,6 @@
 # Matrice di accettazione del prodotto
 
-Base0.17.0, piano T01–T16 e onboarding T17. La matrice separa **funzionalità implementate**, **controlli eseguiti** e **accettazione personale o di piattaforma**. I fixture dei verifier sono isolati dal normale avvio e non diventano dati fittizi dell'app. Il mandato di proseguire fino alla task finale autorizza lo sviluppo continuo; non certifica percorsi personali o piattaforme non provate.
+Base 0.17.1, piano T01–T16, onboarding T17 e polish T18. La matrice separa **funzionalità implementate**, **controlli eseguiti** e **accettazione personale o di piattaforma**. I fixture dei verifier sono isolati dal normale avvio e non diventano dati fittizi dell'app. Il mandato di sviluppo non certifica percorsi personali o piattaforme non provate. Il polish verifica adattamento e raggiungibilità di controlli; l'accettazione visiva finale resta del maintainer.
 
 | Requisito | Implementazione | Evidenze automatiche disponibili | Verifica personale/esterna distinta |
 | --- | --- | --- | --- |

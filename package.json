@@ -1,6 +1,6 @@
 {
   "name": "nexus-ai",
-  "version": "0.17.0",
+  "version": "0.17.1",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -56,7 +56,8 @@
     "release:manifest": "node scripts/release.mjs manifest",
     "verify:self-host": "node scripts/verify-self-host.mjs",
     "verify:onboarding": "node scripts/verify-onboarding.mjs",
-    "verify:onboarding-data": "node scripts/verify-onboarding-data.mjs"
+    "verify:onboarding-data": "node scripts/verify-onboarding-data.mjs",
+    "verify:polish": "node scripts/verify-polish.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

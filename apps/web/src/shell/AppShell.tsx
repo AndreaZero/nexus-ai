@@ -67,7 +67,7 @@ export function AppShell({ route, onNavigate, onSearch, onNotifications, reduced
         </button>)}
       </nav>
       <div className="sidebar-ambient"><SidebarPlanet reducedMotion={reducedMotion} /><div className="sidebar-payoff">{copy.payoff.map(line => <span key={line}>{line}</span>)}<i /></div></div>
-      <button type="button" className="workspace-switcher" title={data.workspace?.name ?? 'Select or create a workspace'} aria-haspopup="dialog" onClick={() => { if (data.ready) setPicker('workspace'); else onNavigate('projects'); }}><span className="workspace-switcher-mark"><NexusMark size={24} /></span><span><small>{copy.workspace}</small><strong>{data.workspace?.name ?? copy.selectWorkspace}</strong></span><Icon name="chevron-down" size={15} /></button>
+      <button type="button" className="workspace-switcher" title={data.workspace?.name ?? 'Select or create a workspace'} aria-label={`Select workspace${data.workspace ? ` · ${data.workspace.name}` : ''}`} aria-haspopup="dialog" onClick={() => { if (data.ready) setPicker('workspace'); else onNavigate('projects'); }}><span className="workspace-switcher-mark"><NexusMark size={24} /></span><span><small>{copy.workspace}</small><strong>{data.workspace?.name ?? copy.selectWorkspace}</strong></span><Icon name="chevron-down" size={15} /></button>
     </aside>
     <div className="workspace-main">
       <header className={`workspace-header${isSession ? ' workspace-header--session' : ''}`}>

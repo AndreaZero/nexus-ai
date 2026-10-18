@@ -3,3 +3,24 @@
 .overview-rail .health-card{position:relative}.overview-rail .deploy-health-source{position:absolute;bottom:7px;left:14px;right:14px;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.environment-probe>input:disabled{opacity:.6}
 
 .environment-row.environment-probe{padding:8px 0;margin:0}.environment-row.environment-probe>div{flex:1}.environment-probe>.text-link{font-size:10px;margin-left:auto}.environment-probe-form .probe-consent{display:flex;flex-direction:row;align-items:center;gap:9px;font-size:12px}.environment-probe-form .probe-consent input{width:auto;min-height:0}
+
+.deploy-form-pair{grid-template-columns:repeat(2,minmax(0,1fr))}
+.deploy-editor fieldset,.deploy-form-pair>label{min-width:0}
+.deploy-env-list small,.deploy-record small,.deploy-health-source,.deploy-preview-tile .overview-source{overflow-wrap:anywhere}
+.deploy-record-icon{flex-shrink:0}
+.deploy-detail-heading{flex-wrap:wrap}
+.deploy-health-grid .health-metrics{min-width:0}
+.deploy-health-grid .health-metrics>div{flex-wrap:wrap}
+.deploy-health-grid .health-metrics dd{white-space:normal;overflow-wrap:anywhere}
+.overview-rail .health-card-body{height:calc(100% - 56px);overflow:auto;padding-bottom:0!important}
+.overview-rail .health-metrics{min-width:0}
+.overview-rail .health-metrics>div{flex-wrap:wrap}
+.overview-rail .health-metrics dd{white-space:normal;overflow-wrap:anywhere}
+.deploy-observations a{overflow-wrap:anywhere}
+.deploy-preview-tile .compact-actions{margin-top:8px}
+.deploy-pulse-previews{height:calc(100% - 37px);overflow:auto;align-items:flex-start;scroll-padding:4px}
+.deploy-pulse-previews>.deploy-preview-tile{flex:1 0 190px}
+@media(max-width:1450px){.deploy-pulse-previews{flex-wrap:wrap}.deploy-pulse-previews>.deploy-preview-tile{flex-basis:100%;min-width:0}}
+@media(max-width:1050px){.deploy-layout{grid-template-columns:minmax(0,1fr)}.deploy-environments{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.deploy-form-pair{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:580px){.deploy-environments{grid-template-columns:minmax(0,1fr)}}

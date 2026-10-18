@@ -1,6 +1,6 @@
 # Documentazione Nexus AI
 
-Base applicativa **0.17.0**, base T01–T16 e onboarding T17. Le guide descrivono i comportamenti implementati; [stato](status.md) e [accettazione](acceptance.md) distinguono controlli automatici, package, prova personale e risultati per piattaforma. Dopo la consegna T16 è stato autorizzato T17, limitato al percorso iniziale guidato.
+Base applicativa **0.17.1**, base T01–T16, onboarding T17 e polish UI/UX T18. Le guide descrivono i comportamenti implementati; [stato](status.md) e [accettazione](acceptance.md) distinguono controlli automatici, package, prova personale e risultati per piattaforma. La rifinitura conserva le reference e migliora la raggiungibilità di contenuti e controlli nelle finestre ridotte.
 
 | Documento | Uso |
 | --- | --- |

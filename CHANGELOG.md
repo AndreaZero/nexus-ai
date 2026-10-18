@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.1 — 18 ottobre 2026
+
+Polish UI/UX T18: header e toolbar si adattano al contenuto, sidebar e selettori restano raggiungibili nelle finestre basse o compatte. Corrette griglie, testi lunghi e azioni nei moduli; liste Pulse, preview deploy, contesto, diff e output conservano contenuti accessibili tramite scorrimento. Ripristinati i controlli precedentemente nascosti dai breakpoint senza cambiare palette, pianeta, particelle e composizione delle reference.
+
+Dialoghi centrati e contenuti nel viewport, focus sul primo campo abilitato, chiusura dal vero backdrop ed Escape con ritorno al controllo iniziale. Nessuna modifica a DB, protocollo Codex, account o permessi; nessuna migrazione o nuova dipendenza.
+
 ## 0.17.0 — 18 ottobre 2026
 
 Onboarding guidato in sei passi dal primo accesso alla prima risposta Codex, con riapertura da Overview/Settings, rimando e ripresa per account/server. Riusa form e contesti reali, conserva bozze e conversazioni, propone una prima richiesta senza inviarla. Percorso cliente/browser limitato al progetto condiviso e inviti preservati. Stepper, card, rail e movimento ridotto derivano dalle tre reference.

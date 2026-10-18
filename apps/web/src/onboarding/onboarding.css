@@ -12,3 +12,11 @@
 @media(max-width:700px){.onboarding-stepper ol{display:grid;grid-template-columns:1fr 1fr}.onboarding-stepper li:last-child{flex:1}.onboarding-stepper li>svg{display:none}.onboarding-intro{flex-wrap:wrap;gap:10px}.onboarding-intro>button{margin-left:auto}.onboarding-rail{grid-template-columns:1fr}.onboarding-rail>.nexus-card:last-child{grid-column:auto}.onboarding-ready{grid-template-columns:1fr}.onboarding-navigation{flex-wrap:wrap}.onboarding-navigation>span{flex-basis:50%}.onboarding-step-heading{flex-wrap:wrap}.onboarding-step-heading>div{flex-basis:65%}.onboarding-summary .onboarding-stage-icon{display:none}}
 @media(prefers-reduced-motion:reduce){.onboarding-page button,.onboarding-summary button{transition:none}}
 .nexus-app--reduced-motion .onboarding-page button,.nexus-app--reduced-motion .onboarding-summary button{transition:none}
+
+.onboarding-intro h2,.onboarding-intro p,.onboarding-step-heading p,.onboarding-summary h2,.onboarding-summary p,.onboarding-copy,.onboarding-footnote{overflow-wrap:anywhere}
+.onboarding-stepper button{scroll-margin-block:8px}
+.onboarding-projects{scroll-padding:5px}
+.onboarding-projects>button{flex-shrink:0}
+.onboarding-summary>button{max-width:100%}
+@media(max-width:1050px){.onboarding-stepper ol{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px 10px}.onboarding-stepper li>svg{display:none}.onboarding-stepper small{font-size:10px}.onboarding-rail{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.onboarding-stepper ol{grid-template-columns:repeat(2,minmax(0,1fr))}.onboarding-rail{grid-template-columns:minmax(0,1fr)}}

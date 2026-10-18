@@ -21,3 +21,15 @@
 .notification-filters label { display: flex; align-items: center; gap: 5px; }
 .notification-dialog .overview-notifications { max-height: 440px; overflow: auto; }
 @media (max-width: 700px) { .application-search-filters { flex-wrap: wrap; } .application-search-filters label { min-width: 150px; } .application-category-settings { grid-template-columns: 1fr; } }
+
+.application-search-filters label,.application-preferences-form fieldset{min-width:0}
+.application-category-settings{grid-template-columns:repeat(2,minmax(0,1fr))}
+.application-checkbox{overflow-wrap:anywhere}
+.application-checkbox input,.notification-filters input{flex-shrink:0}
+.application-connection-confirm{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.application-connection-confirm>p{flex-basis:100%;min-width:0;margin:0;overflow-wrap:anywhere}
+.application-connection-confirm>button{margin-right:0}
+.notification-filters{flex-wrap:wrap}
+.notification-filters select{flex-basis:200px}
+.notification-filters label{flex-shrink:0}
+@media(max-width:700px){.application-category-settings{grid-template-columns:minmax(0,1fr)}.application-search-filters label{min-width:min(150px,100%)}}

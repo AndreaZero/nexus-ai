@@ -3,3 +3,19 @@
 @media(max-width:1200px){.work-board{grid-template-columns:repeat(2,minmax(0,1fr))}.work-board-column{min-height:280px}.work-page .domain-page-heading{align-items:flex-start}.work-audience{justify-items:start}.work-record-row{flex-wrap:wrap}}
 @media(max-width:700px){.work-board,.work-form-pair{grid-template-columns:1fr}.work-load-more{flex-direction:column;align-items:flex-start}.work-roadmap>a{gap:10px}.work-editor .domain-form-actions{flex-wrap:wrap}}
 @media(prefers-reduced-motion:reduce){.work-page *{scroll-behavior:auto;transition:none!important}}
+
+.work-form-pair{grid-template-columns:repeat(2,minmax(0,1fr))}
+.work-form-pair>label,.work-audience{min-width:0}
+.work-task-card>span,.work-task-card small,.work-record-row small,.work-roadmap h3{overflow-wrap:anywhere}
+.work-record-icon{flex-shrink:0}
+.work-file-picker>div{flex-wrap:wrap}
+.work-file-picker>div>span{min-width:0;overflow-wrap:anywhere}
+.work-file-picker button,.work-attachments button{flex-shrink:0}
+.work-metadata>div,.work-publication-preview dl div{min-width:0;flex-wrap:wrap}
+.work-metadata dd,.work-publication-preview dd{min-width:0}
+.work-provenance a{overflow-wrap:anywhere}
+.work-attachments>div{flex-wrap:wrap}
+.work-attachments>div>span{flex-basis:160px}
+.work-board-rows{scroll-padding-block:5px}
+.pulse-feedback-controls button{min-width:24px;min-height:24px}
+@media(max-width:700px){.work-form-pair{grid-template-columns:minmax(0,1fr)}}

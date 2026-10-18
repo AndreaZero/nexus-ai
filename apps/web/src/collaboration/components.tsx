@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Button, Card, EmptyPanel, Icon } from '@nexus-ai/ui';
 import { useAccount } from '../auth/AuthProvider.js';
 import { useCollaboration } from './CollaborationProvider.js';
+import { isDialogBackdropClick } from '../dialog.js';
 
 export function DomainDialog({ title, onClose, children, busy = false }: { title: string; onClose(): void; children: ReactNode; busy?: boolean }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -11,10 +12,10 @@ export function DomainDialog({ title, onClose, children, busy = false }: { title
     const previous = document.activeElement;
     const dialog = ref.current;
     dialog?.showModal();
-    dialog?.querySelector<HTMLElement>('input, select, button')?.focus();
+    (dialog?.querySelector<HTMLElement>('input:not(:disabled), textarea:not(:disabled), select:not(:disabled)') ?? dialog?.querySelector<HTMLElement>('button:not(:disabled)'))?.focus();
     return () => { dialog?.close(); if (previous instanceof HTMLElement) previous.focus(); };
   }, []);
-  return <dialog ref={ref} className="domain-dialog" aria-labelledby={titleId} aria-busy={busy} onCancel={event => { if (busy) event.preventDefault(); else onClose(); }} onClick={event => { if (!busy && event.target === event.currentTarget) onClose(); }}>
+  return <dialog ref={ref} className="domain-dialog" aria-labelledby={titleId} aria-busy={busy} onCancel={event => { if (busy) event.preventDefault(); else onClose(); }} onClick={event => { if (!busy && isDialogBackdropClick(event)) onClose(); }}>
     <div className="domain-dialog-heading"><h2 id={titleId}>{title}</h2><button type="button" className="icon-control" aria-label="Close dialog" disabled={busy} onClick={onClose}><Icon name="x" size={18} /></button></div>
     {children}
   </dialog>;

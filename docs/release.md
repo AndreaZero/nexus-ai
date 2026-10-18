@@ -1,6 +1,6 @@
 # Packaging e distribuzione desktop
 
-La versione corrente T17 è **0.17.0**; conserva la procedura di distribuzione introdotta in T16. Il desktop include Electron44.9.0 e il runtime ufficiale Codex0.159.2 per OS e architettura dell'host. Il renderer è incluso nel package; server PostgreSQL/SMTP e account Nexus sono configurati separatamente, come descritto in [self-host.md](self-host.md). Nessun processo Codex gira nel container server.
+La versione corrente T18 è **0.17.1**; conserva la procedura di distribuzione introdotta in T16. Il desktop include Electron44.9.0 e il runtime ufficiale Codex0.159.2 per OS e architettura dell'host. Il renderer è incluso nel package; server PostgreSQL/SMTP e account Nexus sono configurati separatamente, come descritto in [self-host.md](self-host.md). Nessun processo Codex gira nel container server.
 
 ## Build nativa e file verificabili
 
@@ -16,15 +16,15 @@ L'ultimo comando esegue la build completa, prepara il runtime nativo, crea insta
 
 | Host | Artefatto in `release/` | Firma nel percorso unsigned |
 | --- | --- | --- |
-| Windows | `win/Nexus-AI-0.17.0-win-x64.exe` o `arm64.exe` | Nessuna firma sviluppatore richiesta; Authenticode osservata nel manifest |
-| macOS | `mac/Nexus-AI-0.17.0-mac-arm64.dmg` o `x64.dmg` | Firma ad-hoc esplicita, hardened runtime disattivato, nessuna notarizzazione |
-| Linux | `linux/Nexus-AI-0.17.0-linux-x86_64.AppImage` o `arm64.AppImage` | Firma piattaforma non applicabile |
+| Windows | `win/Nexus-AI-0.17.1-win-x64.exe` o `arm64.exe` | Nessuna firma sviluppatore richiesta; Authenticode osservata nel manifest |
+| macOS | `mac/Nexus-AI-0.17.1-mac-arm64.dmg` o `x64.dmg` | Firma ad-hoc esplicita, hardened runtime disattivato, nessuna notarizzazione |
+| Linux | `linux/Nexus-AI-0.17.1-linux-x86_64.AppImage` o `arm64.AppImage` | Firma piattaforma non applicabile |
 
 Gli script release eliminano dall'ambiente dei figli le variabili di firma per `unsigned`; non cercano certificati personali nel portachiavi. La configurazione generata è in `.nexus/release-config`, ignorata da Git. Il comando classico `package:mac` ha anch'esso firma ad-hoc esplicita, senza selezione automatica di identità. Per build riproducibili senza credenziali preferire `release:package unsigned`. Su Linux l'eseguibile è esplicitamente `nexus-ai`, perché il nome scoped del package npm non è un nome eseguibile valido; il target AppImage normalizza `x64` in `x86_64` nel nome artefatto, mantenendo `architecture: x64` nel manifest.
 
 Ogni installer ha accanto `<nome>.manifest.json` e `<nome>.sha256`. Il manifest contiene versione realmente letta da `app.asar`, commit sorgente e stato delle modifiche locali se disponibili, OS/architettura, toolchain, runtime confezionato, hash SHA-256 dell'eseguibile Codex e dell'installer, dimensione e risultato osservato della verifica firma. Rifiuta package e runtime con versione/piattaforma incoerenti. Gli hash permettono di rilevare corruzione; da soli non attestano un'identità del produttore.
 
-In PowerShell verificare l'installer con `Get-FileHash .\release\win\Nexus-AI-0.17.0-win-x64.exe -Algorithm SHA256`. Su macOS usare `shasum -a 256` e su Linux `sha256sum`, confrontando il valore con il file `.sha256` ricevuto dallo stesso artefatto CI.
+In PowerShell verificare l'installer con `Get-FileHash .\release\win\Nexus-AI-0.17.1-win-x64.exe -Algorithm SHA256`. Su macOS usare `shasum -a 256` e su Linux `sha256sum`, confrontando il valore con il file `.sha256` ricevuto dallo stesso artefatto CI.
 
 ## Firma richiesta e notarizzazione
 

@@ -111,3 +111,19 @@
 @media(max-width:1199px){.pulse-layout .pulse-hero-copy{width:310px}.pulse-layout .pulse-hero h2 span{max-width:295px}.pulse-rail .pulse-feed-list{max-height:250px}.pulse-layout .viewer-card-body{height:calc(100% - 40px)}}
 @media(max-width:767px){.pulse-layout .pulse-hero-copy{width:calc(100% - 136px);max-width:320px}.pulse-layout .pulse-hero p{min-height:0}.pulse-layout .pulse-hero h2 span{max-width:100%;font-size:21px}.pulse-layout .pulse-hero-progress>span{font-size:10px}.pulse-layout .summary-card{height:224px}.pulse-layout .pulse-sessions-card{height:224px}.pulse-layout .pulse-availability-list{height:104px}.pulse-layout .pulse-bottom>*{height:150px}.pulse-layout .pulse-feed-card,.pulse-layout .viewer-card{height:330px}.pulse-layout .pulse-controls>label{margin-left:0}.pulse-layout .pulse-milestone-list{height:164px}.pulse-milestone-row{grid-template-columns:24px minmax(0,1fr) 35px 80px;gap:7px}}
 @media(prefers-reduced-motion:reduce){.pulse-layout *{animation:none!important;transition:none!important}}
+
+/* Fixed reference cards keep their geometry; long lists scroll without squeezing rows. */
+.pulse-layout .pulse-milestone-list{justify-content:flex-start;overflow:auto;scroll-padding:5px;padding-top:3px}
+.pulse-milestone-row,.pulse-session-list>a,.pulse-outcomes-list>a,.pulse-feed-list>a,.pulse-viewer-list>div:not(.nexus-empty-panel){flex-shrink:0}
+.pulse-session-list,.pulse-feed-list,.pulse-layout .pulse-outcomes-list,.pulse-layout .pulse-viewer-list{scroll-padding:5px}
+.pulse-layout .pulse-sessions-body>.text-link{flex-shrink:0}
+.pulse-feed-list strong{overflow-wrap:anywhere}
+.pulse-layout .working-identity{flex-wrap:wrap}
+.pulse-layout .working-identity>div{flex-basis:100px}
+.pulse-layout .working-card-body{height:calc(100% - 37px);overflow:auto}
+.pulse-layout .pulse-feedback-controls button{min-width:24px;min-height:24px}
+@media(max-width:1450px){
+  .workspace-header>.pulse-controls{position:relative;top:auto;right:auto;max-width:none;flex-wrap:wrap;min-height:27px;padding:7px 0 4px;gap:8px 12px}
+  .workspace-header>.pulse-controls>span:first-child{display:block;max-width:none;white-space:normal;overflow-wrap:anywhere}
+  .workspace-header>.pulse-controls>[role=alert]{position:static;width:100%;max-width:none}
+}

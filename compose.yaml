@@ -18,7 +18,7 @@ services:
       retries: 12
     networks: [private]
   server:
-    image: nexus-ai-server:0.17.0
+    image: nexus-ai-server:0.17.1
     build:
       context: .
       args:

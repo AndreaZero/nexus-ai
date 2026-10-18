@@ -52,3 +52,11 @@
 .health-metrics dd{font-size:10px;white-space:nowrap}
 @media(max-width:1450px){.overview-event{gap:6px}.overview-event>time{min-width:30px}.overview-event>.nexus-badge{display:none}.overview-session-choice{max-width:160px}}
 @media(max-width:767px){.overview-session-choice{max-width:145px}.overview-event>.nexus-badge{display:inline-flex}.active-session-files{gap:5px}.telemetry-summary{font-size:10px}}
+
+.overview-event strong,.overview-notifications strong{overflow-wrap:anywhere}
+.overview-event>.nexus-avatar{flex-shrink:0}
+.overview-system-footer{flex-wrap:wrap}
+.overview-task-list{scroll-padding-block:5px}
+.overview-session-choice{min-width:0;max-width:min(225px,100%)}
+@media(max-width:1450px){.overview-session-choice{max-width:160px}}
+@media(max-width:767px){.overview-session-choice{max-width:145px}}

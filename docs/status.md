@@ -1,6 +1,34 @@
 # Stato operativo
 
-**T17 integrata e consegnata — versione 0.17.0, in attesa di verifica manuale. Il nuovo mandato onboarding termina con questa consegna; ulteriori interventi seguono il feedback del maintainer. Build Windows 0.16.0 confermata, distinta dalla nuova 0.17.0.**
+**T18 in corso — polish mirato UI/UX autorizzato dal maintainer: contenuti tagliati, equilibrio dei layout e accessibilità di bottoni/menu, conservando le reference. T17 resta consegnata 0.17.0, con prova manuale distinta.**
+
+## Ownership T18 prima delle deleghe
+
+Un solo intervento di rifinitura, senza nuove feature di dominio o modifiche a DB/runtime/auth. Uscita: contenuti e azioni raggiungibili a 1586×992, 1280×720 e 960×640, testi lunghi, dialoghi e tastiera; palette/composizione originali conservate. Verifica visuale con fixture dichiarate, nessuna inferenza personale.
+
+| Fronte | Percorsi scrivibili | Contratto e consegna |
+| --- | --- | --- |
+| /root/polish_session | apps/web/src/session/session.css, apps/web/src/repositories/repositories.css, apps/web/src/views/SessionView.tsx, apps/web/src/session/SessionPanels.tsx, apps/web/src/session/CodeWorkspace.tsx | Correggere overflow di sessione, strumenti, composer, diff/code e toolbar locali. Nessun provider/contratto/azione nuova. Segnalare cause e controlli; non editare app.css o primitive condivise. |
+| /root/polish_pages | apps/web/src/{collaboration,work,deployments,onboarding,application,codex,overview,pulse}/*.css | Layout e controlli delle pagine, card a contenuto lungo e finestre ridotte; preservare griglie reference al viewport originale. CSS di dominio soltanto; proporre cambi TSX al coordinatore. |
+| /root/polish_qa | apps/desktop/src/polish-verification.ts, scripts/verify-polish.mjs | Verifica Electron con renderer/preload reali e fixture controllate riusando l’impostazione acceptance: viewport reference/1280×720/960×640, pagine e dialoghi, raggiungibilità di azioni e screenshot. Nessun account personale o inferenza. Coordinatore esegue dopo build integrata. |
+| Coordinatore | app.css, integration.css, shell/AppShell.tsx, packages/ui, dialoghi condivisi, docs/manifests e verifica visuale | Shell/sidebar/header, menu/dialoghi, integrazione e verifica finale con renderer reale; un solo autore per config/versioni. |
+
+## Integrazione T18 — 0.17.1
+
+Cause corrette: header ad altezza fissa non compatibile con toolbar su più righe, sidebar con altezza minima e selettori nascosti in modalità compatta, griglie intrinseche che si allargavano con nomi/URL lunghi, azioni locali rimosse ai breakpoint e liste con righe compresse o overflow nascosto. Card e colonne restano fedeli alla composizione originale; lo scorrimento è confinato a liste, tab, contesto e codice dove serve. Per la sessione il frame segue l'altezza effettiva dell'header e riserva spazio al composer: su una finestra bassa messaggi e contesto scorrono senza spingere il campo di invio fuori dalla vista iniziale. Ridotto movimento e focus sono conservati.
+
+Dialoghi centrati nel viewport e moduli con primo campo abilitato a fuoco; Escape e chiusura ripristinano il focus. Il padding interno non equivale più al backdrop. Pulsanti con label lunghe e gruppi azioni possono andare a capo. Nessun cambiamento ad autorizzazioni, login, runtime/protocollo Codex o dati condivisi; nove migrazioni e dipendenze invariate. Le versioni applicative/health/immagine server sono allineate a 0.17.1; UI e bridge mantengono le rispettive versioni interne.
+
+Check completo passato: typecheck/lint e **121 confini renderer**. Build completa passata; dopo la correzione concreta del composer su 1280×720 è stata ricompilata la sola web app. Bundle renderer 762.61kB, warning chunk esistente non bloccante. Corrette anche due diagnostiche del solo verifier (cause dell'errore e firma console Electron), con ESLint mirato e typecheck desktop passati.
+
+**Verifica finale passata: 30 combinazioni pagina/viewport, 7 gruppi di controlli, 19 catture e 129 misure.** Dieci rotte a 1586×992, 1280×720 e 960×640: Overview, Pulse, Sessione, Projects, Repos, Tasks, Docs, Deployments, Settings e Getting started. I check usano scorrimento reale, geometria degli antenati e hit test; coprono sidebar/selettori, cinque azioni sessione, policy, due preview Pulse, footer di moduli lunghi, click nativi su padding/backdrop, Escape, ritorno focus, ricerca e skip link. Il composer è verificato prima di qualsiasi scroll automatico: fondo a 922/992px, 650/720px e 570/640px nei tre viewport. Report .nexus/visual/t18/polish-report.json.
+
+L'ispezione degli screenshot ha motivato due rifiniture concrete: frame sessione per il composer, seguito dal pass finale completo; poi rail Overview/Pulse spostato sotto il contenuto già sotto 1366px, per non comprimere KPI e label su 1280px. **Ricontrollo mirato delle sole due dashboard passato**: 3 gruppi, 2 catture e 8 misure a 1280×720, incluse le due azioni preview tramite scroll; report polish-dashboard-report.json. Package ancora da registrare. Aperte PNG1/2/3 e catture effettive delle tre viste, compresi sessione 1280/960, Pulse1280 finale e footer deploy960. Catture pubbliche selezionate in docs/design/captures/t18-*.png.
+
+L'harness usa renderer/preload di produzione e DTO controllati dichiarati, senza inferenza, DB o credenziali personali. Un ReferenceError del solo harness e il suo budget iniziale insufficiente sono stati corretti senza allentare le asserzioni. La suite funzionale completa non viene ripetuta localmente per sole modifiche di presentazione; i controlli CI restano distinti. Screenshot Settings/Repos con percorso temporaneo QA conservati solo nell'area ignorata; le catture pubbliche selezionate non contengono percorsi locali.
+
+[Issue 18](https://github.com/AndreaZero/nexus-ai/issues/18). Tutti i fronti implementativi sono integrati; nessun task successivo autorizzato. Prova manuale e accettazione del maintainer restano aperte.
+
 
 ## Mandato e ownership T17 integrate e rilasciate
 

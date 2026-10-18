@@ -36,3 +36,12 @@
 .session-layout .environment-row small{overflow:hidden;text-overflow:ellipsis;max-width:145px;white-space:nowrap}
 @media(max-width:1024px){.codex-transcript{max-height:calc(100vh - 400px);min-height:250px}.codex-composer-selection .codex-model-controls{min-width:200px}}
 @media(max-width:640px){.codex-input-hint{display:none}.codex-message{grid-template-columns:30px minmax(0,1fr);gap:6px}.codex-message-avatar{width:28px;height:28px}.codex-model-controls{gap:5px}.codex-model-controls select{min-width:85px}.codex-composer-selection{gap:6px}.codex-runtime-path{max-width:200px}}
+
+.codex-settings-actions{align-items:center}
+.codex-settings-actions>.settings-note{flex:1 1 220px;min-width:0;margin:0;overflow-wrap:anywhere}
+.codex-login-pending{min-width:0}
+.codex-login-pending strong,.codex-login-pending>span{max-width:100%;overflow-wrap:anywhere}
+.codex-login-pending code{max-width:100%;overflow-wrap:anywhere}
+.codex-model-controls{min-width:0}
+.codex-model-controls label{max-width:100%}
+.codex-model-controls select{min-width:0;width:100%}

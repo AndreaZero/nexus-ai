@@ -118,7 +118,7 @@ svg { vertical-align: middle; }
 .nexus-logo__payoff { margin-top: 8px; color: #8da4be; font-size: 9px; font-weight: 400; letter-spacing: 1px; line-height: 1.4; }
 .nexus-logo--compact { align-items: center; }
 
-.nexus-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-width: 0; border: 1px solid #294156; border-radius: var(--nexus-radius-control); color: var(--nexus-text-primary); background: linear-gradient(180deg, #101e2c, #09121c); font-size: 12px; font-weight: 500; line-height: 1.2; text-decoration: none; white-space: nowrap; transition: color var(--nexus-motion-fast) ease-out, background-color var(--nexus-motion-fast) ease-out, border-color var(--nexus-motion-fast) ease-out, box-shadow var(--nexus-motion-fast) ease-out; }
+.nexus-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-width: 0; max-width: 100%; border: 1px solid #294156; border-radius: var(--nexus-radius-control); color: var(--nexus-text-primary); background: linear-gradient(180deg, #101e2c, #09121c); font-size: 12px; font-weight: 500; line-height: 1.2; text-align: center; text-decoration: none; white-space: normal; overflow-wrap: anywhere; transition: color var(--nexus-motion-fast) ease-out, background-color var(--nexus-motion-fast) ease-out, border-color var(--nexus-motion-fast) ease-out, box-shadow var(--nexus-motion-fast) ease-out; }
 .nexus-button--md { min-height: 35px; padding: 8px 13px; }
 .nexus-button--sm { min-height: 27px; padding: 5px 9px; font-size: 10px; gap: 5px; }
 .nexus-button:hover:not(:disabled) { border-color: #527594; background: #142539; }
