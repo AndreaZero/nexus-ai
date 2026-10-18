@@ -1,115 +1,116 @@
 # Architettura
 
-## Struttura del sistema
-
-La base T01 è un monorepo TypeScript con backend Fastify e renderer React condiviso. Il desktop Electron aggiunge il confine locale isolato. Nei task successivi il server conserverà e distribuirà il lavoro condiviso e il browser servirà collaborazione e osservazione. Windows, macOS e Linux sono target desktop fin dalla prima configurazione.
+Nexus AI 0.16.0 è un monorepo TypeScript con desktop Electron, renderer React comune al web e server Fastify/PostgreSQL. Il desktop esegue Codex e opera sui file locali; il server gestisce identità Nexus e dati condivisi. Windows, macOS e Linux sono target reali con package nativi separati.
 
 ```mermaid
 flowchart LR
   subgraph Machine[Computer dello sviluppatore]
-    Desktop[Desktop Electron]
-    Runtime[Runtime locale e bridge Codex]
-    Codex[Codex app-server]
-    Files[Repository e file locali]
-    Desktop --> Runtime
-    Runtime --> Codex
-    Runtime --> Files
+    Desktop[Electron main e preload]
+    Renderer[Renderer isolato]
+    Codex[Codex app-server locale]
+    Files[Cartella autorizzata]
+    Renderer -->|API fisse validate| Desktop
+    Desktop --> Codex
+    Desktop --> Files
     Codex --> Files
   end
   Codex --> OpenAI[OpenAI con account personale]
-  Desktop <-->|HTTPS e WSS in uscita| Server[Server Nexus]
-  Web[Web e altri desktop autorizzati] <-->|HTTPS e WSS| Server
-  Server --> DB[(PostgreSQL)]
-  Server --> Assets[Storage allegati e deliverable]
-  Server --> GitHub[GitHub e webhook]
+  Desktop <-->|HTTPS e WSS in uscita| Server[Server Nexus singola istanza]
+  Web[Browser autorizzato] <-->|HTTPS e WSS| Server
+  Server --> DB[(PostgreSQL: identità, lavoro, allegati, outbox)]
+  Server --> SMTP[SMTP configurato]
+  Server --> GitHub[API GitHub e webhook]
 ```
 
-Il server riceve contenuti selezionati per il progetto e applica la visibilità prima di inoltrarli. Non viene promessa cifratura end-to-end: il server deve poter elaborare i dati condivisi. Il filesystem del computer e le credenziali Codex restano locali. Nessuna porta del computer viene pubblicata per la collaborazione; l'eventuale callback di login è solo locale e temporanea.
+Il server può leggere i contenuti condivisi per applicare autorizzazioni e costruire proiezioni; non viene promessa cifratura end-to-end. File privati, home/keyring e credenziali Codex restano locali. La collaborazione non pubblica porte del computer e non conferisce controllo remoto del runtime. Il browser usa i domini condivisi e non esegue processi locali.
 
-T10 aggiunge `POST /api/pulse` come proiezione transazionale degli stessi domini, con riuso dell'overview autorizzata e conteggi di tutte le task visibili prima dei limiti. Client preview è un'audience server restrittiva, mentre dettagli Codex/editor/preview locali rimangono sul dispositivo tecnico. Nessuna nuova tabella: scrittura task/milestone, deliverable e feedback resta T11. Fonti e semantica in [pulse.md](pulse.md).
+## Stack effettivo
 
-T11 aggiunge il dominio work transazionale e migrazione0005 per CRUD/assegnazioni, documenti/update, revisioni deliverable, feedback/commenti, allegati/ricevute. Allegati selezionati e bounded in PostgreSQL, download autenticato e salvataggio nativo nel main; nessuno storage service aggiuntivo. Eventi work.changed invalidano WS senza payload privati, il feed costruisce metadata correnti autorizzati. UI Tasks/Docs e card Pulse usano gli stessi domini; [workflow e limiti](work.md).
+| Area | Implementazione |
+| --- | --- |
+| Workspace | pnpm 10.32.1, TypeScript strict5.9.3; Node 22.19+ serie22 oppure24 |
+| UI | React 19.3.1/Vite 8.3.4, token CSS, primitive accessibili, font locali |
+| Desktop | Electron 44.9.0, preload ristretto e electron-builder 26.15.3 |
+| Backend e identità | Fastify 5.12.7, Better Auth/plugin Electron 1.7.10, SMTP Nodemailer |
+| Persistenza | PostgreSQL, Drizzle ORM0.45.4, migrazioni SQL additive e controllate |
+| Realtime | WebSocket autenticato, outbox e ACK persistiti in PostgreSQL |
+| Codex | Runtime ufficiale0.159.2 e schema generato della stessa versione |
+| Codice/output | Componenti React per diff split/unified con linee e testo sicuro; output bounded senza HTML o terminale eseguibile |
+| Grafici/effetti | SVG per indicatori e dati limitati; canvas per particelle/wave e scene decorative |
+| Distribuzione | Container backend, strumenti DB, package nativi e workflow CI; nessun deploy remoto automatico |
 
-## Stack proposto
-
-| Area | Scelta | Motivazione |
-| --- | --- | --- |
-| Workspace | pnpm, TypeScript strict | Dipendenze e contratti condivisi, manutenzione da singolo sviluppatore |
-| UI | React, Vite, CSS tokens, primitive accessibili | Fedeltà grafica senza un tema preconfezionato che imponga layout diversi |
-| Desktop | Electron, preload ristretto, packaging nativo | Processi Codex/Git locali e UI comune sui tre OS |
-| Backend | Node.js e Fastify | API e WebSocket nello stesso servizio modulare |
-| Persistenza | PostgreSQL, Drizzle e migrazioni SQL; auth operativo da T03 | Pool server Node-only e migrazioni esplicite. Tenant/eventi nei task successivi |
-| Identità Nexus | Better Auth 1.7.10, plugin Electron ufficiale | Account verificati, sessioni/revoca e SMTP; browser desktop con PKCE e storage OS cifrato, implementati in T03 |
-| Realtime | WebSocket autenticato, outbox PostgreSQL | Eventi durevoli e presenza senza un broker obbligatorio |
-| Codice e diff | Monaco caricato su richiesta; output terminale isolato | Confronto dei cambiamenti con linee, tab e output come reference 2 |
-| Grafici ed effetti | SVG per dati piccoli; canvas per particelle ambientali | Controllo di wave, pianeta e glow senza un motore 3D pesante obbligatorio |
-| Verifica | Typecheck/lint, test mirati, confronto visuale e build del maintainer | Confidenza proporzionata al cambiamento |
-
-Nessun numero di versione è un vincolo prima di T01. T01 registra versioni effettive nel manifest/lockfile e una matrice compatibilità. Nessun servizio presente nei mockup, come Redis, email o database del gestionale illustrato, diventa automaticamente un requisito infrastrutturale di Nexus.
-
-## Struttura prevista al termine dello sviluppo
+Versioni complete e transitive sono nei manifest e nel lockfile. Il diff non incorpora Monaco né un IDE completo. Redis, broker e storage esterni non sono prerequisiti: gli allegati condivisi sono bounded e salvati in PostgreSQL.
 
 ```text
 apps/
-  desktop/                 # Electron main, preload, packaging e runtime locale
-  web/                     # Renderer comune, rotte e feature di prodotto
-  server/                  # API, auth, domini, realtime, webhook e job
+  desktop/                 # main/preload, runtime, Git, storage e package
+  web/                     # renderer comune e domini UI
+  server/                  # auth, API, realtime, webhook e readiness
 packages/
-  contracts/               # Schemi pubblici, DTO, eventi, comandi, capability
-  ui/                      # Token applicativi, componenti, grafici ed effetti
-  codex-bridge/            # Client app-server, schema generato, normalizzazione
-  db/                      # Schema, query autorizzate e migrazioni
+  contracts/               # schemi/DTO e API pubbliche
+  ui/                      # token, primitive ed effetti
+  codex-bridge/            # supervisore app-server e schema generato
+  db/                      # schema, migrazioni e strumenti operatore
+deploy/                    # configurazione di hosting
 docs/
 examples/design/
 .agents/skills/nexus-coordination/
 ```
 
-Queste directory esistono dalla base T01. Da T03 sono operativi identità Nexus, persistenza auth e accesso browser/desktop; T04 aggiunge il dominio collaborazione (workspace/progetti/membership/inviti/repository), client renderer in `apps/web/src/collaboration` e binding cartella account/dispositivo solo nel main. Le entità condivise sono in PostgreSQL e le mutazioni registrano un evento non segreto nella stessa transazione; broadcast/replay resta T08. Task/milestone/sessioni hanno solo tabelle vuote di base, nessun runtime o endpoint anticipato. `packages/ui` non importa DB/runtime; `packages/contracts` non importa Electron, Fastify o filesystem. `codex-bridge` e `db` restano Node-only; il controllo automatico verifica gli import renderer/UI/contratti.
+## Identità e confini locali
 
-T05 aggiunge runtime Codex nativo 0.159.2 incluso nel desktop, supervisore stdio typed e servizio main isolato per account Nexus. Home/keyring e mapping thread sono locali; nessun nuovo schema o endpoint backend. I turni operano in readOnly nella cartella canonicalizzata del binding T04, con ruolo tecnico riautorizzato e approvazioni di escalation declinate. Il renderer riceve DTO limitati di account/modelli/messaggi/attività attraverso IPC ristretto, senza RPC, path o credenziali generici. Condivisione delle sessioni e autonomia offline sono T08; il servizio T05 ricontrolla online i permessi correnti. Dettagli e prova personale in [codex.md](codex.md).
+Nexus e Codex hanno login separati. Better Auth gestisce account verificati, sessioni/revoca e inviti via SMTP. Il login desktop passa dal browser con PKCE e callback verificata; il main conserva il proprio segreto attraverso lo storage OS. Il renderer riceve solo DTO consentiti, senza cookie o API filesystem/processi generiche. [Account](auth.md), [collaborazione](collaboration.md).
 
-## Confini del desktop
+Il main controlla mittente IPC, identità, ruolo tecnico e binding account/progetto prima delle operazioni locali. Cartelle canonicalizzate e argv separati evitano l'interpretazione shell di input remoto. `packages/contracts` non importa Electron/Node/DB; UI e renderer non importano runtime o persistenza server. Il controllo confini verifica gli import.
 
-T06 aggiunge `DesktopContext`: file scelti nativamente e bozza cifrata con controllo root/generation/account, preview esplicita, input file Codex e Git in sola osservazione. Il server conserva esclusivamente estratti revisionati tramite il dominio sessions e migrazione additiva 0002; nessun token o percorso provider/localhome. La condivisione è pull con permessi correnti; realtime resta T08. Fonte operativa: [session.md](session.md).
+Codex usa un eseguibile fissato incluso nel package, una home dedicata per account e mapping locale dei thread. Nessuna importazione delle credenziali/config/chat di altre app. Login personale principale; API key soltanto esplicita e nessun fallback a consumo. Il supervisore applica timeout, framing/buffer limitati, annullamento e shutdown. ReadOnly è il default; workspaceWrite e approvazioni singole appartengono al driver locale. Un'approvazione cliente non diventa un permesso di esecuzione. [Protocollo e limiti](codex.md).
 
-T07 aggiunge `DesktopWorkspace`: oggetti Git/file locali, UUID effimeri per apertura editor e preview esplicita nel browser di sistema. Nessun filtro/hook del repository o shell generica. `DesktopCodex` abilita workspaceWrite soltanto per scelta del driver locale e gestisce callback di approvazione singole con scadenza e controlli di contesto; nessun nuovo endpoint server, schema DB o controllo remoto. Diff/output/report sono proiezioni locali bounded, separati dagli estratti pubblicati.
+Contesto, bozza cifrata, Git e diff sono locali. Il server riceve solo estratti scelti dopo anteprima e audience; non riceve path della home, token o conversazioni private. DesktopGit usa operazioni argv fisse, controllo della snapshot e indice temporaneo per commit selettivi; niente hook/filtri o push impliciti. [Sessione](session.md), [repository](repositories.md).
 
-T08 aggiunge `DesktopRealtime`, coda cifrata di solo testo scelto e `POST /api/realtime` + WebSocket autenticato. Outbox PostgreSQL nella stessa transazione di share/estratti, receipt idempotente dopo COMMIT e snapshot autorevoli al reconnect. Presenza effimera su una singola istanza backend, polling di eventi e permessi ogni 2 s, heartbeat15s/expiry45s; nessun Redis. Browser osservatore senza esecuzione e main desktop unico titolare di cookie/socket/coda. Durante indisponibilità dell'autorità Nexus, Codex conserva processo e cronologia ma interrompe il turno e non riesegue prompt/approvazioni. [Dettagli, limiti e prova](realtime.md).
+## Dati condivisi e autorizzazioni
 
-T09 aggiunge una proiezione di lettura su outbox ed entità condivise correnti (`POST /api/overview`) e cursore notifiche persistente per utente/progetto, migrazione0004. Il feed coalescente non è una copia del protocollo Codex né un archivio completo dei delta. WS T08 invalida gli snapshot; i target autorizzati rimuovono subito le righe revocate anche mentre nuovi eventi attendono applicazione esplicita. `DesktopTelemetry` misura CPU/memoria aggregate solo dopo consenso locale, con binding/ruolo correnti e lease breve del consumatore; nessun upload o campione di rete inventato. [Overview e prova](overview.md).
+Il server applica membership e visibilità attuali prima di ogni lettura, mutazione, download e sottoscrizione. Client/viewer non ottengono informazioni tecniche interne soltanto perché un pulsante è nascosto. Lock ordinati workspace→project, versioni CAS e ricevute idempotenti proteggono le operazioni concorrenti e i retry.
 
-- `main`: lifecycle runtime, selezione cartella, Git, processi locali e segreti Nexus protetti dal sistema operativo. Path mediante API native, processi con argomenti separati e senza composizione di comandi shell da input remoto.
-- `preload`: metodi espliciti e validati, con verifica del mittente IPC. Nessun `exec`, `readFile` generico o accesso indiscriminato a `ipcRenderer` esposto alla pagina.
-- `renderer`: stesso prodotto del web; sceglie le azioni da capability reali come `canRunLocalSession` e `canOpenLocalEditor`. Renderer isolato, sandbox, `nodeIntegration: false`, `contextIsolation: true` e CSP.
-- Navigazioni esterne e deep link sono validati; preview esterne non ereditano il preload o i privilegi della finestra Nexus. Nessun `webview` privilegiato per una pagina deploy.
-- Il processo Codex è supervisionato: avvio, stop, crash, ripresa, limiti buffer e shutdown senza processi orfani. Il percorso eseguibile e la sua versione sono verificati.
+| Dominio | Dati e comportamento |
+| --- | --- |
+| Collaborazione | Workspace/progetti, membri/inviti, repository condivisi; binding cartella separato sul dispositivo |
+| Sessioni/realtime | Estratti autorizzati, testo selezionato live, offset/ACK/outbox e presenza con scadenza |
+| Work | Task/milestone/commenti, documenti/update, revisioni deliverable, allegati, feedback e decisioni |
+| Overview/Pulse | Proiezioni delle entità correnti, attività coalescenti, progressi da scope definito, notifiche e cursore letto |
+| Repositories | Integrazione GitHub per account/repository, token cifrati AES-GCM, PR/review e webhook HMAC |
+| Deployments | Ambienti con audience corrente, registrazioni manuali effettive, thumbnailPNG e health con fonte/TTL |
+| Application | Ricerca autorizzata su10tipi pubblicati; nome e preferenze con versione |
 
-## Condivisione e consistenza
+Ogni mutazione pubblicabile salva risultato e invalidazione outbox nella stessa transazione. Le proiezioni usano dati correnti, senza trattare il payload storico come autorizzazione. La ricerca applica ACL prima di match, snippet e pagina; non indicizza file o cronologia privata Codex. Notifiche del progetto e badge usano il feed autorizzato e il cursore persistente; non sono notifiche email o push OS. [Contratti](contracts.md), [work](work.md), [application](application.md).
 
-Ogni mutazione di dominio salva il risultato e un evento nella stessa transazione. L'outbox inoltra eventi autorizzati; i client applicano eventi per ID e cursore. Le proiezioni per overview e pulse derivano dagli stessi domini, evitando conteggi incompatibili tra schermate. La presenza scade tramite heartbeat e non è una misura durevole di lavoro.
+GitHub usa token dedicati con scope minimi e lease al solo main per la sincronizzazione esplicita. Le operazioni PR/review salvano ricevuta prima del POST e riconciliano esiti incerti; webhook raw firmati e deliveryID impediscono replay. Le prove automatiche con API controllata non dimostrano l'uso di un repository personale esterno.
 
-Gli stream di testo vengono raccolti localmente, filtrati e trasmessi in batch brevi con offset stabili. Il server conferma solo batch persistiti. Una coda locale limitata può ritrasmettere eventi già autorizzati senza dupliche; non riproduce comandi, approvazioni o azioni eseguibili dopo una riconnessione. Gli eventi non ancora accettati devono essere visibili come non sincronizzati.
+## Realtime e recupero
 
-Ogni modifica a membership/visibilità invalida sottoscrizioni e cache. Il replay applica i permessi correnti, non quelli della data di creazione dell'evento. Il dettaglio del protocollo è in `contracts.md`.
+Il WebSocket è autenticato mediante Origin/cookie prima dell'upgrade, senza token in query. La presenza è effimera: heartbeat15s e scadenza45s, distinta dal lavoro durevole. Il backend corrente è **singola istanza**; polling interno di outbox/permessi ogni2s, senza broker condiviso. Più repliche richiedono fanout e rate limit distribuiti prima dell'uso.
 
-## Piattaforme, distribuzione e hosting
+I batch di testo scelto hanno offset stabili e ACK dopo persistenza. La coda locale cifrata è bounded; può ritentare testo autorizzato, mai prompt, comandi o approvazioni eseguibili. Reconnect ricarica snapshot e permessi correnti; revoca o cambio audience invalidano anche le righe trattenute dal renderer. In assenza dell'autorità Nexus il turno locale viene interrotto, conservando cronologia e credenziale per il recupero. [Realtime](realtime.md).
 
-| Piattaforma | Percorso previsto | Verifica |
+T15 rafforza epoche dei comandi, attesa shutdown e frame stdin scaduti. Un errore React mostra un boundary focalizzato senza payload/stack e senza reload automatico. Un crash del processo renderer arresta Codex prima del dialogo esplicito Reload Nexus/Close window. La verifica usa soltanto renderer temporanei propri. [Recupero e revisione](design/t15-review.md).
+
+## Osservazioni e preview
+
+Gli indicatori derivano da fonti dichiarate: progressi task, risultati provider/test riconosciuti, record deployment e osservazioni health datate. Senza requisiti o con evidenze mancanti/scadute la health è unknown, senza score. Le registrazioni manuali non avviano pipeline o infrastruttura e il backend non effettua fetch degli URL del progetto. [Regola health](deployments.md).
+
+CPU/memoria aggregate e HEAD loopback sono osservazioni locali opt-in, private e temporanee; nessun upload o polling implicito. La HEAD invia una sola richiesta senza cookie/body/redirect, con autorizzazione prima/dopo e scadenza30s.
+
+Le preview deployment si aprono da ID riautorizzati in una BrowserWindow senza preload/Node, con sandbox e partizione effimera; popup/permessi negati e navigazioni limitate all'origine. Non ereditano il cookie Nexus. Nel browser il link usa noopener/noreferrer.
+
+## Configurazione e distribuzione
+
+Gli endpoint desktop vengono letti dal main prima di creare account/runtime/binding. Origini HTTPS o HTTP loopback, senza path/query/credenziali; modifica da disconnessi e riavvio esplicito. Ogni autorità custom usa un profilo userData distinto; il default mantiene il profilo già esistente. Il preload espone solo le origini validate e API fisse, la CSP limita le connessioni all'autorità attiva. Nome/preferenze sono sul server; movimento, cartelle e segreti locali mantengono la propria collocazione.
+
+Il container ospita backend e renderer compilati, PostgreSQL privato e SMTP configurato; non esegue Codex. TLS/WSS e reverse proxy appartengono all'host. `/health` è distinto dalla readiness operativa `/ready`, che controlla database/schema/configurazione senza DDL o invio email. Le migrazioni e i restore sono azioni operatore esplicite; backup DB e segreti necessari al recupero vanno custoditi separatamente. [Self-host e upgrade](self-host.md).
+
+| Piattaforma | Evidenza disponibile | Prova ancora distinta |
 | --- | --- | --- |
-| Windows | Installer x64, runtime e percorsi Windows | Build e prova del maintainer su questa macchina |
-| macOS | Artefatti arm64/x64 in base al Mac disponibile; identità bundle stabile | Build nativa dal Mac del maintainer più avanti; firma/notarizzazione quando configurate |
-| Linux | AppImage x64 e istruzioni dipendenze desktop | Build su Linux/runner appropriato; prova manuale prima di dichiararlo verificato |
+| Windows | Build/package/smoke locali storici; risultati finali in status | Prova manuale finale0.16.0, firma se configurata |
+| macOS | Check/test/build sul runner nativo CI T15 | Package/esecuzione desktop e Keychain/protocollo; firma/notarizzazione |
+| Linux | Check/test/build sul runner nativo CI T15 | Package/esecuzione desktop e keyring/protocollo |
 
-Usare directory dati OS, selettori cartella nativi, keychain disponibile e apertura editor con adapter per OS. Se lo storage sicuro non è disponibile, mostrare l'errore e richiedere una modalità esplicita: nessun salvataggio silenzioso in chiaro. Non dichiarare supporto verificato solo perché compila il TypeScript.
-
-Il backend deve essere distribuibile come immagine/container con PostgreSQL, migrazioni controllate, storage allegati configurabile, email e URL pubblici HTTPS/WSS. Un singolo processo è sufficiente inizialmente; il broadcast deve dichiarare questo limite. Prima di più repliche introdurre fanout condiviso e rate limit coerenti, senza perdere l'outbox durevole. Non è autorizzato ora alcun acquisto o deploy a pagamento.
-
-Backup/restore del DB, retention, log privi di contenuti sensibili e endpoint di health operativa fanno parte di T16. Le metriche dell'ambiente del progetto e quelle del server Nexus sono domini distinti.
-
-T12 aggiunge DesktopGit (argv fissi, snapshot CAS e commit selettivo con indice temporaneo) e il dominio server repositories/GitHub. Token fine-grained per account/repository cifrati AES-GCM con AAD, lease soltanto al main, API PR/review con ricevute durevoli prima del POST e riconciliazione; webhook raw firmati/idempotenti. Feed tecnico e Pulse osservati restano filtrati dal ruolo attuale. Contratti, limiti e fonti in [repositories.md](repositories.md).
-
-T13 aggiunge il dominio server deployments, migrazione0007 e sorgente manuale esplicita per ambienti, build e osservazioni health. La visibilità appartiene all'ambiente corrente; ricevuta, mutazione e invalidazione outbox sono atomiche con lock workspace→project. Il backend non effettua fetch degli URL di progetto. Il main desktop gestisce separatamente una HEAD loopback opt-in, privata e temporanea, e preview mediante ID autorizzati in BrowserWindow senza preload/Node con partizione effimera. Il renderer comune proietta gli stessi dati in Deployments/Overview/Pulse/Sessione, rimuove score scaduti e nasconde dati non riautorizzabili. Fonte, timestamp e regola health restano espliciti; [workflow e limiti](deployments.md).
-
-## T14 — configurazione dell’autorità Nexus
-
-La configurazione desktop attiva viene letta nel main prima di creare account, runtime o binding. Il preload espone soltanto le due origini validate e API fisse. Ogni server custom usa un profilo userData separato derivato da hash dell’origine; un marker mantiene l’autorità del profilo precedente anche quando cambiano i default compilati. La configurazione pending non sposta l’account durante una sessione. Preferenze personali e nome sono sul server, mentre movimento, cartelle e credenziali locali conservano la propria collocazione. Ricerca solo dati pubblicati e autorizzati, nessun accesso ai file locali dal server. Guida application.md.
+La [CI T15 riuscita sui tre OS](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162) verifica check/test/build, non l'accettazione grafica, il login personale o un package firmato. Il workflow di distribuzione e i risultati effettivi per versione sono descritti in [release](release.md) e [status](status.md). Le prove native del maintainer restano necessarie, incluso il Mac dal proprio dispositivo.

@@ -9,6 +9,7 @@ export interface ServerConfig {
   readonly port: number;
   readonly allowedOrigins: readonly string[];
   readonly logLevel: LogLevel;
+  readonly trustedProxies: readonly string[];
   readonly database: DatabaseConfig;
   readonly auth: AuthConfig;
 }
@@ -125,11 +126,25 @@ export function readServerConfig(
     );
   }
 
+  const trustedProxies = (env['NEXUS_TRUSTED_PROXIES'] ?? '').split(',').map(value => value.trim()).filter(Boolean);
+  if (!trustedProxies.every(value => {
+    const parts = value.split('/');
+    const address = parts[0] ?? '';
+    const family = isIP(address);
+    if (!family || parts.length > 2) return false;
+    if (parts.length === 1) return true;
+    const prefix = parts[1] ?? '';
+    return /^\d+$/.test(prefix) && Number(prefix) > 0 && Number(prefix) <= (family === 4 ? 32 : 128);
+  })) {
+    throw new ServerConfigurationError('NEXUS_TRUSTED_PROXIES richiede IP o CIDR espliciti con prefisso maggiore di zero; wildcard e trust globale sono vietati.');
+  }
+
   return {
     host,
     port,
     allowedOrigins: [...new Set(allowedOrigins)],
     logLevel: logLevel as LogLevel,
+    trustedProxies: [...new Set(trustedProxies)],
     database: readDatabaseConfig(env),
     auth: readAuthConfig(env),
   };

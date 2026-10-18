@@ -1,3 +1,5 @@
+import {readOperationalReadiness} from './operations.js';
+import {readinessResponseSchema} from '@nexus-ai/contracts';
 import {applicationRequestSchema,applicationResponseSchema} from '@nexus-ai/contracts';
 import {createApplicationService} from './application.js';
 import cors from '@fastify/cors';
@@ -29,6 +31,7 @@ import { createRepositoriesService } from './repositories.js';
 import {deploymentsRequestSchema,deploymentsResponseSchema} from '@nexus-ai/contracts';
 import {createDeploymentsService} from './deployments.js';
 import {installDomainApi} from './domain-api.js';
+import { webContentSecurityPolicy } from './web-policy.js';
 
 class OriginNotAllowedError extends Error {
   readonly statusCode = 403;
@@ -49,10 +52,15 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     logController: new LogController({ disableRequestLogging: true }),
     bodyLimit: 1024 * 1024,
     requestTimeout: 30_000,
-    trustProxy: false,
+    trustProxy: config.trustedProxies.length ? [...config.trustedProxies] : false,
   });
   installRequestLogging(app);
   const database = createDatabaseBoundary(config.database);
+  app.get('/ready',async(_request,reply)=>{
+    reply.header('Cache-Control','no-store');
+    const result=readinessResponseSchema.parse(await readOperationalReadiness(database,config,'0.16.0'));
+    return reply.code(result.status==='ready'?200:503).send(result);
+  });
   const mail = config.auth.mail ? createEmailSender(config.auth.mail) : null;
   const auth = createNexusAuth(config.auth, database, mail);
   const collaboration = createCollaborationService(database, mail, config.auth.webURL);
@@ -211,7 +219,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     return healthResponseSchema.parse({
       schemaVersion: 1,
       service: 'nexus-server',
-      version: '0.15.0',
+      version: '0.16.0',
       status: 'ok',
       database: await database.check(),
       codex: 'local_only',
@@ -487,7 +495,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
         response.header('X-Content-Type-Options', 'nosniff');
         response.header('Referrer-Policy', 'no-referrer');
         response.header('Cache-Control', 'no-cache');
-        response.header('Content-Security-Policy', `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ${config.auth.baseURL}; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`);
+        response.header('Content-Security-Policy', webContentSecurityPolicy(config.auth.baseURL));
       },
     });
     for (const route of ['/', '/sign-in', '/sign-up', '/forgot-password', '/reset-password', '/verify-email', '/desktop-auth']) {

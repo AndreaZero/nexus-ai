@@ -1,51 +1,51 @@
 # Nexus AI
 
-Workspace open source per sviluppare con Codex e condividere in tempo reale il lavoro con colleghi e clienti.
+Workspace open source per sviluppare con **Codex locale** e condividere il lavoro con colleghi e clienti. Desktop Windows, macOS e Linux; renderer web comune e server Nexus per account, progetti, cronologia pubblicata e collaborazione.
 
-App desktop **Windows, macOS e Linux**, runtime Codex sulla macchina dello sviluppatore, server condiviso ospitato e accesso web per osservatori e collaboratori. Ogni sviluppatore usa il proprio account Codex/ChatGPT. L'interfaccia segue le tre reference in [`examples/design/`](examples/design/).
+La base **0.16.0** comprende il piano T01–T16: sessioni, contesto, diff e approvazioni locali; realtime e presenza; task, roadmap, documenti e consegne; Git/GitHub; ambienti e health; ricerca, notifiche e impostazioni. L'interfaccia segue le [tre reference](examples/design/). Le animazioni sono ricostruzioni documentate e i pannelli si popolano soltanto con dati effettivi.
 
-## Stato del progetto
+L'implementazione e l'accettazione restano distinte: risultati automatici e package effettivamente prodotti sono nello [stato](docs/status.md), prove personali e native residue nella [matrice R01–R16](docs/acceptance.md). La tranche termina con T16; non è previsto un avvio automatico di altre task. Il server ospitabile non viene distribuito automaticamente su un servizio esterno.
 
-**T12: Git, GitHub e repository.** Code/Repos con diff e commit selettivo, branch e sincronizzazione esplicita, token dedicati cifrati, PR/review sullo SHA verificato e webhook firmati/idempotenti. Feed e Pulse alimentati da osservazioni autorizzate. [Guida e prova T12](docs/repositories.md). Shell/reference, correzione429 e runtime Codex conservati; restano T13–T16 nel [piano](docs/plan.md). Evidenze e limiti di piattaforma in [stato](docs/status.md).
+## Build Windows dal checkout già configurato
 
-Da questa cartella, con Node 22.19+ della serie 22 o Node 24 e pnpm 10.32.1:
+Chiudere la precedente app e il terminale del server. Conservare il proprio `.env`, database e account. Requisiti: Node **22.19+ della serie 22 oppure 24**, pnpm **10.32.1**, Git e PostgreSQL locale configurato.
 
-```sh
+```powershell
 pnpm install --frozen-lockfile
-# Dopo aver configurato DATABASE_URL nel proprio .env:
-pnpm auth:setup
 pnpm db:migrate
-pnpm mailpit --install
 pnpm package:win
 ```
 
-`package:win` va eseguito su Windows e produce l'installer unsigned0.12.0 in `release/win/`. T12 aggiunge la migrazione additiva0006 per Git/GitHub e credenziali cifrate. Guida completa in [repositories.md](docs/repositories.md); nessun nuovo DB/secret richiesto. T09 introduce la migrazione **0004** per lettura notifiche, già applicata su questa macchina; la patch0.9.1 corregge il429 sui controlli account e non aggiunge migrazioni. Account/progetti e `.env` conservati, nessun nuovo DB/secret. Arrestare app/server precedenti prima della build e riavviarli dopo: il backend aggiornato applica il limite corretto. Tenere Mailpit e `pnpm start:server` in terminali distinti, poi aprire l'app o `pnpm start:desktop`. Inbox locale `http://127.0.0.1:8025`; login Codex personale distinto, ripreso automaticamente dal proprio keyring senza browser/inferenza automatici. Backend con [log Chalk](CONTRIBUTING.md#log-server-e-diagnosi). Mac/Linux: `pnpm package:mac`/`pnpm package:linux` sul relativo OS/architettura. Controlli `pnpm check`/`pnpm test` e dettagli in [CONTRIBUTING.md](CONTRIBUTING.md).
+Installer in `release/win/Nexus-AI-0.16.0-win-x64.exe` su Windows x64. In assenza di credenziali di firma il package è **unsigned**. Le migrazioni sono esplicite; il DB locale aggiornato contiene nove migrazioni fino a `0008_application`. Per un nuovo clone seguire il [setup completo](CONTRIBUTING.md#setup-locale).
 
-- [Indice documentazione](docs/README.md)
-- [Prodotto e requisiti](docs/product.md)
-- [Architettura](docs/architecture.md)
-- [Piano di lavoro e task](docs/plan.md)
-- [Stato e prossimo passo](docs/status.md)
-- [Specifiche design](docs/design/README.md)
-- [Regole agenti](AGENTS.md)
-- [Skill di coordinamento](.agents/skills/nexus-coordination/SKILL.md)
-- [Contribuire e verificare le build](CONTRIBUTING.md)
-- [Task T04 — workspace e collaborazione](https://github.com/AndreaZero/nexus-ai/issues/4)
-- [Task T05 — Codex locale e account personale](https://github.com/AndreaZero/nexus-ai/issues/5)
-- [Task T06 — sessione, contesto e cronologia](https://github.com/AndreaZero/nexus-ai/issues/6)
-- [Task T07 — diff, output e approvazioni locali](https://github.com/AndreaZero/nexus-ai/issues/7)
-- [Task T08 — realtime, presenza e recupero](https://github.com/AndreaZero/nexus-ai/issues/8)
-- [Task T09 — overview operativa e attività reali](https://github.com/AndreaZero/nexus-ai/issues/9)
-- [Task T10 — Client & Team Pulse](https://github.com/AndreaZero/nexus-ai/issues/10)
-- [Task T11 — Task, roadmap, documenti e consegne cliente](https://github.com/AndreaZero/nexus-ai/issues/11)
-- [Task T12 — Git, GitHub, commit, PR e review](https://github.com/AndreaZero/nexus-ai/issues/12)
+Avviare in terminali separati, senza duplicare Mailpit se è già attivo:
 
-## Metodo
+```powershell
+pnpm mailpit
+```
 
-Una tranche alla volta, sviluppo parallelo con ownership separate, integrazione del coordinatore e verifica manuale del maintainer. Ogni tranche aggiunge funzionalità definitive alla stessa app. Niente demo separate, simulazioni live in produzione o riscritture pianificate di un prototipo.
+```powershell
+pnpm start:server
+```
 
-Le verifiche automatiche sono mirate ai rischi reali. Le build e le prove manuali delle piattaforme vengono eseguite dal maintainer e registrate distinguendo ciò che è stato verificato da ciò che resta da verificare.
+```powershell
+pnpm start:desktop
+```
+
+Si può aprire l'app installata al posto dell'ultimo comando. Mailpit trattiene le email locali nell'[inbox](http://127.0.0.1:8025), senza inviarle al proprio indirizzo esterno. Un server pubblico richiede SMTP reale: [self-host](docs/self-host.md). Login Nexus e login personale Codex sono separati; le credenziali Codex restano sul dispositivo.
+
+## Documentazione
+
+- [Setup, comandi e prove manuali](CONTRIBUTING.md)
+- [Indice delle guide](docs/README.md), [architettura](docs/architecture.md) e [requisiti](docs/product.md)
+- [Design e confronto finale](docs/design/t15-review.md)
+- [Self-host, backup e upgrade](docs/self-host.md)
+- [Package nativi, firma e release](docs/release.md)
+- [Stato delle verifiche](docs/status.md) e [accettazione R01–R16](docs/acceptance.md)
+- [Regole agenti](AGENTS.md) e [skill di coordinamento](.agents/skills/nexus-coordination/SKILL.md)
+
+`pnpm package:mac` e `pnpm package:linux` richiedono il rispettivo sistema operativo e producono l'architettura dell'host. Configurazione e workflow CI non sostituiscono la prova nativa: il maintainer proverà macOS dal Mac quando disponibile.
 
 ## Licenza
 
-[MIT](LICENSE). Repository: [AndreaZero/nexus-ai](https://github.com/AndreaZero/nexus-ai).
+[MIT](LICENSE). Dipendenze e runtime conservano le [proprie licenze](THIRD_PARTY_NOTICES.md). Repository: [AndreaZero/nexus-ai](https://github.com/AndreaZero/nexus-ai).

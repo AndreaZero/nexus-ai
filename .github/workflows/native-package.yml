@@ -1,0 +1,73 @@
+name: Native desktop packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      signing:
+        description: 'unsigned for verification; signed requires explicit repository signing secrets'
+        type: choice
+        options: [unsigned, signed]
+        default: unsigned
+        required: true
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check the source and host dependencies
+        run: pnpm check
+      - run: pnpm test
+      - name: Package without developer signing
+        if: github.event_name != 'workflow_dispatch' || inputs.signing == 'unsigned'
+        run: pnpm release:package unsigned
+      - name: Package with required Windows signing
+        if: github.event_name == 'workflow_dispatch' && inputs.signing == 'signed' && runner.os == 'Windows'
+        run: pnpm release:package signed
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+      - name: Package with required Developer ID signing and notarization
+        if: github.event_name == 'workflow_dispatch' && inputs.signing == 'signed' && runner.os == 'macOS'
+        run: pnpm release:package signed
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          CSC_NAME: ${{ secrets.MAC_CSC_NAME }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Package Linux AppImage
+        if: github.event_name == 'workflow_dispatch' && inputs.signing == 'signed' && runner.os == 'Linux'
+        run: pnpm release:package unsigned
+      - name: Keep installers and observed manifests
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: nexus-ai-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            release/*/Nexus-AI-*.exe
+            release/*/Nexus-AI-*.dmg
+            release/*/Nexus-AI-*.AppImage
+            release/*/Nexus-AI-*.manifest.json
+            release/*/Nexus-AI-*.sha256

@@ -1,24 +1,33 @@
 # Matrice di accettazione del prodotto
 
-Questa matrice distingue funzionalità implementate, prove automatiche e accettazione del maintainer. Le fixture dei verifier sono isolate dal normale avvio: non simulano dati di lavoro nell’app distribuita. Il mandato T13–T16 consente la prosecuzione senza conferme intermedie, ma non certifica prove personali o piattaforme non eseguite.
+Base0.16.0, piano T01–T16. La matrice separa **funzionalità implementate**, **controlli eseguiti** e **accettazione personale o di piattaforma**. I fixture dei verifier sono isolati dal normale avvio e non diventano dati fittizi dell'app. Il mandato di proseguire fino alla task finale autorizza lo sviluppo continuo; non certifica percorsi personali o piattaforme non provate.
 
-| Requisito | Implementazione e prove disponibili | Verifica personale o esterna ancora distinta |
-| --- | --- | --- |
-| R01 desktop multipiattaforma | Main/preload/renderer condivisi, runtime nativo e packaging per Windows/macOS/Linux; smoke e package Windows effettivi | Build ed esecuzione native Mac/Linux; firma e notarizzazione con credenziali del maintainer |
-| R02 collaborazione | Workspace/progetti/inviti/ruoli, PostgreSQL/HTTP e revoca verificati inT04/T08/T11–T14 | Percorso con utenti e SMTP reali del server ospitato |
-| R03 Codex personale | Protocollo ufficiale0.159.2 fissato, login/keyring isolato, API opzionale esplicita e nessun fallback automatico; test provider controllato | Richiesta e approvazioni con account personale, nessuna inferenza avviata dai verifier |
-| R04 filesystem locale | Binding per account/progetto, file scelti, Git e modifiche/diff reali isolati; test T05–T07/T12 | Cartelle e permessi nativi su Mac/Linux |
-| R05 sessione completa | Chat/contesto/piano/diff/output/test/approvazioni, publisher estratti selezionati; verifier Electron T07/T11/T12 | Workflow personale completo sul proprio repository |
-| R06 realtime | Outbox/ACK/replay/idempotenza/ruoli, presenza e revoca con HTTP/WS reali T08 | Due dispositivi su rete/server ospitato, TLS e proxy effettivi |
-| R07 Overview | Presenza/feed/task/sessioni/health/deploy/notifiche da domini reali; T09/T11–T14 | Accettazione visiva con dati personali e soglie health scelte |
-| R08 Pulse | Milestone/progressi/outcome/consegne/feedback, wave e audience; T10/T11/T13 | Conferma finale delle tre viste da parte del maintainer |
-| R09 task | CRUD/stato/assegnazioni/commenti/roadmap/link sessioni, CAS e PG/HTTP T11 | Uso del flusso con collaboratori reali |
-| R10 Git/GitHub | Git locale effettivo; token cifrati, PR/review SHA e webhook firma/replay con API controllata T12 | Token/repository GitHub personale, push/PR/review e webhook HTTPS esterno |
-| R11 consegne | Pubblicazione con anteprima/audience, revisioni/allegati/feedback/decisioni e ruoli T11 | Consegna e decisione del cliente reale |
-| R12 ambienti | Registro manuale effettivo, URL/PNG scelti, health con fonte/TTL, preview isolata e HEAD locale consensuale T13 | Registrare una build o staging effettivo; nessuna pipeline cloud implicita |
-| R13 ricerca/settings | ACL prima del match,10tipi/messaggi pubblicati, CAS preferenze/profilo e notifiche, endpoint/profili/CSP T14 | Riavvio nativo e ricerca con propri dati dopo la build finale |
-| R14 reference | Tre PNG autoritative, geometria1586×992, scene pianeta/particelle/wave deterministiche, screenshot e movimento ridotto | Le PNG non definiscono animazioni; ricostruzioni e differenze documentate, accettazione estetica umana |
-| R15 recupero/accessibilità | Focus/dialog/keyboard, stati vuoto/offline/auth/runtime e test mirati; ulteriore review T15 | Tecnologie assistive e percorso personale sulle altre piattaforme |
-| R16 open source/manutenzione | Repository GitHub MIT, istruzioni agenti/skill, docs/changelog per task; T16 setup/release | Gestione segreti/SMTP/TLS, backup conservati esternamente e prove operative del proprio host |
+| Requisito | Implementazione | Evidenze automatiche disponibili | Verifica personale/esterna distinta |
+| --- | --- | --- | --- |
+| R01 desktop multipiattaforma | Main/preload/renderer condivisi, vendor e package nativi Windows/macOS/Linux | Package/smoke Windows storici; CI T15 check/test/build passati sui tre OS; evidenze release finale in status | Esecuzione finale0.16.0 sul proprio Windows e desktop Mac/Linux; firma/notarizzazione richiedono credenziali |
+| R02 collaborazione | Workspace/progetti, membership, inviti e ruoli correnti | PostgreSQL/SMTP/HTTP, isolamento/revoca/concorrenza T04/T08/T11–T14 | Utenti reali e SMTP del proprio server ospitato |
+| R03 Codex personale | Solo Codex 0.159.2, login e home/keyring Nexus, API opzionale esplicita | Binario reale anonimo/handshake/catalogo e provider controllato; recovery mirato T15 | Richiesta completa, interruzione e approvazioni con account personale; nessuna inferenza avviata dai verifier |
+| R04 filesystem locale | Binding account/progetto, contesto scelto, Git e modifiche/diff | Git/filesystem effettivi isolati T05–T07/T12; canonicalizzazione e alias root T15 | Cartelle, permessi e selettori nativi Mac/Linux |
+| R05 sessione completa | Chat/piano/contesto/diff/output/test/approvazioni del driver e Share selezionato | Renderer/preload/Git/TAP con provider controllato T07/T11/T12; recovery T15 | Workflow personale completo sul proprio repository |
+| R06 realtime | Outbox/ACK/replay, presenza, coda testo bounded e revoca | HTTP/WS/PG reali e riconnessione/idempotenza T08–T14 | Due dispositivi su server/rete effettivi con TLS/proxy |
+| R07 Overview | Presenza/sessioni/feed/task/health/deploy/notifiche da domini reali | Proiezioni T09–T14 e catture/geometrie reference 3 T15 | Conferma con dati reali e requisiti health scelti |
+| R08 Pulse | Milestone/progressi, outcome/consegne/feedback, wave e audience | PG/HTTP/WS T10/T11/T13 e catture reference 1 T15 | Accettazione finale del maintainer e del flusso cliente reale |
+| R09 task | CRUD/stato/assegnazioni/commenti, milestone/roadmap e link sessioni | CAS/ricevute/ruoli su PG/HTTP T11 e ricerca T14 | Uso con collaboratori effettivi |
+| R10 Git/GitHub | Commit selettivo, branch/sync espliciti, PR/review e webhook | Git reale; API GitHub controllata, cifratura, ricevute e firma/replay T12 | Token/repository personale, push/PR/review e webhook HTTPS esterno |
+| R11 consegne | Anteprima/audience, revisioni/allegati, feedback e decisioni cliente | Percorso e download autorizzati PG/HTTP/WS T11 | Consegna e decisione con cliente reale |
+| R12 ambienti | Registro manuale, URL/PNG scelti, health con fonte/TTL e preview isolata | T13:8 test server+8probe+8 web;6 scenari PG/HTTP;13UI; finestra preview effettiva separata | Registrare build/staging effettivi; nessuna pipeline cloud avviata implicitamente |
+| R13 ricerca/settings |10 tipi pubblicati con ACL prima del match, profilo/preferenze CAS, notifiche/cursore e endpoint isolati | T14:5 test server+10 native+7 web;5 scenari PG/HTTP e9UI | Ricerca sui propri dati, riavvio e configurazione del proprio host |
+| R14 reference | Tre composizioni1586×992, pianeta/particelle/wave e riduzione movimento | T15:14 controlli/17 catture, geometrie e testi lunghi,960 px; tre catture pubbliche controllate | Confronto estetico umano e movimento/GPU/font sul dispositivo; nessuna identità pixel dichiarata |
+| R15 recupero/accessibilità | Focus/dialog/tastiera, vuoti/offline/auth, boundary React e recupero crash esplicito | T15:6 controlli boundary,5processo con2crash QA;28 Codex/14 bridge e39Codex+context dopo fix concreto | Tecnologie assistive, sessione personale e percorsi di recupero su altre piattaforme |
+| R16 open source/manutenzione | GitHub MIT, regole/skill, guide, container, migrazioni/backup/restore, CI/package/checksum | Revisioni per task; verifiche operative/finali e risultati release elencati in status | Host reale, SMTP/TLS/segreti, backup esterni, ripristino e aggiornamento operativo del proprio servizio |
 
-Le prove successive e il risultato finale di distribuzione sono registrati in [status.md](status.md). Questa matrice non trasforma un package unsigned in una release firmata e non dichiara l’accettazione completa di R01 finché mancano le prove native richieste.
+I conteggi dei test mirati T15 non sono sommabili: il gruppo39Codex+context comprende verifiche ripetute dopo il fix di canonicalizzazione;28 Codex/14 bridge descrivono una precedente verifica motivata di recovery. Analogamente, le suite finali sono registrate separatamente in status, senza sommare esecuzioni ripetute.
+
+## Evidenze consultabili
+
+- [Stato finale e risultati effettivi per versione](status.md), [piano](plan.md) e [changelog](../CHANGELOG.md).
+- [CI T15 riuscita su Windows/macOS/Linux](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162): check/test/build nativi in CI, distinti da package e prova desktop.
+- [Revisione visuale e catture controllate T15](design/t15-review.md), con report delle tre reference.
+- [Setup/upgrade/backup](self-host.md) e [distribuzione nativa](release.md).
+
+Il package unsigned non equivale a una release firmata. La readiness non dimostra consegna SMTP, login Codex o salute del progetto; queste prove hanno fonti e consensi propri. Il prodotto è implementato nel perimetro previsto, ma l'accettazione completa di R01 resta aperta fino alle prove native richieste. Il lavoro autorizzato si arresta dopo la consegna T16; ulteriori interventi seguono il feedback del maintainer.

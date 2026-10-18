@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.16.0 — 18 ottobre 2026
+
+Distribuzione self-host con container Node/PostgreSQL, migrazioni esplicite e readiness che verifica tutti gli hash storici. Operator multipiattaforma per backup custom e ripristino su database vuoto, senza sovrascritture implicite; proxy attendibili configurati per IP/CIDR e SMTP autenticato con STARTTLS. La policy web permette il realtime soltanto sulla stessa authority HTTP/WebSocket.
+
+Packaging nativo Windows/macOS/Linux con manifest della versione confezionata, hash SHA-256 e risultato osservato della firma. Percorsi unsigned e signed separati, notarizzazione Mac subordinata alle credenziali, workflow GitHub per installer nativi e guide di installazione, upgrade e recupero. Nessuna nuova migrazione applicativa: nove in totale. Prove, limiti e accettazione personale sono distinti in docs/status.md e docs/acceptance.md.
+
 ## 0.15.0 — 18 ottobre2026
 
 Accettazione visiva e recupero: Settings a colonne indipendenti, titoli lunghi e contatori autorizzati; schermata di recupero React con focus e reload manuale. I comandi Codex accodati vengono annullati se cambia connessione/account; reconnect attende la chiusura precedente e i frame scaduti sotto backpressure non vengono trasmessi. Canonicalizzazione del root nel resolver Git e fixture native coerenti con alias dei percorsi temporanei. UI0.3.1, bridge0.5.1; protocollo/runtime0.159.2 invariato. Nessuna migrazione o dipendenza nuova.

@@ -35,6 +35,14 @@ nsis:
 mac:
   icon: resources/icon.icns
   category: public.app-category.productivity
+  # Local packages have no developer certificate. Apple Silicon still needs an
+  # ad-hoc signature; the explicit signed release helper overrides these values.
+  identity: '-'
+  hardenedRuntime: false
+  notarize: false
+  binaries:
+    - Contents/Resources/codex/bin/codex
+    - Contents/Resources/codex/codex-path/rg
   target:
     - target: dmg
 linux:

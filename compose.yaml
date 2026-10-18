@@ -1,0 +1,63 @@
+name: nexus-ai
+services:
+  database:
+    image: postgres:18.6-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nexus
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${NEXUS_DATABASE_ADMIN_PASSWORD:?Set the separate PostgreSQL administrator password}
+      NEXUS_DATABASE_PASSWORD: ${NEXUS_DATABASE_PASSWORD:?Set the dedicated Nexus database password}
+    volumes:
+      - database:/var/lib/postgresql
+      - ./deploy/10-nexus.sql:/docker-entrypoint-initdb.d/10-nexus.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d nexus"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks: [private]
+  server:
+    image: nexus-ai-server:0.16.0
+    build:
+      context: .
+      args:
+        VITE_NEXUS_SERVER_URL: ${NEXUS_PUBLIC_URL:?Set the exact public HTTPS origin or loopback HTTP origin}
+    restart: unless-stopped
+    init: true
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://nexus:${NEXUS_DATABASE_PASSWORD:?Set the URL-safe database password}@database:5432/nexus?sslmode=disable
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set a stable random base64url authentication secret}
+      BETTER_AUTH_URL: ${NEXUS_PUBLIC_URL:?Set the public origin}
+      NEXUS_WEB_URL: ${NEXUS_PUBLIC_URL:?Set the public origin}
+      NEXUS_ALLOWED_ORIGINS: ${NEXUS_PUBLIC_URL:?Set the public origin},nexus://app
+      NEXUS_TRUSTED_PROXIES: ${NEXUS_TRUSTED_PROXIES:-}
+      NEXUS_LOG_LEVEL: ${NEXUS_LOG_LEVEL:-info}
+      SMTP_HOST: ${SMTP_HOST:?Set an external SMTP host, or mailpit with the development profile}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      NEXUS_EMAIL_FROM: ${NEXUS_EMAIL_FROM:?Set a valid email sender}
+    ports:
+      - 127.0.0.1:${NEXUS_HTTP_PORT:-3001}:3001
+    networks: [private, outbound]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+  mailpit:
+    image: axllent/mailpit:v1.31.6
+    profiles: [development]
+    restart: unless-stopped
+    ports: [127.0.0.1:8026:8025]
+    networks: [private, outbound]
+networks:
+  private:
+    internal: true
+  outbound: {}
+volumes:
+  database: {}

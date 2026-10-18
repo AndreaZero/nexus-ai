@@ -16,6 +16,8 @@ export function createEmailSender(config: MailConfig) {
     host: config.host,
     port: config.port,
     secure: config.secure,
+    // Authenticated SMTP must negotiate TLS before sending credentials. Mailpit has no auth.
+    requireTLS: Boolean(config.credentials) && !config.secure,
     ...(config.credentials ? { auth: config.credentials } : {}),
     connectionTimeout: 5_000,
     greetingTimeout: 5_000,

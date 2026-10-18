@@ -36,3 +36,8 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.example.json
+
+# Self-host credentials and PostgreSQL archives
+deploy/*.env
+*.dump
+*.backup

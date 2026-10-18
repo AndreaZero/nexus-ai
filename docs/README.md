@@ -1,33 +1,33 @@
 # Documentazione Nexus AI
 
-La documentazione distingue **requisiti dell'utente**, **decisioni progettuali proposte** e **comportamenti verificati**. T11 collega task/roadmap, documenti, consegne e feedback cliente a Overview e Pulse; recupero T08 e correzione429 conservati. Prove automatiche, native e accettazione manuale sono distinte in `status.md`; setup/build in `../CONTRIBUTING.md`, runtime in `codex.md`, sessione in `session.md`, sincronizzazione in `realtime.md`, overview in `overview.md`, Pulse in `pulse.md`.
+Base applicativa **0.16.0**, piano T01–T16. Le guide descrivono i comportamenti implementati; [stato](status.md) e [accettazione](acceptance.md) distinguono controlli automatici, package, prova personale e risultati per piattaforma. Il lavoro si ferma dopo T16 come richiesto dal maintainer.
 
 | Documento | Uso |
 | --- | --- |
-| [Fonti](sources.md) | Conversazione recuperata, limiti del recupero e documentazione ufficiale |
-| [Prodotto](product.md) | Big picture, ruoli, requisiti e completamento dell'app |
-| [Architettura](architecture.md) | Desktop multipiattaforma, server, confini e struttura prevista |
-| [Dati e protocollo](contracts.md) | Modello dati, eventi, comandi, autorizzazioni e consistenza |
-| [Codex](codex.md) | Account, runtime locale, protocollo e approvazioni |
-| [Piano](plan.md) | Tranche sequenziali, task, dipendenze e criteri di uscita |
-| [Stato](status.md) | Situazione corrente, prossimo task e verifica del maintainer |
-| [Decisioni](decisions.md) | Motivazioni e assunzioni tecniche da concretizzare |
-| [Design](design/README.md) | Palette, tipografia, geometria, componenti e asset |
-| [Schermate](design/screens.md) | Mappa completa delle tre reference e flussi collegati |
-| [Movimento](design/motion.md) | Particelle, pianeta, wave, grafici, transizioni e prestazioni |
-| [Token CSS](design/tokens.css) | Base dei valori trasferiti al package UI in T02 |
-| [Registro asset](design/assets.md) | Origine, hash, elementi da costruire e criteri di accettazione |
-| [Confronto T02](design/t02-review.md) | Catture reali della shell, geometria verificata e differenze residue |
-| [PostgreSQL locale](setup/postgresql.md) | Database/ruolo dedicati, script manuale, configurazione e verifica prima della persistenza |
-| [Account T03](auth.md) | Setup, migrazioni, Mailpit, accesso web/desktop, confini e prove eseguite |
-| [Collaborazione T04](collaboration.md) | Workspace/progetti, ruoli, inviti, repository, cartella locale e verifica manuale |
-| [Sessione T06/T07](session.md) | File/bozza, diff e output reali, report test, policy/approvazioni locali e pubblicazione esplicita |
-| [Realtime T08](realtime.md) | Presenza, selezione/consenso live, outbox, recupero, revoca e prova a due account |
-| [Overview T09](overview.md) | Reference3, feed/filtri/link, notifiche e lettura persistente, misure locali opt-in e prova |
-| [Lavoro e consegne T11](work.md) | Board/roadmap, documenti e aggiornamenti, allegati, revisioni/feedback/approvazioni cliente |
-| [Ricerca e impostazioni T14](application.md) | Ricerca autorizzata, notifiche, profilo/preferenze e connessione self-host |
-| [Ambienti e deploy T13](deployments.md) | Registrazioni reali, health datata, preview e probe locale opt-in |
-| [Git/GitHub T12](repositories.md) | Commit/branch/sync, token cifrati, PR/review, webhook e prova manuale |
-| [Pulse T10](pulse.md) | Reference1, wave/milestone/progresso, summary UTC, outcomes e preview client con fonti reali |
+| [Contribuire](../CONTRIBUTING.md) | Setup locale, build, comandi e controlli proporzionati |
+| [Self-host](self-host.md) | Container, SMTP, HTTPS/proxy, readiness, migrazioni, backup/restore e upgrade |
+| [Release](release.md) | Package Windows/macOS/Linux, CI, checksum, firma e notarizzazione |
+| [Stato](status.md) | Evidenze effettive, ownership e limiti della consegna finale |
+| [Accettazione](acceptance.md) | Matrice R01–R16 e prove personali/native ancora distinte |
+| [Prodotto](product.md) | Obiettivo, ruoli, requisiti e fonti reali dei pannelli |
+| [Architettura](architecture.md) | Confini desktop/server/web, dati locali e servizi ospitabili |
+| [Dati e protocollo](contracts.md) | Schemi, autorizzazioni, comandi, eventi e consistenza |
+| [Codex](codex.md) | Runtime ufficiale0.159.2, account personale, protocollo e approvazioni |
+| [PostgreSQL locale](setup/postgresql.md) | Database/ruolo dedicati e preparazione manuale |
+| [Account](auth.md) | Identità Nexus, Mailpit, login browser/desktop e recupero |
+| [Collaborazione](collaboration.md) | Workspace/progetti, membri, inviti e binding della cartella |
+| [Sessione](session.md) | Contesto scelto, diff/output/test, policy e pubblicazione esplicita |
+| [Realtime](realtime.md) | Presenza, condivisione selezionata, outbox, recupero e revoca |
+| [Overview](overview.md) | Reference3, feed/notifiche, health e metriche locali opt-in |
+| [Pulse](pulse.md) | Reference1, milestone, progressi, outcome, feedback e audience cliente |
+| [Lavoro e consegne](work.md) | Task/roadmap, documenti/update, allegati, revisioni e feedback |
+| [Git/GitHub](repositories.md) | Commit/branch/sync, token cifrati, PR/review e webhook |
+| [Ambienti e deploy](deployments.md) | Registrazioni manuali, URL reali, health con TTL e preview isolata |
+| [Ricerca e impostazioni](application.md) | Ricerca autorizzata, notifiche, preferenze e connessione self-host |
+| [Design](design/README.md) | Palette, tipografia, geometrie, componenti ed effetti |
+| [Schermate](design/screens.md) e [movimento](design/motion.md) | Mappa delle tre PNG e comportamento delle animazioni |
+| [Token CSS](design/tokens.css) e [asset](design/assets.md) | Valori, origini, licenze e ricostruzioni |
+| [Confronto finale T15](design/t15-review.md) | Catture controllate, geometrie, accessibilità e limiti visivi |
+| [Piano](plan.md), [decisioni](decisions.md) e [fonti](sources.md) | Sequenza completata, motivazioni e tracciabilità |
 
-Le documentazioni tecniche indicano la struttura da implementare, non API o tabelle già esistenti. Il piano e lo stato sono le sole fonti operative di avanzamento. Il changelog descrive cambiamenti consegnati; le decisioni spiegano scelte durevoli.
+Le sezioni storiche T03–T12 documentano le verifiche della rispettiva consegna. Per versione, comandi operativi e stato finale prevalgono questa guida, CONTRIBUTING, self-host, release e status. I fixture dei verifier non vengono caricati nell'app distribuita; un nuovo progetto mantiene stati vuoti finché non vengono creati o pubblicati dati reali.

@@ -1,12 +1,12 @@
 # Lavorare su Nexus AI
 
-Il maintainer sviluppa con agenti e verifica le build native. Leggere [AGENTS.md](AGENTS.md), [piano](docs/plan.md) e [stato](docs/status.md). Un task corrente, file assegnati senza sovrapposizioni, integrazione unica e verifiche proporzionate.
+Leggere [AGENTS.md](AGENTS.md), [stato](docs/status.md) e [piano](docs/plan.md). I task T01–T16 appartengono alla stessa base definitiva. Il mandato corrente termina dopo T16: nessuna tranche ulteriore viene avviata automaticamente. Il maintainer verifica le build native; implementazione, verifica automatica e accettazione sono registrate separatamente.
 
-## Setup e comandi
+## Setup locale
 
-Requisiti: Node **22.19+ della serie 22 oppure 24**, pnpm **10.32.1**, Git. T03 richiede PostgreSQL locale per account/persistenza e Mailpit per email locali. Il DB è creato dal maintainer secondo [questa guida](docs/setup/postgresql.md); nessun servizio a pagamento necessario. Non inserire password nel template `.env.example` o in variabili `VITE_`.
+Requisiti: Node **22.19+ della serie 22 oppure 24**, pnpm **10.32.1**, Git, PostgreSQL con ruolo/database dedicati. Per un nuovo clone predisporre PostgreSQL con la [guida locale](docs/setup/postgresql.md), poi impostare `DATABASE_URL` nel proprio `.env` ignorato da Git. La password è quella del ruolo dedicato, con codifica URL dei caratteri riservati; non quella dell'account Nexus. Non condividere credenziali in chat o in variabili `VITE_`.
 
-Dalla root, dopo `DATABASE_URL` nel proprio `.env`:
+Solo per la prima configurazione:
 
 ```powershell
 pnpm install --frozen-lockfile
@@ -16,50 +16,23 @@ pnpm mailpit --install
 pnpm package:win
 ```
 
-`auth:setup` aggiunge solo configurazioni mancanti e genera il secret una volta; conserva i valori esistenti. La migrazione è esplicita e limitata al DB locale `nexus_ai_dev`, senza esecuzione automatica all'avvio. Mailpit viene scaricato dalla release ufficiale, verificato SHA-256 e conservato in `.nexus/`, ignorata da Git. Lo stesso launcher gestisce i tre OS; solo Windows è stato provato qui.
+`auth:setup` aggiunge i valori locali mancanti e genera il secret una sola volta, conservando quelli esistenti. Mailpit viene scaricato dalla release ufficiale con verifica SHA-256 e conservato in `.nexus/`, ignorata da Git. Non è un servizio SMTP pubblico: le email di verifica/reset/invito restano nell'[inbox locale](http://127.0.0.1:8025). Per inviare agli indirizzi reali serve SMTP sul server ospitato: [self-host](docs/self-host.md).
 
-| Comando | Scopo |
-| --- | --- |
-| `pnpm check` | Build librerie, typecheck, lint e confini renderer/Node |
-| `pnpm test` | Test di dominio, autorizzazioni, sicurezza, SMTP locale e storage |
-| `pnpm build` | Compilazione workspace |
-| `pnpm db:check` | Probe DB reale senza stampare credenziali |
-| `pnpm db:migrate` | Migrazioni versionate sul DB locale dedicato |
-| `pnpm mailpit --install` / `pnpm mailpit` | Installazione locale verificata / avvio inbox e SMTP loopback |
-| `pnpm dev:desktop` | Librerie, backend, Vite e app; URL browser account 5173 |
-| `pnpm dev:web` / `pnpm dev:server` | Renderer web + backend / solo backend |
-| `pnpm start:server` | Backend compilato, `.env` root e pagine account compilate |
-| `pnpm start:desktop` | App compilata; richiede build |
-| `pnpm smoke:desktop` | Renderer/bridge/isolamento in finestra nascosta |
-| `pnpm verify:shell` | Catture shell, ricerca e preferenza movimento; richiede build |
-| `pnpm verify:accounts` | Prova esplicita account PostgreSQL/SMTP reali con fixture locale temporanea |
-| `pnpm verify:auth-desktop` | Scambio PKCE, cifratura OS, ripristino/revoca in Electron isolato |
-| `pnpm verify:session-rate` | Regressione429, finestre reali del limiter con tempo QA virtuale e controlli auth Electron su backend proprio |
-| `pnpm verify:collaboration` | Tre account temporanei: inviti SMTP, isolamento progetti, ruoli/revoca e owner concorrenti su PostgreSQL reale |
-| `pnpm verify:sessions` | Tre account temporanei: estratti/audience, versioni/concorrenza, idempotenza, task visibili e revoca su HTTP/PostgreSQL/SMTP |
-| `pnpm verify:repositories` | GitHub/ruoli/ricevute/webhook con PG/HTTP reali e API remota controllata |
-| `pnpm verify:repository-ui` | Code/Repos/PR/review nel renderer/preload reali e Git temporaneo |
-| `pnpm verify:work` | Workflow T11 con PG/SMTP/HTTP/WS reali: ruoli, CAS/ricevute, revisione/decisione, allegati, visibilità e revoca |
-| `pnpm verify:pulse` | Snapshot Pulse, audience e progressi oltre100task, summary UTC/mine, outcomes e revoca con PG/SMTP/HTTP/WS reali |
-| `pnpm verify:workspace` | Electron/IPC/UI reale con Git e TAP Node isolati, trasporto provider controllato e OS opens intercettati; nessuna credenziale o inferenza personale |
-| `pnpm codex:prepare` | Copia il runtime ufficiale fissato della piattaforma dalla dipendenza installata; eseguito anche dal build desktop |
-| `pnpm codex:schema` | Rigenera i tipi dal binario 0.159.2; non modificare manualmente `generated/` |
-| `pnpm verify:codex` | Handshake, account anonimo isolato, catalogo e shutdown del binario reale; richiede build, non esegue inferenza |
-| `pnpm package:win` / `pnpm package:mac` / `pnpm package:linux` | Build e NSIS / DMG / AppImage sul relativo OS |
+## Aggiornamento e build Windows finale
 
-Gli harness account richiedono PostgreSQL locale e Mailpit attivi. `verify:accounts`/`verify:auth-desktop` usano un backend locale già avviato; il secondo scrive ID/email in `.nexus/visual/t09-fix/auth/desktop-auth-report.json` e il coordinatore rimuove solo tali righe. `verify:session-rate` avvia invece il proprio backend su porta effimera e coordina anche la pulizia dei due account QA. Non eseguirli su servizi remoti o usare dati di persone reali. I test SMTP aprono una porta loopback temporanea; il sandbox dell'agente può richiedere esecuzione esterna, senza cambiare la sandbox del renderer.
+Chiudere l'app precedente e il terminale con il vecchio backend, conservando `.env`, account e database:
 
-Gli orchestratori usano Node e argomenti separati, senza shell nei manifest. Dev carica `.env` e sostituisce solo `NEXUS_WEB_URL` con il Vite locale; main/preload e librerie richiedono riavvio dopo modifiche, renderer/server hanno watch. Non avviare comandi concorrenti sulle porte 3001/5173.
+```powershell
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm package:win
+```
 
-## Build e prova Windows T12
+La versione applicativa è **0.16.0**. Su Windows x64 l'installer è `release/win/Nexus-AI-0.16.0-win-x64.exe`; il programma non installato è `release/win/win-unpacked/Nexus AI.exe`. Il packaging usa l'architettura dell'host. Senza credenziali di firma l'artefatto è unsigned; il comando non installa automaticamente il pacchetto. I risultati effettivamente ottenuti nella consegna sono in [status](docs/status.md), la procedura completa in [release](docs/release.md).
 
-Versione T12: **0.12.0**, Git/GitHub, commit/branch/sincronizzazione, PR e review. Correzione429 e Codex0.159.2 conservati. Chiudere app/server precedenti; eseguire `pnpm install --frozen-lockfile`, `pnpm db:migrate`, `pnpm package:win`. Installer unsigned `release/win/Nexus-AI-0.12.0-win-x64.exe`; programma `release/win/win-unpacked/Nexus AI.exe`. La migrazione additiva0006 porta a sette migrazioni, già applicata esplicitamente al DB locale senza cancellare dati o cambiare credenziali. Nessuna installazione automatica.
+`db:migrate` è esplicito e limitato al database locale dedicato `nexus_ai_dev`. Le migrazioni additive arrivano a `0008_application`, **nove in totale**; su questa macchina sono già applicate e un nuovo lancio non ricrea account o dati. Il backend non migra il database all'avvio. Per un host diverso usare gli strumenti operatore e le conferme descritti in [self-host](docs/self-host.md), senza modificare la protezione del comando locale.
 
-Per T12 seguire la [prova completa](docs/repositories.md): diff e commit selezionato, branch, token GitHub dedicato, fetch/push confermati, PR e review sulla SHA letta. `pnpm verify:repositories` usa PostgreSQL/Mailpit/HTTP reali e GitHub controllato; `pnpm verify:repository-ui` renderer/preload/Git reali con risposte GitHub controllate. Nessun token personale o POST GitHub esterno nei verifier; rapporti `.nexus/visual/t12/`. La [prova T11](docs/work.md) e i comandi precedenti restano disponibili. Mac/Linux richiedono build native sul relativo OS.
-
-Dopo la build tenere aperti:
-
-Per T09 seguire la [prova a due account](docs/overview.md#build-e-prova-windows): presenza, feed e link al testo autorizzato, selezione locale/remota, nuovi eventi senza salto della lettura, Mark all read, metriche locali opt-in e revoca. `pnpm verify:overview` esegue la prova locale PG/Mailpit/HTTP/WS con fixture propri; `pnpm verify:workspace` verifica anche overview popolata, campioni OS reali e privacy delle righe trattenute nel renderer/preload effettivi con trasporti controllati. I percorsi [T08](docs/realtime.md) e [T07](docs/session.md) restano disponibili. **Open in Editor** richiede VS Code con protocollo `vscode://` registrato.
+Avviare ciascun servizio in un terminale distinto. Se Mailpit è già attivo, riutilizzarlo:
 
 ```powershell
 # Terminale 1
@@ -76,40 +49,74 @@ pnpm start:server
 pnpm start:desktop
 ```
 
-In Settings avviare **Sign in with browser**, registrarsi, aprire la verifica su **http://127.0.0.1:8025**, accedere e scegliere **Continue in Nexus AI**. Verificare riapertura, logout e reset con revoca delle vecchie sessioni. I cinque passi completi e gli errori recuperabili sono in [Account T03](docs/auth.md).
+Il package desktop contiene runtime Codex e renderer; PostgreSQL, backend e Mailpit sono servizi separati. Le pagine account compilate sono servite dal backend su `http://127.0.0.1:3001/sign-in`. In sviluppo `pnpm dev:desktop` avvia backend/Vite/app, con URL browser account5173, lasciando Mailpit separato. Non eseguirlo insieme a `start:server` sulle stesse porte; Ctrl+C arresta i comandi avviati.
 
-Per T04 aprire **Projects**, creare workspace/progetto e selezionarlo. In **Team**, scegliere ambito Project e invitare un secondo indirizzo; aprire l'email in Mailpit e accettare dal browser con l'account verificato corrispondente. Controllare il solo progetto assegnato, ridurre il ruolo e rimuovere l'accesso. In **Repos** salvare URL HTTPS/default branch e scegliere una cartella locale dal desktop; riaprendo l'app il binding rimane distinto per account e dispositivo. [Regole e prova completa T04](docs/collaboration.md).
+## Comandi disponibili
 
-Per T05, dopo l'accesso Nexus, aprire **Settings → Codex**, collegare il runtime e scegliere l'accesso personale ChatGPT nel browser. È un login distinto da quello Nexus: l'email Codex non passa da Mailpit. Il ritorno viene gestito dal runtime locale; attendere lo stato account connesso. Il device code è un'alternativa esplicita se il browser non completa il flusso. Su Windows usare il setup sandbox mostrato nelle impostazioni se richiesto. In **Repos** collegare una cartella a un repository del progetto, con ruolo owner/developer, poi aprire **AI Session**, scegliere modello/effort dal catalogo e inviare una domanda sui file chiedendo sola lettura. Controllare streaming, interruzione, nuovo messaggio e riapertura sullo stesso thread. [Passi e limiti completi](docs/codex.md#prova-manuale-t05).
+| Comando | Scopo |
+| --- | --- |
+| `pnpm check` | Build librerie, TypeScript strict, ESLint e confini renderer/Node |
+| `pnpm test` | Test workspace e orchestratori |
+| `pnpm build` | Compilazione workspace; prepara il runtime Codex nativo |
+| `pnpm db:check` / `pnpm db:migrate` | Probe DB senza segreti / migrazioni locali esplicite |
+| `pnpm mailpit --install` / `pnpm mailpit` | Scaricamento verificato / SMTP e inbox loopback |
+| `pnpm dev:desktop` | Backend, renderer Vite e desktop in sviluppo |
+| `pnpm dev:web` / `pnpm dev:server` | Renderer e backend / solo backend |
+| `pnpm start:server` / `pnpm start:desktop` | Servizi compilati, dopo build |
+| `pnpm smoke:desktop` | Renderer/preload/IPC in finestra nascosta, senza Node nel renderer |
+| `pnpm codex:prepare` | Vendor ufficiale della piattaforma dalla dipendenza fissata |
+| `pnpm codex:schema` | Schema dal binario0.159.2; non editare manualmente i generated |
+| `pnpm verify:codex` | Handshake/account anonimo/catalogo/shutdown reali, senza inferenza |
+| `pnpm package:win` / `pnpm package:mac` / `pnpm package:linux` | Installer/DMG/AppImage sul rispettivo OS |
+| `pnpm release:package unsigned` / `pnpm release:manifest unsigned` | Build/package/hash / hash e manifest del package già creato |
+| `pnpm db:operator --help` | Migrazioni, backup e restore espliciti con conferma del database |
+| `pnpm verify:operations` | Readiness/hash e backup/restore del solo schema QA proprio |
+| `pnpm verify:accounts` / `pnpm verify:auth-desktop` | Account locali reali / PKCE, cifratura OS e ripristino/revoca |
+| `pnpm verify:session-rate` | Regressione429 con tempo QA virtuale e auth Electron su backend proprio |
+| `pnpm verify:collaboration` / `pnpm verify:sessions` | Inviti/ruoli/revoca / estratti, CAS e pubblicazione autorizzata |
+| `pnpm verify:realtime` / `pnpm verify:overview` | Outbox/presenza/replay / feed, notifiche e target correnti |
+| `pnpm verify:pulse` / `pnpm verify:work` | Audience/progressi / task, documenti, allegati, feedback e decisioni |
+| `pnpm verify:workspace` | Sessione, Git/TAP locali e UI/IPC con provider controllato |
+| `pnpm verify:repositories` / `pnpm verify:repository-ui` | PG/HTTP e API GitHub controllata / renderer/preload e Git reale isolato |
+| `pnpm verify:deployments` / `pnpm verify:deployment-ui` | Registro/health/ruoli su PG/HTTP / UI reale e singola HEAD locale |
+| `pnpm verify:preview` | Finestra preview effettiva, isolamento/cookie/Node e chiusura |
+| `pnpm verify:application` / `pnpm verify:application-ui` | Ricerca/settings ACL su PG/HTTP / ricerca, notifiche, preferenze e UI |
+| `pnpm verify:shell` / `pnpm verify:acceptance` | Shell / tre reference, ruoli, tastiera, resize e recupero controllato |
+| `pnpm verify:renderer-recovery` / `pnpm verify:renderer-process` | Boundary React / crash del solo renderer QA e recupero esplicito |
 
-L'accesso personale usa lo storage sicuro OS nella home Codex di Nexus, distinta dalle altre app. Nessuna importazione automatica delle loro sessioni; API key solo se scelta esplicitamente e con relativo consumo API. Il catalogo da solo non prova diritti/quota di inferenza. Scritture/approvazioni locali T07, estratti T06 e condivisione selezionata live T08 sono disponibili con consensi distinti.
+Gli strumenti operativi T16 e i comandi di checksum/package sono elencati nelle guide [self-host](docs/self-host.md) e [release](docs/release.md). I verifier non sono prerequisiti da ripetere tutti per ogni build dell'utente.
 
-Da 0.5.1 il renderer ascolta gli eventi Nexus prima del recupero iniziale, ignora letture obsolete e accorpa refresh simultanei. Dopo il ripristino Nexus collega automaticamente Codex una volta per account verificato, leggendo solo il proprio keyring: non apre un nuovo login o una richiesta AI. Disconnect resta rispettato durante navigazione/cambio progetto/focus; al riavvio l'app tenta nuovamente il collegamento. Se il backend parte dopo l'app, **Refresh Nexus** o il ritorno in primo piano recuperano la credenziale conservata; non esistono retry infiniti. Logout/revoca e permessi rimangono autorevoli sul server.
+Gli harness PostgreSQL/SMTP richiedono DB locale migrato e Mailpit. Creano fixture propri, mai dati di persone reali, e non vanno puntati a SMTP o servizi di produzione. `verify:accounts` e `verify:auth-desktop` usano un backend locale già avviato; il secondo conserva gli identificativi QA nel report privato per la pulizia documentata. Gli altri orchestratori indicano nel relativo report server effimeri e pulizia eseguita. I verifier UI possono usare DTO o provider controllati dichiarati: non dimostrano inferenza personale o chiamate GitHub esterne. I report locali sono in `.nexus/visual/`, esclusi da Git; soltanto catture controllate e revisionate possono entrare nei documenti pubblici.
 
-### Log server e diagnosi
+## Prova manuale della consegna
 
-`pnpm start:server` mostra log Chalk con ora UTC, livello, ID richiesta, metodo, endpoint, esito HTTP e durata. Le operazioni workspace validate aggiungono `operation`; errori catturati aggiungono categoria e codice stabile quando disponibile, ad esempio `database_authentication`/`28P01`, `unavailable`/`ECONNREFUSED`, `rate_limited`/HTTP 429. Ogni risposta espone anche `X-Request-ID` per correlazione. Il colore è automatico nel terminale e disattivabile con `NO_COLOR=1`; nei file resta testo leggibile.
+1. **Account e progetto:** riaprire l'app con backend attivo, controllare il ripristino Nexus e la selezione progetto. Registrazione, reset e inviti locali si leggono in Mailpit. [Account](docs/auth.md), [collaborazione](docs/collaboration.md).
+2. **Codex e sessione:** collegare il proprio account Codex da Settings, scegliere cartella autorizzata in Repos e modello dal catalogo. Provare richiesta, streaming, interruzione e ripresa; workspaceWrite richiede scelta locale e approvazioni del driver. [Codex](docs/codex.md), [sessione](docs/session.md).
+3. **Condivisione:** pubblicare soltanto messaggi scelti dopo anteprima/audience; osservare da un secondo account, scollegare/ricollegare e ridurre il ruolo. Controllare che il contenuto interno sparisca dalla vista cliente. [Realtime](docs/realtime.md).
+4. **Lavoro:** task → sessione → aggiornamento → deliverable → feedback/decisione cliente. [Workflow](docs/work.md). Una decisione cliente non autorizza esecuzioni Codex, push o deploy.
+5. **Git e ambiente:** usare un repository dedicato, diff/commit e sincronizzazione espliciti. Configurare GitHub solo con il proprio token dedicato; registrare una build effettiva e health con fonte/scadenza, aprire preview. [Repository](docs/repositories.md), [deploy](docs/deployments.md).
+6. **Ricerca e UI:** Ctrl+K/Cmd+K, ricerca di testo pubblicato, notifiche/mark read, preferenze e riavvio. Confrontare Pulse/Sessione/Overview a1586×992 e960px, normale/ridotto. [Impostazioni](docs/application.md), [revisione visiva](docs/design/t15-review.md).
 
-`NEXUS_LOG_LEVEL=info` registra ogni completamento, `debug` anche l'inizio richiesta, `warn`/`error` riducono il rumore e `silent` disattiva i log ordinari. Query/fragment, body, cookie, header, indirizzi email, messaggi/stack SQL e contenuto chat sono esclusi tramite campi ammessi. URL sconosciute e asset usano etichette di percorso generiche. Nessun invio a servizi esterni. Il logger riguarda il backend: il processo Codex resta locale e non inoltra i prompt al server Nexus.
+Il login Codex è distinto da Nexus: la sua email non passa da Mailpit. Il runtime usa una home/keyring di Nexus senza importare le credenziali di altre app. API key solo per scelta esplicita, senza fallback automatico a consumo. Il collegamento automatico al riavvio verifica il proprio account e non invia prompt o apre login. `Open in Editor` richiede VS Code e il protocollo `vscode://` registrato.
 
-Per il problema dopo l'avvio chat, riprovare con app e backend 0.5.1 e conservare le righe WARN/ERROR o i completamenti `/auth/get-session` e `/api/collaboration` vicini all'errore. HTTP 429 è distinto da indisponibilità e la sessione salvata è conservata per un nuovo controllo. Non è stato dimostrato che un limite di frequenza abbia causato il feedback iniziale; i log servono a identificarne la risposta effettiva.
+## Log server e diagnosi
 
-`pnpm verify:collaboration` richiede il DB locale migrato e Mailpit loopback; crea una propria istanza HTTP temporanea e non arresta il server del maintainer. Elimina soltanto workspace/account/email QA della propria esecuzione. La verifica non deve essere usata con SMTP remoto o credenziali di produzione.
+`pnpm start:server` mostra log Chalk con ora UTC, livello, ID richiesta, metodo, endpoint, stato HTTP e durata. Operazioni validate aggiungono il nome dell'operazione; gli errori hanno categoria/codice stabile quando disponibile. `X-Request-ID` permette la correlazione. Colore automatico, disattivabile con `NO_COLOR=1`. `NEXUS_LOG_LEVEL=debug|info|warn|error|silent` regola la verbosità.
 
-Il backend serve le pagine compilate su `http://127.0.0.1:3001/sign-in`; le email non escono dal PC. In sviluppo si può usare `pnpm dev:desktop` al posto dei comandi server/app, lasciando Mailpit nell'altro terminale. Per fermare usare Ctrl+C. Il pacchetto non incorpora né avvia backend, PostgreSQL o Mailpit.
+Body, query/fragment, cookie, token, email, contenuti chat e stack SQL sono esclusi dai campi ammessi. Il processo Codex resta locale; i prompt non vengono inviati al logger Nexus. HTTP 429, autenticazione e indisponibilità hanno esiti diversi: conservare le sole righe pertinenti con ID richiesta, senza copiare `.env` o credenziali. La correzione account0.9.1/no429 resta nella base finale.
 
-`Invoke-RestMethod http://127.0.0.1:3001/health` mostra `database: connected` solo dopo un probe riuscito; non dimostra che Codex sia collegato. Le sole URL pubbliche vengono incorporate nel renderer/main durante build: cambiando URL nel `.env` occorre ricompilare il pacchetto. Nessuna credenziale del `.env` deve essere incorporata negli artefatti.
+`/health` espone il probe DB, non prova lo stato Codex o degli ambienti del progetto. `/ready` verifica prerequisiti operativi e schema senza migrare: [semantica e limiti](docs/self-host.md). Gli endpoint custom si configurano da Settings da disconnessi con riavvio esplicito; account/keyring/cartelle sono isolati per autorità. Nel browser le origini si configurano nella build/deployment web.
 
-## macOS, Linux e limiti
+## macOS e Linux
 
-Sul relativo sistema usare installazione/setup DB e auth, poi `pnpm check`, `pnpm test` e `pnpm package:mac` oppure `pnpm package:linux`. Output `release/mac/` e `release/linux/`. Ogni comando produce l'architettura dell'host Node (x64 o arm64), con runtime Codex corrispondente: per due architetture usare due host/runner nativi, senza copiare il vendor di un altro sistema. Mac DMG e Linux AppImage richiedono ambiente desktop reale. AppImage può richiedere FUSE 2 o `--appimage-extract-and-run`. Non usare `--no-sandbox`.
+Sul relativo sistema usare Node/pnpm della versione supportata, `pnpm install --frozen-lockfile`, quindi `pnpm check`, `pnpm test` e `pnpm package:mac` oppure `pnpm package:linux`. Output `release/mac/` e `release/linux/`. Il backend può essere locale o self-host configurato; non occorre installare PostgreSQL su ogni dispositivo che usa un server ospitato.
 
-macOS richiede prova nativa di protocollo e continuità Keychain/firma. Linux richiede keyring sicuro: `basic_text` è rifiutato, senza salvataggio in chiaro. Le configurazioni di packaging e la CI non provano questi comportamenti nativi. Il maintainer proverà il Mac più avanti. Firma/notarizzazione e distribuzione self-host sono T16.
+Il packaging produce x64/arm64 secondo l'host Node, con runtime Codex corrispondente. Due architetture richiedono due host/runner nativi. Non copiare il vendor da un altro OS. Mac DMG e Linux AppImage richiedono prova su desktop reale; AppImage può richiedere FUSE2 o `--appimage-extract-and-run`. Non usare `--no-sandbox`.
 
-## Verifiche e contributi
+Mac: protocollo di ritorno, Keychain e continuità della firma richiedono prova nativa. Linux: keyring sicuro richiesto, `basic_text` rifiutato senza ripiego in chiaro. Workflow CI, package unsigned e release firmata sono evidenze distinte. Firma/notarizzazione richiedono le credenziali del maintainer: [release](docs/release.md). La prova Mac sarà eseguita dal maintainer dal proprio Mac.
 
-Le shell T02 sono già accettate Windows; [reference e confronto](docs/design/t02-review.md). Le pagine account nuove seguono gli stessi token e font; [catture T03](docs/auth.md). UI vuota senza dati reali, nessuna attività o salute inventata.
+## Regole di integrazione
 
-Eseguire i controlli pertinenti dopo l'integrazione; ripeterli solo per correzioni o dubbi concreti. Non aggiungere test per edit documentali reversibili o ripetere suite per abitudine. La consegna contiene commit, comandi OS, prerequisiti, pochi passi e limiti: implementato, testato, pacchetto generato e accettato dal maintainer restano evidenze distinte.
+Un autore per manifest/lockfile, contratti e migrazioni; ownership prima delle deleghe. I processi usano Node e argv separati, con main/preload isolati dal renderer. Non committare `.env`, auth store, token, output di clienti o package. Dipendenze esatte nel lockfile; nessun aggiornamento casuale durante le verifiche.
 
-Un autore per manifest/lockfile, contratti e migrazioni. Versioni esatte nel lockfile; niente aggiornamenti durante una verifica del task. Niente `.env`, auth store, token, output di clienti o build nei commit. Aggiornare stato/piano/changelog con il task; commit coerenti, niente push forzati o migrazioni su produzione implicite.
+Eseguire controlli pertinenti dopo l'integrazione, ripetendoli solo dopo difetti concreti o rischi nuovi. I cambi documentali non richiedono nuovi test che ripetano il testo. Aggiornare documenti esistenti, stato/piano/changelog e commit coerenti; niente push forzati, migrazioni di produzione implicite o loop senza nuova evidenza. La [matrice di accettazione](docs/acceptance.md) resta il riferimento per ciò che richiede ancora una prova umana.

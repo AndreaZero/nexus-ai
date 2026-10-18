@@ -129,3 +129,5 @@ export const healthResponseSchema = z.object({
 }).strict();
 
 export type HealthResponse = z.infer<typeof healthResponseSchema>;
+
+export * from './operations.js';

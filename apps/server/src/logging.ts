@@ -20,7 +20,7 @@ const routes = new Set([
   '/auth/sign-up/email', '/auth/sign-out', '/auth/send-verification-email', '/auth/verify-email',
   '/auth/request-password-reset', '/auth/reset-password', '/auth/revoke-sessions',
   '/auth/electron/token', '/auth/electron/transfer-user', '/api/collaboration', '/api/sessions', '/api/realtime', '/api/overview',
-  '/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password', '/api/pulse', '/api/work', '/api/repositories', '/api/repositories/credential', '/api/deployments','/api/application',
+  '/ready', '/sign-in', '/sign-up', '/verify-email', '/forgot-password', '/reset-password', '/api/pulse', '/api/work', '/api/repositories', '/api/repositories/credential', '/api/deployments','/api/application',
 ]);
 const categories = new Set(['internal', 'configuration', 'database_authentication', 'database_unavailable',
   'database_query', 'rate_limited', 'invalid_request', 'origin_denied', 'timeout', 'email_delivery', 'unavailable']);

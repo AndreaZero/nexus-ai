@@ -1,10 +1,32 @@
 # Stato operativo
 
-**T15 integrata e consegnata, verifica manuale distinta; T16 autorizzata e arresto al termine.**
+**T16 in sviluppo, task finale; T15 integrata nel commit1a19ac7. Arresto al termine richiesto dal maintainer.**
 
 ## Mandato T13–T16 del18ottobre2026
 
 Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra task e di fermarsi al termine. Si mantiene l'ordine T13→T14→T15→T16 e si integra/verifica ciascuna task prima della seguente. Questa autorizzazione sostituisce l'attesa del via dopo ogni consegna; non equivale a prove native Mac/Linux o firma/credenziali esterne disponibili. T12 manuale resta distinto dal via allo sviluppo.
+
+## Ownership T16 prima delle deleghe
+
+| Agente | Percorsi scrivibili | Contratto/uscita |
+| --- | --- | --- |
+| /root/t16_ops | Dockerfile,.dockerignore,compose.yaml,deploy/**,packages/db/src/operator*.ts e readiness.ts,apps/server/src/operations*.ts/config.ts/config.test.ts,scripts/database.mjs e verify-operations.mjs,docs/self-host.md | Setup selfhost reale senza Codexserver, readinessreadonly, proxytrust esplicito, operator migrate/backup/restore con confermadb/emptytarget; QA solo schema proprio |
+| /root/t16_release | .github/workflows/**,apps/desktop/electron-builder.yml,apps/desktop/scripts/release*.mjs,scripts/release*.mjs,docs/release.md | Packaging nativo3OS, artifacts/checksums, unsigned/signed separati, notarizationsecredenziali; fonti ufficiali v26, noaggiornamentideps nonnecessari |
+| /root/t16_docs | README.md,CONTRIBUTING.md,docs/README.md,docs/architecture.md,docs/acceptance.md,docs/sources.md,THIRD_PARTY_NOTICES.md | Stato finale e guide aggiornate/completamentoR01–R16 con limiti veri, setup/buildWindows/3OS; nonstatus/plan/changelog/AGENTS |
+| /root/t16_docs — QA Docker dopo handoff | scripts/verify-self-host.mjs | Compose effettivo con progetto/volumi/image/secret propri; readiness prima/dopo migrazione, SMTP/signup, backup/restoreDBQA, cleanup isolato |
+| Coordinatore | contratti/DBexport/app.ts/logging/manifest/versioni/.env.example,status/plan/changelog/AGENTS,verifiche/packageGitHub e .gitignore/email.ts | Integrazione un autore, tests/check/build finali, backupQA isolato, packageWindows e smoke; stopdopoT16 |
+
+Contratto readinessResponseSchema in contracts/operations.ts: GET/ready readonly, statusready/not_ready; checks.database, schema(current/pending/mismatch/unavailable), accounts/emailconfigured, timestamp. Factoryserver readOperationalReadiness(database,config,version) restituisce DTO. DB readiness controlla journal/hash migrazioni senza eseguireDDL. Config trustedProxies readonlystring[] default[] validIP/CIDRespliciti; mainFastify rootintegra. Operator produzione richiede --confirm-database nomeesatto, restore soltanto databasevuoto nooverwriteimplicit; backupsegreti separati, PGpasswordchildenvnonargv/log. QA pg_dump/pg_restore solo schemaQAproprio nella nexus_ai_dev (ruolononCREATEDB), nessunrestorepublic. Compose singleinstance+PGprivate+SMTPconfig esterna/optionalMailpitdev, TLSreverseproxy esplicito, secretstemplate nonvalori privati. Rootmanifestsseparati e nessun install/commit agenti.
+
+## Evidenze T16 in integrazione finale
+
+Versione applicazione **0.16.0**, Codex **0.159.2**, nove migrazioni senza modifiche allo schema applicativo durante T16. Implementati container server senza Electron/Codex, PostgreSQL privato, Mailpit solo nel profilo development, proxy IP/CIDR espliciti e SMTP autenticato con STARTTLS. GET /ready è readonly: confronta tutta la cronologia/hash delle migrazioni, separando schema pending/mismatch dalla semplice liveness /health.
+
+Operator migrate/backup/restore con conferma esatta del database, lock condiviso, archivio custom nuovo e restore solo su database vuoto; nessun DROP/CLEAN o password negli argomenti. Il test PostgreSQL18 reale ha superato **5 verifiche** su schema temporaneo proprio, inclusi dump/restore effettivi e rifiuto overwrite/restore sul DB applicativo. Account e journal esistenti conservati; report privato .nexus/visual/t16/operations-report.json.
+
+**pnpm check passato** (typecheck, lint e confini di116file). **pnpm test passato:318 test**,14bridge/7DB/61web/108server/122desktop/6script; un ulteriore test CSP mirato passato dopo la correzione concreta per ws/wss, con build e lint server passati. Questa ripetizione limitata verifica il nuovo difetto; non sono state eseguite inferenze personali. La CI T15 [39099306162](https://github.com/AndreaZero/nexus-ai/actions/runs/39099306162) ha passato check/test/build su tutti e tre gli OS.
+
+Packaging finale, prova container completa e matrice CI installer in completamento: i risultati saranno registrati separatamente da installazione GUI, firma e accettazione del maintainer. Guida [self-host](self-host.md), [release](release.md) e matrice [R01–R16](acceptance.md).
 
 ## Ownership T15 integrate e rilasciate
 
@@ -25,7 +47,7 @@ Confrontate le PNG1/2/3 e le catture effettive:14controlli renderer/preload e17c
 
 Recovery:3difetti corretti (epoca della coda comandi, attesa shutdown prima reconnect, frame stdin scaduti). **28test DesktopCodex e14bridge passati**; dopo correzione percorsi canonicalizzati CI, **39test Codex+context passati** incl aliasRootGit. Si tratta di ripetizione motivata da difetti concreti, non somma di test distinti. CI precedente39098545462 falliva12casi macOS/Windows sufixturetemporanei conalias; fixture canonicalizzate e resolverGit rafforzato prima della prossima run.
 
-ErrorBoundaryReact effettivo: **6controlli Electron passati**, focusalert/no payload/noautoreload e un reload esplicito. Crashprocessrenderer: **5controlli passati**,2forcefullyCrashRenderer propri, stopesecuzione prima dialog e reload/close espliciti. Main integra DesktopCodex.dispose prima del dialog; nessun crash/inferenza sull’app del maintainer. Typecheck/lintmirati e buildUI/web/desktop passati; smoke finale registrato separatamente. Nessuna migrazione,9totali; versioni app0.15.0,UI0.3.1,bridge0.5.1,Codex0.159.2. Tutteownershiprilasciate; acceptance.md distingueR01–R16 e prove personali/native residue.
+ErrorBoundaryReact effettivo: **6controlli Electron passati**, focusalert/no payload/noautoreload e un reload esplicito. Crashprocessrenderer: **5controlli passati**,2forcefullyCrashRenderer propri, stopesecuzione prima dialog e reload/close espliciti. Main integra DesktopCodex.dispose prima del dialog; nessun crash/inferenza sull’app del maintainer. Typecheck/lintmirati e buildUI/web/desktop passati; smoke finale Windows passato dopo hookmaincrash (warningGPUsoloall’uscita). Nessuna migrazione,9totali; versioni app0.15.0,UI0.3.1,bridge0.5.1,Codex0.159.2. Tutteownershiprilasciate; acceptance.md distingueR01–R16 e prove personali/native residue.
 
 ## Ownership T14 integrate e rilasciate
 

@@ -7,7 +7,15 @@ test('server configuration defaults bind locally and allow only explicit rendere
   const config = readServerConfig({});
   assert.equal(config.host, '127.0.0.1');
   assert.equal(config.port, 3001);
+  assert.deepEqual(config.trustedProxies, []);
   assert.deepEqual(config.allowedOrigins, ['http://127.0.0.1:5173', 'nexus://app']);
+});
+
+test('proxy trust requires explicit bounded IP ranges without reflecting values', () => {
+  assert.deepEqual(readServerConfig({ NEXUS_TRUSTED_PROXIES: '127.0.0.1,10.20.0.0/24,::1,127.0.0.1' }).trustedProxies, ['127.0.0.1', '10.20.0.0/24', '::1']);
+  for (const value of ['true', '*', '0.0.0.0/0', '::/0', '127.0.0.1/33', '::1/129', 'secret.example', '10.0.0.1/24/2']) {
+    assert.throws(() => readServerConfig({ NEXUS_TRUSTED_PROXIES: value }), (error: unknown) => error instanceof ServerConfigurationError && !error.message.includes(value));
+  }
 });
 
 test('account URLs and SMTP are explicit and secrets remain server-only configuration', () => {
