@@ -2,7 +2,7 @@
 
 ## 0.17.1 — 18 ottobre 2026
 
-Polish UI/UX T18: header e toolbar si adattano al contenuto, sidebar e selettori restano raggiungibili nelle finestre basse o compatte. Corrette griglie, testi lunghi e azioni nei moduli; liste Pulse, preview deploy, contesto, diff e output conservano contenuti accessibili tramite scorrimento. Ripristinati i controlli precedentemente nascosti dai breakpoint senza cambiare palette, pianeta, particelle e composizione delle reference.
+Polish UI/UX T18: composer della sessione visibile anche su finestre basse, header e toolbar si adattano al contenuto, sidebar e selettori restano raggiungibili nelle finestre basse o compatte. Corrette griglie, testi lunghi e azioni nei moduli; liste Pulse, preview deploy, contesto, diff e output conservano contenuti accessibili tramite scorrimento. Ripristinati i controlli precedentemente nascosti dai breakpoint senza cambiare palette, pianeta, particelle e composizione delle reference.
 
 Dialoghi centrati e contenuti nel viewport, focus sul primo campo abilitato, chiusura dal vero backdrop ed Escape con ritorno al controllo iniziale. Nessuna modifica a DB, protocollo Codex, account o permessi; nessuna migrazione o nuova dipendenza.
 

@@ -205,7 +205,7 @@ Guida riprendibile account Nexus → workspace → progetto → cartella locale 
 
 ### T18 — Polish mirato di layout e controlli
 
-**Stato:** integrazione 0.17.1 e verifica visuale in corso, dopo autorizzazione del maintainer. **Dipendenze:** T17; ownership in status.md.
+**Stato:** integrata e consegnata 0.17.1, in attesa di verifica manuale — [issue18](https://github.com/AndreaZero/nexus-ai/issues/18). Verifica visuale30combinazioni più ricontrollo2dashboard, package/smoke Windows e CI sorgente dei tre OS passati. **Dipendenze:** T17; evidenze e ownership in status.md.
 
 Correggere componenti tagliati e azioni poco raggiungibili senza ridisegnare la shell. Layout flessibili per testi lunghi, header e toolbar, navigazione laterale nelle finestre basse, dialoghi e moduli. Conservare palette, card, pianeta, particelle e composizione delle reference. Nessuna modifica ai servizi di dominio o ai confini runtime/server.
 

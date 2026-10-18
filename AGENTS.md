@@ -4,7 +4,7 @@
 
 Leggi `docs/status.md`, il task corrente in `docs/plan.md` e i documenti pertinenti. Per lavoro parallelo leggi `.agents/skills/nexus-coordination/SKILL.md`. Per UI leggi `docs/design/README.md`, `screens.md` e `motion.md`, quindi apri le PNG originali. I riassunti testuali non sostituiscono l'ispezione delle immagini.
 
-La fase corrente è **T18 — polish UI/UX autorizzato dal maintainer dopo T17**. Correggere componenti tagliati e rendere controlli/menu accessibili mantenendo layout e stile. Nessuna nuova feature di dominio; fermarsi alla consegna. T17 resta consegnata 0.17.0 con prova manuale distinta. Ownership ed evidenze in docs/status.md; migrazione 0008 applicata, 9 totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
+La fase corrente è **T18 consegnata — versione 0.17.1, in attesa di prova manuale**. Layout e controlli rifiniti, composer visibile e dialoghi accessibili; reference conservate. Fermarsi qui e attendere feedback; nessun task ulteriore autorizzato. Ownership ed evidenze in docs/status.md; migrazione 0008 applicata, 9 totali. Preservare shell/reference1/2/3, runtime Codex0.159.2 e auth0.9.1/no429, account e configurazione. Non stampare .env/segreti o avviare migrazioni automaticamente.
 
 ## Prodotto e architettura
 
