@@ -14,7 +14,7 @@ import { useOnboarding } from './OnboardingProvider.js';
 import './onboarding.css';
 
 const icons: Record<string, IconName> = { account: 'shield', workspace: 'team', project: 'projects', folder: 'repos', codex: 'sparkles', session: 'sessions' };
-const firstRequest = 'Read the project README and summarize its purpose, structure and main entry points. Do not modify files or run commands.';
+const firstRequest = 'Read the project README and summarize its purpose, structure and main entry points. Do not modify files. Use read-only inspection.';
 
 export function OnboardingView() {
   const guide = useOnboarding();

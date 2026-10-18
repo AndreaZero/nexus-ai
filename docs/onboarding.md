@@ -74,3 +74,5 @@ L'esito del verificatore non sostituisce login, permessi OS e prima inferenza re
 - [Guida con movimento ridotto,960×992](design/captures/t17-onboarding-960.png).
 
 Le catture mostrano esclusivamente fixture QA dichiarati. Account, modello e risposta di questi scenari sono controllati, separati dalle verifiche PostgreSQL/HTTP reali e dal normale avvio dell’app.
+
+Il testo consigliato invita a leggere il README senza modificare file, consentendo l’ispezione in sola lettura. Non vieta tutti i comandi, perché la lettura dei file può passare dagli strumenti readonly del runtime. Non viene cambiata la policy corrente e nessun comando parte prima dell’invio esplicito. Le catture QA del commit e26a2a6 precedono questa sola rifinitura del testo.
