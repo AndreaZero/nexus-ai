@@ -177,6 +177,8 @@ Ricerca autorizzata fra progetti accessibili, messaggi, task e documenti; shortc
 
 ### T15 — Accettazione visiva e percorsi di recupero
 
+**Stato:** integrata e consegnata, in attesa di verifica manuale — [issue15](https://github.com/AndreaZero/nexus-ai/issues/15). Confronto in design/t15-review.md e matrice in acceptance.md. Accettazione personale distinta; prosecuzione T16 autorizzata.
+
 **Dipendenze:** T14. **Ownership:** coordinatore integra feedback; fronti UI/accessibilità e runtime/recovery su percorsi separati.
 
 Confrontare tutte le PNG sul viewport originale, correggere differenze di layout/tipo/luce/asset e verificare animazioni dal vivo. Provare tre ruoli, titoli lunghi, vuoti, offline, auth scaduta, crash e ripresa; viewport ridotto e tastiera. Coprire solo rischi non già verificati o toccati dalle correzioni, senza ripetere suite per abitudine.

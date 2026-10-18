@@ -17,14 +17,22 @@
 .navigation-dialog__footer kbd { font: inherit; }
 .notification-dialog { width: min(400px, calc(100vw - 32px)); }
 .settings-layout, .route-empty-layout { display: grid; gap: 14px; padding: 12px 17px 20px; }
-.settings-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.settings-layout { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.settings-column { display: grid; gap: 14px; align-content: start; min-width: 0; }
 .settings-layout .nexus-card { min-height: 215px; }
 .settings-details { margin: 12px 0; font-size: 12px; }
 .settings-details > div { display: flex; justify-content: space-between; gap: 14px; padding: 8px 0; border-bottom: 1px solid var(--nexus-border-subtle); }
-.settings-details dt { color: var(--nexus-text-muted); }
-.settings-details dd { margin: 0; text-align: right; color: var(--nexus-text-secondary); overflow-wrap: anywhere; }
+.settings-details dt { color: var(--nexus-text-muted); min-width: 0; }
+.settings-details dd { min-width: 0; margin: 0; text-align: right; color: var(--nexus-text-secondary); overflow-wrap: anywhere; }
 .settings-note { margin: 12px 0; color: var(--nexus-text-muted); font-size: 12px; line-height: 1.55; }
 .settings-appearance { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .route-empty-layout > .nexus-card { min-height: 400px; }
 .notification-dialog .nexus-empty-panel { padding: 48px 12px; }
 @media (max-width: 900px) { .settings-layout { grid-template-columns: minmax(0, 1fr); } }
+
+.renderer-recovery { min-height: 100vh; display: grid; place-items: center; padding: 28px; color: var(--nexus-text-primary); background: radial-gradient(ellipse at 50% 0, #0c2945, transparent 65%), var(--nexus-bg-app); }
+.renderer-recovery > div { width: min(100%, 500px); padding: 26px; border: 1px solid var(--nexus-border-strong); border-radius: var(--nexus-radius-card); background: var(--nexus-surface-gradient); }
+.renderer-recovery-eyebrow { color: var(--nexus-accent-cyan); font-size: 11px; letter-spacing: .14em; }
+.renderer-recovery h1 { margin: 14px 0; font-size: 24px; line-height: 1.3; }
+.renderer-recovery p { margin: 0 0 22px; color: var(--nexus-text-secondary); font-size: 13px; line-height: 1.6; }
+.renderer-recovery button { padding: 10px 16px; border: 1px solid var(--nexus-accent-cyan); border-radius: 6px; color: var(--nexus-text-primary); background: #0753ab; }

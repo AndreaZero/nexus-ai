@@ -1,0 +1,271 @@
+{
+  "checks": [
+    "Production renderer/preload mounts controlled observations with Node absent and frozen bridge",
+    "Reference3 owner overview preserves sidebar, two-column grid, plan, task, diff and honest unconfigured health",
+    "Reference1 populated milestone/wave/progress, published outcome, approved deliverable and feedback use explicit controlled sources",
+    "Reference2 local conversation, context, repository, plan, patch and test observation fit the split workspace",
+    "All three reference compositions honor operating-system reduced motion while retaining their static scenes",
+    "All three reference routes fit 960px without document overflow with long project, task and actor names",
+    "Ctrl+K focuses search, Escape closes the native dialog and returns focus to the search trigger",
+    "Skip link moves keyboard focus to main content and Tab continues to an interactive control",
+    "Developer membership retains local technical observations without owner-only member capabilities",
+    "Client current projection hides team-only task and local conversation, and disables execution composer",
+    "Realtime loss immediately removes shared activity and presence; no stale online presentation",
+    "Empty project uses explicit unavailable/unconfigured states with no invented counters or telemetry",
+    "Controlled runtime exit reports failure and disables execution; recovered production event restores the selected local session",
+    "Unavailable account event clears shared and local session observations before a different account can mount"
+  ],
+  "captures": [
+    "reference3-overview-normal",
+    "reference1-pulse-normal",
+    "reference2-session-normal",
+    "reference-session-reduced",
+    "reference-overview-reduced",
+    "reference-pulse-reduced",
+    "pulse-960",
+    "overview-960",
+    "session-960",
+    "overview-developer",
+    "overview-client",
+    "session-client",
+    "overview-offline",
+    "overview-empty",
+    "runtime-failed",
+    "runtime-recovered",
+    "account-unavailable"
+  ],
+  "measurements": {
+    "reference3-normal": {
+      "viewport": {
+        "width": 1586,
+        "height": 992
+      },
+      "documentOverflow": false,
+      "rectangles": {
+        ".workspace-sidebar": {
+          "x": 0,
+          "y": 0,
+          "width": 212,
+          "height": 992
+        },
+        ".workspace-header": {
+          "x": 212,
+          "y": 0,
+          "width": 1374,
+          "height": 155
+        },
+        ".overview-layout": {
+          "x": 230,
+          "y": 168,
+          "width": 1338,
+          "height": 803
+        },
+        ".overview-center": {
+          "x": 230,
+          "y": 168,
+          "width": 956,
+          "height": 802
+        },
+        ".overview-rail": {
+          "x": 1198,
+          "y": 142,
+          "width": 370,
+          "height": 829
+        },
+        ".active-session-card": {
+          "x": 230,
+          "y": 262,
+          "width": 956,
+          "height": 278
+        },
+        ".activity-card": {
+          "x": 230,
+          "y": 550,
+          "width": 558.28125,
+          "height": 420
+        },
+        ".tasks-card": {
+          "x": 798.28125,
+          "y": 550,
+          "width": 387.703125,
+          "height": 290
+        }
+      }
+    },
+    "reference1-normal": {
+      "viewport": {
+        "width": 1586,
+        "height": 992
+      },
+      "documentOverflow": false,
+      "rectangles": {
+        ".pulse-layout": {
+          "x": 225,
+          "y": 160,
+          "width": 1355,
+          "height": 820
+        },
+        ".pulse-hero": {
+          "x": 225,
+          "y": 160,
+          "width": 1050,
+          "height": 232
+        },
+        ".pulse-rail": {
+          "x": 1286,
+          "y": 142,
+          "width": 294,
+          "height": 838
+        },
+        ".milestone-card": {
+          "x": 225,
+          "y": 402,
+          "width": 379.734375,
+          "height": 224
+        },
+        ".summary-card": {
+          "x": 614.734375,
+          "y": 402,
+          "width": 390.15625,
+          "height": 224
+        },
+        ".working-card": {
+          "x": 225,
+          "y": 636,
+          "width": 414.0625,
+          "height": 207
+        }
+      }
+    },
+    "reference2-normal": {
+      "viewport": {
+        "width": 1586,
+        "height": 992
+      },
+      "documentOverflow": false,
+      "rectangles": {
+        ".session-layout": {
+          "x": 224,
+          "y": 118,
+          "width": 1354,
+          "height": 865
+        },
+        ".session-conversation": {
+          "x": 224,
+          "y": 118,
+          "width": 672.5,
+          "height": 865
+        },
+        ".session-context": {
+          "x": 905.5,
+          "y": 118,
+          "width": 672.5,
+          "height": 490
+        },
+        ".environment-card": {
+          "x": 1340.90625,
+          "y": 161,
+          "width": 228.09375,
+          "height": 332
+        },
+        ".code-workspace": {
+          "x": 905.5,
+          "y": 617,
+          "width": 672.5,
+          "height": 366
+        }
+      }
+    },
+    "pulse-960": {
+      "viewport": {
+        "width": 960,
+        "height": 992
+      },
+      "documentOverflow": false,
+      "rectangles": {
+        ".workspace-sidebar": {
+          "x": 0,
+          "y": 0,
+          "width": 64,
+          "height": 992
+        },
+        ".workspace-content": {
+          "x": 64,
+          "y": 155,
+          "width": 881,
+          "height": 1205
+        },
+        ".route-content": {
+          "x": 77,
+          "y": 160,
+          "width": 862,
+          "height": 1188
+        }
+      }
+    },
+    "overview-960": {
+      "viewport": {
+        "width": 960,
+        "height": 992
+      },
+      "documentOverflow": false,
+      "rectangles": {
+        ".workspace-sidebar": {
+          "x": 0,
+          "y": 0,
+          "width": 64,
+          "height": 992
+        },
+        ".workspace-content": {
+          "x": 64,
+          "y": 155,
+          "width": 881,
+          "height": 1298
+        },
+        ".route-content": {
+          "x": 82,
+          "y": 168,
+          "width": 845,
+          "height": 1265
+        }
+      }
+    },
+    "session-960": {
+      "viewport": {
+        "width": 960,
+        "height": 992
+      },
+      "documentOverflow": false,
+      "rectangles": {
+        ".workspace-sidebar": {
+          "x": 0,
+          "y": 0,
+          "width": 64,
+          "height": 992
+        },
+        ".workspace-content": {
+          "x": 64,
+          "y": 114,
+          "width": 881,
+          "height": 880.390625
+        },
+        ".route-content": {
+          "x": 76,
+          "y": 118,
+          "width": 861,
+          "height": 867.390625
+        }
+      }
+    }
+  },
+  "source": "Actual production Electron renderer/preload and strict controlled account, membership, Codex, published work, realtime and health DTOs in this disposable entry only.",
+  "references": [
+    "examples/design/1.png",
+    "examples/design/2.png",
+    "examples/design/3.png"
+  ],
+  "limitations": "Composition and bounded viewport checks, not pixel identity. Font and animation are documented reconstructions; health/deployment unconfigured, telemetry disabled. Controlled recovery events verify renderer transitions; native runtime recovery has separate targeted tests. Windows only; macOS/Linux, personal inference and manual visual acceptance remain untested.",
+  "personalCredentials": false,
+  "inference": false,
+  "externalWrites": false
+}

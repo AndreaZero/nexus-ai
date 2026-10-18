@@ -161,8 +161,14 @@ export class DesktopCodex {
   request(input: CodexRequest): Promise<CodexResponse> {
     const parsed = codexRequestSchema.safeParse(input);
     if (!parsed.success) return Promise.resolve({ ok: false, code: 'invalid_request', message: 'Choose a valid Codex operation.', state: structuredClone(this.state) });
+    const queuedEpoch = this.nexusEpoch;
     const pending = this.queue.then(async (): Promise<CodexResponse> => {
       try {
+        // Consent belongs to the connection at enqueue time. Recovery must not release
+        // an old prompt, login or approval that was waiting behind another request.
+        if (parsed.data.operation !== 'getState' && parsed.data.operation !== 'disconnect' && queuedEpoch !== this.nexusEpoch) {
+          throw new RequestError('unavailable', 'The Nexus connection changed while this action was waiting. It was cancelled and will not be retried automatically.');
+        }
         await this.perform(parsed.data);
         return codexResponseSchema.parse({ ok: true, state: this.state });
       } catch (error) {
@@ -204,9 +210,10 @@ export class DesktopCodex {
     if (this.process !== process || this.userId !== userId) throw new RequestError('auth_required', 'Your Nexus account changed. Connect Codex again.');
   }
 
-  private async connect(userId: string): Promise<ProcessClient> {
+  private async connect(userId: string, epoch: number): Promise<ProcessClient> {
     if (this.process) return this.process;
     await this.shutdown;
+    this.assertNexusEpoch(epoch);
     this.userId = userId;
     this.state = { ...emptyState(), runtime: 'starting', runtimePath: this.dependencies.executable };
     this.publish(true);
@@ -218,8 +225,12 @@ export class DesktopCodex {
     runtime.onServerRequest(event => { if (this.process === runtime) this.serverRequest(runtime, event); });
     runtime.onExit(() => {
       if (this.process !== runtime) return;
+      this.nexusEpoch++;
       this.clearApprovals(); this.completedTurns.clear(); this.seenApprovals.clear(); this.fileApprovalDetails.clear(); this.startingTurn = false;
       this.process = undefined;
+      // A reconnect must wait for the old process tree and stdio to close, including
+      // when the provider exited before its supervisor finished terminating children.
+      this.shutdown = this.shutdown.then(() => runtime.dispose()).catch(() => undefined);
       this.loginId = undefined;
       this.context = undefined;
       if (this.guardTimer) clearInterval(this.guardTimer);
@@ -230,11 +241,13 @@ export class DesktopCodex {
     try {
       await runtime.start();
       this.assertCurrent(runtime, userId);
+      this.assertNexusEpoch(epoch);
       this.state.runtime = 'ready';
       this.state.version = CODEX_VERSION;
       await this.readAccount(runtime);
       await this.listModels(runtime);
       this.assertCurrent(runtime, userId);
+      this.assertNexusEpoch(epoch);
       this.guardTimer = setInterval(() => { void this.request({ operation: 'getState' }); }, 30_000);
       this.guardTimer.unref();
       this.publish(true);
@@ -325,7 +338,7 @@ export class DesktopCodex {
       if (this.process) await this.readAccount(this.process);
       return;
     }
-    if (request.operation === 'connect') { await this.connect(userId); return; }
+    if (request.operation === 'connect') { await this.connect(userId, epoch); return; }
     const runtime = this.ready();
     if (request.operation === 'refreshModels') { await this.readAccount(runtime); await this.listModels(runtime); this.publish(true); return; }
     if (request.operation === 'login' || request.operation === 'loginApiKey') {

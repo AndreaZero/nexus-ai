@@ -198,6 +198,32 @@ test('startup timeout, crash and provider failures never expose raw messages', a
   await assert.rejects(f.bridge.request('model/list', {}), isCode('not_started'));
 });
 
+test('an executable frame that times out behind stdin backpressure is never transmitted later', async (t) => {
+  const f = await fixture(t, { timeout: 150 });
+  await f.bridge.start();
+  const write = f.child.stdin.write.bind(f.child.stdin);
+  let release;
+  let hold = true;
+  f.child.stdin.write = (data, callback) => {
+    if (!hold) return write(data, callback);
+    hold = false;
+    write(data);
+    release = () => callback();
+    return false;
+  };
+  const firstFrame = f.nextFrame('account/read');
+  const first = assert.rejects(f.bridge.request('account/read', { refreshToken: false }), isCode('timeout'));
+  await firstFrame;
+  const queued = assert.rejects(f.bridge.request('turn/start', { threadId: 'controlled-thread', input: [] }), isCode('timeout'));
+  await Promise.all([first, queued]);
+  release(); await tick();
+  assert.equal(f.frames.some(frame => frame.method === 'turn/start'), false);
+  const next = f.nextFrame('account/read');
+  const independent = f.bridge.request('account/read', { refreshToken: false });
+  f.output({ id: (await next).id, result: { account: null, requiresOpenaiAuth: true } });
+  assert.equal((await independent).account, null);
+});
+
 test('pending operations are bounded and disposal rejects pending requests without replay', async (t) => {
   const f = await fixture(t);
   await f.bridge.start();

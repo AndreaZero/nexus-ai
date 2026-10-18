@@ -211,7 +211,7 @@ export async function buildServer(config: ServerConfig, logOutput?: LogOutput): 
     return healthResponseSchema.parse({
       schemaVersion: 1,
       service: 'nexus-server',
-      version: '0.14.0',
+      version: '0.15.0',
       status: 'ok',
       database: await database.check(),
       codex: 'local_only',

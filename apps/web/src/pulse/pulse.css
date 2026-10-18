@@ -51,6 +51,17 @@
 .pulse-layout .pulse-deploy-body>div>span{font-size:10px}
 .pulse-layout .pulse-deploy-body .preview-thumbnail{flex-shrink:0;width:78px;height:67px}
 .pulse-layout .pulse-deploy-body button{font-size:10px;padding:4px 7px}
+.pulse-layout .feedback-card{display:flex;flex-direction:column;min-height:0}
+.pulse-layout .feedback-card>.nexus-card__header{flex-shrink:0}
+.pulse-layout .feedback-card>.nexus-card__body{min-height:0;flex:1;overflow:auto;padding-bottom:7px}
+.pulse-layout .pulse-feedback-content{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pulse-layout .pulse-feedback-content blockquote{margin:0;flex-shrink:0;overflow-wrap:anywhere}
+.pulse-feedback-metadata{display:flex;align-items:center;gap:6px;min-width:0}
+.pulse-feedback-metadata>a{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pulse-feedback-metadata>.nexus-badge{flex-shrink:0}
+.pulse-layout .pulse-feedback-controls{margin-top:0;gap:6px;min-width:0;flex-shrink:0}
+.pulse-layout .pulse-feedback-controls button{flex-shrink:0}
+.pulse-feedback-controls>span{min-width:0;overflow-wrap:anywhere}
 .pulse-layout .pulse-availability-list{padding:0 10px 2px;display:flex;flex-direction:column;gap:1px;height:calc(100% - 37px);overflow:auto}
 .pulse-availability-list>div:not(.nexus-empty-panel){display:flex;align-items:center;gap:5px;font-size:10px;min-height:16px;flex-shrink:0}
 .pulse-availability-list .nexus-avatar{width:16px!important;height:16px!important;flex-shrink:0}

@@ -27,12 +27,13 @@ class RuntimeFixture {
   responseFailure = false;
   pauseCatalog: (() => Promise<void>) | undefined;
   pauseTurn: (() => Promise<void>) | undefined;
+  pauseDispose: (() => Promise<void>) | undefined;
   count = 0;
   turnCount = 0;
   threads = new Map<string, unknown>();
   nextLoginUrl = 'https://auth.openai.com/authorize?client_id=test';
   async start() { if (this.failure) throw this.failure; }
-  async dispose() { this.disposed = true; }
+  async dispose() { await this.pauseDispose?.(); this.disposed = true; }
   onNotification(callback: (event: CodexNotification) => void) { this.notification = callback; return () => undefined; }
   onServerRequest(callback: (event: CodexServerRequest) => void) { this.serverRequest = callback; return () => undefined; }
   onExit(callback: (reason: unknown) => void) { this.exited = callback; return () => undefined; }
@@ -60,7 +61,7 @@ class RuntimeFixture {
 }
 
 async function fixture() {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'nexus-codex-'));
+  const directory = await realpath(await mkdtemp(path.join(os.tmpdir(), 'nexus-codex-')));
   const folder = path.join(directory, 'repository');
   await mkdir(folder);
   let currentFolder = folder;
@@ -213,6 +214,70 @@ test('Nexus loss during turn/start interrupts its late turn identifier instead o
     const result = await sending; assert.equal(result.ok, false); assert.equal(result.state.session?.status, 'interrupted');
     assert.equal(f.runtime.calls.filter(call => call.method === 'turn/interrupt').length, 1);
     assert.equal(f.runtime.calls.filter(call => call.method === 'turn/start').length, 1); assert.equal(f.runtime.disposed, false);
+  } finally { release(); await f.close(); }
+});
+
+test('a prompt queued before Nexus loss is cancelled even when the connection recovers before dispatch', async () => {
+  const f = await fixture();
+  let release: () => void = () => undefined;
+  let entered: () => void = () => undefined;
+  const started = new Promise<void>(resolve => { entered = resolve; });
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  try {
+    await f.service.request({ operation: 'connect' }); await f.service.request(open);
+    f.runtime.pauseCatalog = async () => { entered(); await waiting; };
+    const refreshing = f.service.request({ operation: 'refreshModels' }); await started;
+    const sending = f.service.request(send);
+    f.setAccount({ status: 'unavailable', user: null, expiresAt: null, persistent: false, message: 'Offline' });
+    f.setAccount(nexusAccount()); release(); await refreshing;
+    const result = await sending;
+    assert.equal(result.ok, false); assert.match(result.state.notice!, /cancelled/);
+    assert.equal(f.runtime.calls.some(call => call.method === 'turn/start'), false);
+    assert.equal(f.runtime.disposed, false);
+    assert.equal((await f.service.request(send)).ok, true);
+    assert.equal(f.runtime.calls.filter(call => call.method === 'turn/start').length, 1);
+  } finally { release(); await f.close(); }
+});
+
+test('crash declines pending execution and reconnect waits for the previous process cleanup without replay', async () => {
+  const f = await fixture();
+  let release: () => void = () => undefined;
+  let entered: () => void = () => undefined;
+  const disposing = new Promise<void>(resolve => { entered = resolve; });
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  try {
+    await writable(f); f.runtime.serverRequest(approvalRequest(701, f.folder));
+    const approval = (await f.service.request({ operation: 'getState' })).state.session!.approvals[0]!;
+    f.runtime.pauseDispose = async () => { entered(); await waiting; };
+    f.runtime.exited('controlled crash'); await disposing;
+    const connecting = f.service.request({ operation: 'connect' });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(f.homes.length, 1); assert.equal(f.snapshots.at(-1)?.runtime, 'error');
+    assert.deepEqual(f.runtime.responses.at(-1), { id: 701, result: { decision: 'decline' } });
+    release(); assert.equal((await connecting).ok, true); assert.equal(f.homes.length, 2);
+    const stale = await f.service.request({ operation: 'resolveApproval', projectId, repositoryId, approvalId: approval.id, decision: 'acceptOnce' });
+    assert.equal(stale.ok, false);
+    assert.equal(f.runtime.calls.filter(call => call.method === 'turn/start').length, 1);
+    assert.equal(f.runtime.responses.some(value => (value.result as { decision: string }).decision === 'accept'), false);
+  } finally { release(); await f.close(); }
+});
+
+test('account change while a reconnect waits for cleanup cannot start a runtime for the previous account', async () => {
+  const f = await fixture();
+  let release: () => void = () => undefined;
+  let entered: () => void = () => undefined;
+  const disposing = new Promise<void>(resolve => { entered = resolve; });
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  try {
+    await f.service.request({ operation: 'connect' });
+    f.runtime.pauseDispose = async () => { entered(); await waiting; };
+    f.runtime.exited('controlled crash'); await disposing;
+    const connecting = f.service.request({ operation: 'connect' });
+    await new Promise(resolve => setImmediate(resolve));
+    f.setAccount(nexusAccount('nexus-b')); release();
+    assert.equal((await connecting).ok, false); assert.equal(f.homes.length, 1);
+    assert.equal((await f.service.request({ operation: 'connect' })).ok, true);
+    assert.equal(f.homes[1], codexAccountHome(f.directory, 'nexus-b'));
   } finally { release(); await f.close(); }
 });
 

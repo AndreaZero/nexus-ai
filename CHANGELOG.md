@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.0 — 18 ottobre2026
+
+Accettazione visiva e recupero: Settings a colonne indipendenti, titoli lunghi e contatori autorizzati; schermata di recupero React con focus e reload manuale. I comandi Codex accodati vengono annullati se cambia connessione/account; reconnect attende la chiusura precedente e i frame scaduti sotto backpressure non vengono trasmessi. Canonicalizzazione del root nel resolver Git e fixture native coerenti con alias dei percorsi temporanei. UI0.3.1, bridge0.5.1; protocollo/runtime0.159.2 invariato. Nessuna migrazione o dipendenza nuova.
+
+
 ## 0.14.0 — 18 ottobre2026
 
 Ricerca autorizzata fra progetti e dieci tipi di contenuto condiviso, compresi messaggi pubblicati; filtri, pagine e scorciatoiaCtrl/CmdK. Profilo e preferenze account persistenti con CAS, notifiche per progetto con categorie e lettura persistente, default sharing/modello dal catalogo effettivo. Impostazioni account/runtime/cartelle/movimento collegate. Endpoint self-host desktop con conferma, riavvio e profili separati per origine; CSP vincolata al server attivo. Migrazione additiva0008. Nessuna migrazione all’avvio, inferenza o servizio cloud automatico.

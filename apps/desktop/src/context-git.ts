@@ -9,11 +9,14 @@ type Observation = ContextSnapshot['repository'];
 
 /** Never let Windows search the repository/current directory for a git.exe. */
 export async function resolveGitExecutable(cwd: string, searchPath = process.env['PATH'] ?? process.env['Path'] ?? ''): Promise<string | null> {
+  // Native temporary folders and selected roots can have symlink/short-name aliases.
+  const root = await realpath(cwd).catch(() => null);
+  if (!root) return null;
   for (const directory of searchPath.split(path.delimiter).slice(0, 200)) {
     if (!path.isAbsolute(directory)) continue;
     try {
       const candidate = await realpath(path.join(directory, process.platform === 'win32' ? 'git.exe' : 'git'));
-      const relative = path.relative(cwd, candidate);
+      const relative = path.relative(root, candidate);
       if (!path.isAbsolute(relative) && relative !== '..' && !relative.startsWith(`..${path.sep}`)) continue;
       if (!(await stat(candidate)).isFile()) continue;
       await access(candidate, process.platform === 'win32' ? constants.F_OK : constants.X_OK);

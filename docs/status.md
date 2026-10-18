@@ -1,10 +1,31 @@
 # Stato operativo
 
-**T14 integrata e consegnata, verifica manuale distinta; prosecuzione T15–T16 autorizzata.**
+**T15 integrata e consegnata, verifica manuale distinta; T16 autorizzata e arresto al termine.**
 
 ## Mandato T13–T16 del18ottobre2026
 
 Il maintainer autorizza esplicitamente di procedere fino a T16 senza soste tra task e di fermarsi al termine. Si mantiene l'ordine T13→T14→T15→T16 e si integra/verifica ciascuna task prima della seguente. Questa autorizzazione sostituisce l'attesa del via dopo ogni consegna; non equivale a prove native Mac/Linux o firma/credenziali esterne disponibili. T12 manuale resta distinto dal via allo sviluppo.
+
+## Ownership T15 integrate e rilasciate
+
+| Agente | Percorsi scrivibili | Obiettivo/uscita |
+| --- | --- | --- |
+| /root/t15_ui | apps/web/src/**,packages/ui/src/**,apps/web/test/t15.test.mjs,docs/design/t15-review.md | Confronto PNG1/2/3 e cattureT13/14, fix densitàSettings/longnames/focus/routes/error/offline/reduced; no contratti/main/manifests |
+| /root/t15_recovery | apps/desktop/src/codex*.ts (esclusi generated/harness),packages/codex-bridge/src/** esclusigenerated, relativitest | Review runtimecrash/reconnect/approvals/accountchange, correggere solo difetti concreti; test mirati ai nuovi rischi, niente inferenza personale |
+| /root/t15_qa | apps/desktop/src/acceptance-verification.ts,scripts/verify-acceptance.mjs | Harness Electron/preload/DTO controllati,3reference a1586/960,3ruoli/longnames/keyboard/dialog/auth/offline/runtimeerror recovery; screenshot/report e limiti, no UI edit |
+| /root/t15_recovery — QA renderer dopo handoff | apps/desktop/src/renderer-recovery-verification.ts,scripts/verify-renderer-recovery.mjs | Reactboundary effettivo con childthrow isolato, focus/no payload/riavvio manuale; nessun hookproduzione |
+| /root/t15_recovery — crash nativo dopo QA boundary | apps/desktop/src/renderer-process-recovery.ts,renderer-process-verification.ts,scripts/verify-renderer-process.mjs e main.ts solo hookcreateWindow | Arresto locale prima dialogReload/Close esplicito su render-process-gone; actualforcefullyCrashRenderer su finestraQA sola |
+| Coordinatore | integrazione/docs/versioni/rootmanifest, context-git.ts e context.test.ts/codex.test.ts dopo handoff recovery | Canonicalizzazione percorsi fixture da fallimentoCI39098545462 e resolverGitconalias; un autore per confini, build/controlli mirati e integrazione primaT16; nessuna accettazione personale inventata |
+
+Contratti T14 invariati; nessuna nuova tabella/migrazione. Harness usa configurationRead trusted e rendererConnectionPolicy production perCSP, nessuna credenziale o inferenza. Difetti fuoriownership tramite handoff; coordinate screenshot e fonti distinte da accettazione manuale.
+
+## Evidenze T15
+
+Confrontate le PNG1/2/3 e le catture effettive:14controlli renderer/preload e17catture passati con DTO controllati,3ruoli/longnames/keyboard/960/reduced/offline/auth/runtime recovery. Geometrie sidebar212,heroPulse1050×232,rail294/Overview370,splitSessionentro4px. Corrette cardSettings stirate, header/titoli lunghi, feedbackfooterPulse e chip/allegati/taskmini oltrecard. Tre catture controllate pubbliche e report in docs/design/captures/t15*, revisione in design/t15-review.md; nessuna identità pixel o accettazione personale dichiarata.
+
+Recovery:3difetti corretti (epoca della coda comandi, attesa shutdown prima reconnect, frame stdin scaduti). **28test DesktopCodex e14bridge passati**; dopo correzione percorsi canonicalizzati CI, **39test Codex+context passati** incl aliasRootGit. Si tratta di ripetizione motivata da difetti concreti, non somma di test distinti. CI precedente39098545462 falliva12casi macOS/Windows sufixturetemporanei conalias; fixture canonicalizzate e resolverGit rafforzato prima della prossima run.
+
+ErrorBoundaryReact effettivo: **6controlli Electron passati**, focusalert/no payload/noautoreload e un reload esplicito. Crashprocessrenderer: **5controlli passati**,2forcefullyCrashRenderer propri, stopesecuzione prima dialog e reload/close espliciti. Main integra DesktopCodex.dispose prima del dialog; nessun crash/inferenza sull’app del maintainer. Typecheck/lintmirati e buildUI/web/desktop passati; smoke finale registrato separatamente. Nessuna migrazione,9totali; versioni app0.15.0,UI0.3.1,bridge0.5.1,Codex0.159.2. Tutteownershiprilasciate; acceptance.md distingueR01–R16 e prove personali/native residue.
 
 ## Ownership T14 integrate e rilasciate
 

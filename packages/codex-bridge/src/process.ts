@@ -187,7 +187,7 @@ export class CodexProcess {
         reject(new CodexProcessError('timeout'));
       }, this.deps.requestTimeoutMs);
       this.pending.set(id, { timer, resolve: (value) => resolve(value as CodexResponse<M>), reject });
-      void this.write({ id, method, ...(params === undefined ? {} : { params }) }).catch((error: unknown) => {
+      void this.write({ id, method, ...(params === undefined ? {} : { params }) }, () => this.pending.has(id)).catch((error: unknown) => {
         const operation = this.pending.get(id);
         if (!operation) return;
         clearTimeout(operation.timer);
@@ -197,7 +197,7 @@ export class CodexProcess {
     });
   }
 
-  private write(message: unknown): Promise<void> {
+  private write(message: unknown, active?: () => boolean): Promise<void> {
     if (this.disposed || this.failed || !this.child || this.child.stdin.destroyed) return Promise.reject(new CodexProcessError('runtime_exit'));
     let data: Buffer;
     try { data = Buffer.from(`${JSON.stringify(message)}\n`); }
@@ -205,6 +205,9 @@ export class CodexProcess {
     if (data.length > MAX_LINE_BYTES || this.queuedBytes + data.length > MAX_QUEUED_BYTES) return Promise.reject(new CodexProcessError('busy'));
     this.queuedBytes += data.length;
     const operation = this.writes.then(() => new Promise<void>((resolve, reject) => {
+      // A request can expire while a previous stdin frame is under backpressure.
+      // Never transmit an executable operation after its caller received a timeout.
+      if (active && !active()) { reject(new CodexProcessError('timeout')); return; }
       if (this.failed || this.disposed || !this.child || this.child.stdin.destroyed) { reject(new CodexProcessError('runtime_exit')); return; }
       // The write callback gates the next frame, including when the stream applies backpressure.
       this.child.stdin.write(data, (error) => error ? reject(new CodexProcessError('runtime_exit')) : resolve());

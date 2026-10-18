@@ -16,6 +16,7 @@ import {applicationRequestSchema,applicationResponseSchema,desktopPreferencesReq
 import { verifyDesktopAuth } from './auth-verification.js';
 import { LocalBindingService, LocalBindingStorage } from './local-bindings.js';
 import { DesktopCodex, codexRuntimePath } from './codex.js';
+import { installRendererProcessRecovery } from './renderer-process-recovery.js';
 import { DesktopContext } from './context.js';
 import { DesktopWorkspace } from './workspace.js';
 import { DesktopGit } from './git.js';
@@ -390,6 +391,18 @@ async function initialize() {
       },
     });
     mainWindow = window;
+    installRendererProcessRecovery(window, {
+      stopExecution: async () => { await desktopCodex?.dispose(); },
+      isClosing: () => runtimeShutdown || hiddenVerification,
+      confirm: async () => {
+        const result = await dialog.showMessageBox(window, {
+          type: 'error', title: 'Nexus AI', message: 'The Nexus screen stopped unexpectedly.',
+          detail: 'Local Codex execution was stopped. Reload Nexus to reconnect, or close this window. Unsaved edits may need to be entered again.',
+          buttons: ['Reload Nexus', 'Close window'], defaultId: 1, cancelId: 1, noLink: true,
+        });
+        return result.response === 0 ? 'reload' : 'close';
+      },
+    });
     window.setMenuBarVisibility(false);
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', (event) => event.preventDefault());

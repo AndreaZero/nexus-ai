@@ -19,7 +19,7 @@ function success(response: ContextResponse) {
   return response;
 }
 async function fixture() {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'nexus-context-'));
+  const directory = await realpath(await mkdtemp(path.join(os.tmpdir(), 'nexus-context-')));
   const root = path.join(directory, 'repo');
   await mkdir(root);
   let currentRoot = root;
@@ -202,4 +202,14 @@ test('Git resolver ignores empty/relative PATH entries and repository-owned exec
     const resolved = await resolveGitExecutable(state.root);
     if (resolved) assert.equal(path.relative(state.root, resolved).startsWith('..') || path.isAbsolute(path.relative(state.root, resolved)), true);
   } finally { await state.close(); }
+});
+
+test('Git resolver excludes repository executables when the root is a directory alias', async () => {
+  const state = await fixture();
+  try {
+    const alias=path.join(state.directory,'linked-repository');
+    await symlink(state.root,alias,process.platform==='win32'?'junction':'dir');
+    await writeFile(path.join(state.root,process.platform==='win32'?'git.exe':'git'),'Repository file must never execute.',{mode:0o755});
+    assert.equal(await resolveGitExecutable(alias,state.root),null);
+  } finally {await state.close();}
 });

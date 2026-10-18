@@ -12,12 +12,12 @@
 .overview-event>.nexus-badge{font-size:10px;margin-top:2px}
 .overview-new-events{margin-top:7px;border:1px solid #175e9c;border-radius:5px;background:#0d2c49;color:#a1dfff;padding:5px 10px;cursor:pointer;font-size:10px;align-self:center}
 .overview-recovery{color:#99b8ce;font-size:11px;padding:30px 10px;line-height:1.7;text-align:center}
-.overview-task-list{max-height:207px;overflow:auto;scrollbar-width:thin;scrollbar-color:#254b65 transparent}
+.overview-task-list{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;scrollbar-color:#254b65 transparent}
 .overview-task-list>button{display:grid;grid-template-columns:12px minmax(0,1fr);gap:6px;margin:3px 4px;padding:8px 5px;border:1px solid #1a3147;background:linear-gradient(#102236,#0c1827);border-radius:5px;color:#d3e2ee;text-align:left;width:calc(100% - 8px);cursor:pointer}
-.overview-task-list>button strong{font-weight:500;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
+.overview-task-list>button strong{font-weight:500;font-size:10px;line-height:1.4;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .overview-task-list>button small{grid-column:1/-1;font-size:10px;color:#7e9bb7}
 .overview-task-done{grid-column:1/-1;color:#00c991;font-size:10px;text-align:right}
-.overview-todo-count{display:block;font-size:10px;color:#859fb7;padding:4px}
+.overview-todo-count{display:block;font-size:10px;color:#859fb7;padding:4px;flex-shrink:0}
 .overview-system-chart{height:48px;display:grid;place-items:center;position:relative;background-image:linear-gradient(#17314555 1px,transparent 1px);background-size:100% 16px}
 .overview-system-chart>span{font-size:10px;text-align:center;color:#7f9db5;max-width:90%}
 .overview-system-chart svg{width:100%;height:44px;overflow:visible}
